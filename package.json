@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "lint:components": "eslint . --config eslint.config.js",
+    "validate:components": "npm run lint:components",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -26,5 +28,16 @@
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
+  },
+  "lint-staged": {
+    "*.{tsx,jsx}": [
+      "eslint --fix --config eslint.config.js",
+      "git add"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }

@@ -10,12 +10,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@/components': path.resolve(__dirname, './src/components'),
       '@components': path.resolve(__dirname, './src/components'),
       '@services': path.resolve(__dirname, './src/services'),
       '@types': path.resolve(__dirname, './src/types'),
       '@utils': path.resolve(__dirname, './src/utils'),
       '@hooks': path.resolve(__dirname, './src/hooks'),
       '@styles': path.resolve(__dirname, './src/styles'),
+      '@rules': path.resolve(__dirname, './src/rules'),
     },
   },
   
@@ -54,6 +56,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
+          'design-system': ['./src/components/index.ts'],
+          'validation': ['./src/rules/component-rules.ts', './src/utils/component-validator.ts']
         },
       },
     },
