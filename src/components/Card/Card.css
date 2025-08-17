@@ -1,0 +1,139 @@
+/* Card Base Styles */
+.card {
+  position: relative;
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-12);
+  border: var(--borders-hairline) solid var(--color-border-primary);
+  transition: all var(--animation-quick-transition) var(--easing-out-cubic);
+  outline: none;
+}
+
+/* Card Variants */
+.card--default {
+  background-color: var(--color-bg-primary);
+  border-color: var(--color-border-primary);
+}
+
+.card--elevated {
+  background-color: var(--color-bg-primary);
+  border-color: transparent;
+}
+
+.card--outlined {
+  background-color: transparent;
+  border-color: var(--color-border-secondary);
+  border-width: 2px;
+}
+
+.card--filled {
+  background-color: var(--color-bg-secondary);
+  border-color: transparent;
+}
+
+/* Card Padding */
+.card--padding-none {
+  padding: 0;
+}
+
+.card--padding-small {
+  padding: 12px;
+}
+
+.card--padding-medium {
+  padding: 20px;
+}
+
+.card--padding-large {
+  padding: 32px;
+}
+
+/* Card Shadows */
+.card--shadow-none {
+  box-shadow: var(--shadow-none);
+}
+
+.card--shadow-tiny {
+  box-shadow: var(--shadow-tiny);
+}
+
+.card--shadow-low {
+  box-shadow: var(--shadow-low);
+}
+
+.card--shadow-medium {
+  box-shadow: var(--shadow-medium);
+}
+
+.card--shadow-high {
+  box-shadow: var(--shadow-high);
+}
+
+/* Interactive Card States */
+.card--interactive {
+  cursor: pointer;
+  user-select: none;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    border-color: var(--color-border-secondary);
+  }
+  
+  &:active {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-low);
+  }
+  
+  &:focus-visible {
+    box-shadow: 0 0 0 var(--focus-ring-offset) var(--color-bg-primary), 
+                0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color),
+                var(--shadow-low);
+  }
+}
+
+/* Clickable Card (button element) */
+.card[role="button"] {
+  border: none;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  
+  /* Restore card styles when used as button */
+  &.card--default {
+    background-color: var(--color-bg-primary);
+    border: var(--borders-hairline) solid var(--color-border-primary);
+  }
+  
+  &.card--elevated {
+    background-color: var(--color-bg-primary);
+    border: var(--borders-hairline) solid transparent;
+  }
+  
+  &.card--outlined {
+    background-color: transparent;
+    border: 2px solid var(--color-border-secondary);
+  }
+  
+  &.card--filled {
+    background-color: var(--color-bg-secondary);
+    border: var(--borders-hairline) solid transparent;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .card--padding-medium {
+    padding: 16px;
+  }
+  
+  .card--padding-large {
+    padding: 24px;
+  }
+  
+  .card--interactive:hover {
+    transform: none;
+  }
+}

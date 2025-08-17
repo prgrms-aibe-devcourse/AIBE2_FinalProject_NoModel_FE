@@ -1,0 +1,354 @@
+/* Import Inter Variable font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+/* CSS Custom Properties - Linear Design Tokens */
+:root {
+  /* Brand Colors */
+  --color-brand-primary: #7170ff;
+  --color-brand-secondary: #8989f0;
+  --color-brand-accent: #7170ff;
+  --color-brand-accent-hover: #8989f0;
+  --color-brand-accent-tint: #f1f1ff;
+
+  /* Background Colors */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f9f8f9;
+  --color-bg-tertiary: #f4f2f4;
+  --color-bg-quaternary: #eeedef;
+  --color-bg-quinary: #e9e8ea;
+  --color-bg-marketing: #010102;
+  --color-bg-translucent: rgba(0,0,0,.02);
+  --color-bg-level0: #ffffff;
+  --color-bg-level1: #f8f8f8;
+  --color-bg-level2: #f4f4f4;
+  --color-bg-level3: #f0f0f0;
+  --color-bg-tint: #f4f4f5;
+
+  /* Text Colors */
+  --color-text-primary: #282a30;
+  --color-text-secondary: #3c4149;
+  --color-text-tertiary: #6f6e77;
+  --color-text-quaternary: #86848d;
+
+  /* Foreground Colors */
+  --color-fg-primary: #282a2f;
+  --color-fg-secondary: #3c4149;
+  --color-fg-tertiary: #6f6e77;
+  --color-fg-quaternary: #86848d;
+
+  /* Border Colors */
+  --color-border-primary: #e9e8ea;
+  --color-border-secondary: #e4e2e4;
+  --color-border-tertiary: #dcdbdd;
+  --color-border-translucent: rgba(0,0,0,.05);
+
+  /* Line Colors */
+  --color-line-primary: #d4d4d6;
+  --color-line-secondary: #eaeaeb;
+  --color-line-tertiary: #f0f0f0;
+  --color-line-quaternary: #f4f4f4;
+  --color-line-tint: #f4f4f5;
+
+  /* Link Colors */
+  --color-link-primary: #7070ff;
+  --color-link-hover: var(--color-text-primary);
+
+  /* Semantic Colors */
+  --color-semantic-blue: #4ea7fc;
+  --color-semantic-red: #eb5757;
+  --color-semantic-green: #4cb782;
+  --color-semantic-orange: #fc7840;
+  --color-semantic-yellow: #f2c94c;
+  --color-semantic-indigo: #5e6ad2;
+  --color-semantic-linear-plan: #68cc58;
+  --color-semantic-linear-build: #d4b144;
+  --color-semantic-linear-security: #7a7fad;
+
+  /* Typography */
+  --font-family-regular: "Inter Variable","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Open Sans","Helvetica Neue",sans-serif;
+  --font-family-serif: "Tiempos Headline",ui-serif,Georgia,Cambria,"Times New Roman",Times,serif;
+  --font-family-monospace: "Berkeley Mono",ui-monospace,"SF Mono","Menlo",monospace;
+  --font-family-emoji: "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Segoe UI","Twemoji Mozilla","Noto Color Emoji","Android Emoji";
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 510;
+  --font-weight-semibold: 590;
+  --font-weight-bold: 680;
+
+  --font-size-micro: 0.6875rem;   /* 11px */
+  --font-size-mini: 0.75rem;      /* 12px */
+  --font-size-small: 0.8125rem;   /* 13px */
+  --font-size-regular: 0.9375rem; /* 15px */
+  --font-size-large: 1.125rem;    /* 18px */
+  --font-size-title1: 2.25rem;    /* 36px */
+  --font-size-title2: 1.5rem;     /* 24px */
+  --font-size-title3: 1.25rem;    /* 20px */
+
+  /* Spacing */
+  --spacing-page-max-width: 1024px;
+  --spacing-page-padding-inline: 24px;
+  --spacing-page-padding-block: 64px;
+  --spacing-header-height: 64px;
+  --spacing-grid-columns: 12;
+  --spacing-grid-gap: 32px;
+  --spacing-block-small: 8px;
+  --spacing-block: 16px;
+
+  /* Border Radius */
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-24: 24px;
+  --radius-32: 32px;
+  --radius-rounded: 9999px;
+  --radius-circle: 50%;
+
+  /* Shadows */
+  --shadow-none: 0px 0px 0px transparent;
+  --shadow-tiny: 0px 1px 1px 0px rgba(0,0,0,.09);
+  --shadow-low: 0px 1px 4px -1px rgba(0,0,0,.09);
+  --shadow-medium: 0px 3px 12px rgba(0,0,0,.09);
+  --shadow-high: 0px 7px 24px rgba(0,0,0,.06);
+  --shadow-stack-low: 0px -1px 1px 0px rgba(0,0,0,.11) inset,0px 8px 2px 0px transparent,0px 5px 2px 0px rgba(0,0,0,.01),0px 3px 2px 0px rgba(0,0,0,.04),0px 1px 1px 0px rgba(0,0,0,.07),0px 0px 1px 0px rgba(0,0,0,.08);
+
+  /* Animation */
+  --animation-highlight-fade-in: 0s;
+  --animation-highlight-fade-out: 0.15s;
+  --animation-quick-transition: 0.1s;
+  --animation-regular-transition: 0.25s;
+
+  /* Easings */
+  --easing-in-quad: cubic-bezier(0.55,0.085,0.68,0.53);
+  --easing-in-cubic: cubic-bezier(0.55,0.055,0.675,0.19);
+  --easing-in-quart: cubic-bezier(0.895,0.03,0.685,0.22);
+  --easing-out-quad: cubic-bezier(0.25,0.46,0.45,0.94);
+  --easing-out-cubic: cubic-bezier(0.215,0.61,0.355,1);
+  --easing-out-quart: cubic-bezier(0.165,0.84,0.44,1);
+  --easing-in-out-quad: cubic-bezier(0.455,0.03,0.515,0.955);
+  --easing-in-out-cubic: cubic-bezier(0.645,0.045,0.355,1);
+  --easing-in-out-quart: cubic-bezier(0.77,0,0.175,1);
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(0,0,0,.4);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Component Tokens */
+  --component-button-height: 48px;
+  --component-button-icon-size: 18px;
+  --component-button-font-size: 16px;
+  --component-button-corner-radius: var(--radius-rounded);
+  --component-button-padding: 0 16px;
+  --component-button-gap: 10px;
+
+  --component-input-height: 62px;
+
+  --component-switch-height: 20px;
+  --component-switch-width: 32px;
+  --component-switch-thumb-size: 14px;
+
+  /* Z-Index Scale */
+  --z-max: 10000;
+  --z-debug: 5100;
+  --z-skip-nav: 5000;
+  --z-context-menu: 1200;
+  --z-tooltip: 1100;
+  --z-toasts: 800;
+  --z-dialog: 700;
+  --z-dialog-overlay: 699;
+  --z-command-menu: 650;
+  --z-popover: 600;
+  --z-overlay: 500;
+  --z-header: 100;
+  --z-scrollbar: 75;
+  --z-footer: 50;
+  --z-layer3: 3;
+  --z-layer2: 2;
+  --z-layer1: 1;
+}
+
+/* Dark Mode Variables */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-primary: #08090a;
+    --color-bg-secondary: #0f1011;
+    --color-bg-tertiary: #16171a;
+    --color-text-primary: #f7f8f8;
+    --color-text-secondary: #d1d5d9;
+    --color-text-tertiary: #8a8f98;
+    --color-header-background: rgba(10, 10, 10, 0.8);
+  }
+}
+
+/* Reset and Base Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-family-regular);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-regular);
+  line-height: 1.6;
+  letter-spacing: -0.011em;
+  font-feature-settings: "cv01", "ss03";
+  font-variation-settings: "opsz" auto;
+}
+
+/* Typography Classes */
+.title-1 {
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  letter-spacing: -0.012em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-2 {
+  font-size: 1.3125rem;
+  line-height: 1.33;
+  letter-spacing: -0.012em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-3 {
+  font-size: 1.5rem;
+  line-height: 1.33;
+  letter-spacing: -0.012em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-4 {
+  font-size: 2rem;
+  line-height: 1.125;
+  letter-spacing: -0.022em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-5 {
+  font-size: 2.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-6 {
+  font-size: 3rem;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-7 {
+  font-size: 3.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-8 {
+  font-size: 4rem;
+  line-height: 1.06;
+  letter-spacing: -0.022em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.title-9 {
+  font-size: 4.5rem;
+  line-height: 1;
+  letter-spacing: -0.022em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.text-large {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.text-regular {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  letter-spacing: -0.011em;
+}
+
+.text-small {
+  font-size: 0.875rem;
+  line-height: calc(21 / 14);
+  letter-spacing: -0.013em;
+}
+
+.text-mini {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+.text-micro {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.text-tiny {
+  font-size: 0.625rem;
+  line-height: 1.5;
+  letter-spacing: -0.015em;
+}
+
+/* Focus Ring Utility */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--color-bg-primary), 
+              0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--color-bg-primary), 
+              0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+}
+
+/* Container Utility */
+.container {
+  max-width: var(--spacing-page-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-page-padding-inline);
+}
+
+/* Grid Utility */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--spacing-grid-columns), 1fr);
+  gap: var(--spacing-grid-gap);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  :root {
+    --spacing-page-padding-inline: 16px;
+    --spacing-grid-gap: 16px;
+  }
+  
+  .title-4 { font-size: 1.75rem; }
+  .title-5 { font-size: 2rem; }
+  .title-6 { font-size: 2.5rem; }
+  .title-7 { font-size: 3rem; }
+  .title-8 { font-size: 3.5rem; }
+  .title-9 { font-size: 4rem; }
+}
