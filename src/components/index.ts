@@ -4,6 +4,9 @@ export { Input } from './Input';
 export { Card } from './Card';
 export { Badge } from './Badge';
 export { Carousel } from './Carousel';
+export { Navbar } from './Navbar';
+export { Footer } from './Footer';
+export { Hero } from './Hero';
 
 // Types
 export type { 
@@ -39,3 +42,20 @@ export type {
   CarouselOrientation, 
   CarouselIndicatorStyle 
 } from './Carousel';
+
+export type { 
+  NavbarProps, 
+  NavItem 
+} from './Navbar';
+
+export type { 
+  FooterProps, 
+  FooterLink, 
+  FooterSection, 
+  SocialLink 
+} from './Footer';
+
+export type { 
+  HeroProps, 
+  HeroAction 
+} from './Hero';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Button, Input, Card, Badge, Carousel } from '../components';
+import { Button, Input, Card, Badge, Carousel, Navbar, Footer, Hero } from '../components';
 import type { CarouselItem } from '../components';
 import { theme } from '../styles/theme';
 import './ComponentsDemo.css';
@@ -25,6 +25,24 @@ const HeartIcon = () => (
 );
 
 const Path = (props: any) => <path {...props} />;
+
+const TwitterIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M12.5 3.5C11.8 3.9 11 4.1 10.2 4.1C9.4 3.4 8.3 3 7.1 3C4.8 3 3 4.8 3 7.1C3 7.4 3 7.7 3.1 8C5.5 7.9 7.7 6.7 9.1 4.9C9.5 5.6 9.5 6.5 9.1 7.2C8.7 7.9 8 8.3 7.1 8.3H6.5C6.5 9.3 7.3 10.1 8.3 10.1C9.6 10.1 10.7 9.2 11.1 7.9C11.4 7 11.3 6 10.9 5.1C12.1 4.7 12.9 3.6 12.5 3.5Z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+  </svg>
+);
+
+const GitHubIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M8 1C4.1 1 1 4.1 1 8C1 11.1 3 13.7 5.9 14.7C6.3 14.8 6.5 14.5 6.5 14.3V13C4.8 13.4 4.4 12.2 4.4 12.2C4.1 11.4 3.6 11.2 3.6 11.2C2.9 10.8 3.6 10.8 3.6 10.8C4.3 10.9 4.7 11.5 4.7 11.5C5.4 12.6 6.5 12.3 6.5 12.1C6.6 11.6 6.8 11.3 7 11.1C5.4 10.9 3.7 10.3 3.7 7.6C3.7 6.8 4 6.2 4.7 5.7C4.6 5.5 4.4 4.8 4.8 3.8C4.8 3.8 5.4 3.6 6.5 4.3C7.1 4.1 7.8 4 8.5 4C9.2 4 9.9 4.1 10.5 4.3C11.6 3.6 12.2 3.8 12.2 3.8C12.6 4.8 12.4 5.5 12.3 5.7C13 6.2 13.3 6.8 13.3 7.6C13.3 10.3 11.6 10.9 10 11.1C10.3 11.3 10.5 11.8 10.5 12.5V14.3C10.5 14.5 10.7 14.8 11.1 14.7C14 13.7 16 11.1 16 8C16 4.1 12.9 1 8 1Z" fill="currentColor"/>
+  </svg>
+);
+
+const DiscordIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M13.5 3C12.5 2.5 11.4 2.1 10.2 1.9C10.1 2.1 9.9 2.4 9.8 2.6C8.5 2.4 7.2 2.4 6 2.6C5.9 2.4 5.7 2.1 5.6 1.9C4.4 2.1 3.3 2.5 2.3 3C0.3 6.1 -0.2 9.1 0.1 12C1.4 12.9 2.7 13.5 4 13.9C4.3 13.5 4.6 13 4.8 12.5C4.4 12.3 4 12.1 3.6 11.8C3.7 11.7 3.8 11.6 3.9 11.5C6.6 12.7 9.6 12.7 12.3 11.5C12.4 11.6 12.5 11.7 12.6 11.8C12.2 12.1 11.8 12.3 11.4 12.5C11.6 13 11.9 13.5 12.2 13.9C13.5 13.5 14.8 12.9 16.1 12C16.5 8.5 15.6 5.5 13.5 3ZM5.4 10.2C4.6 10.2 3.9 9.4 3.9 8.5C3.9 7.6 4.5 6.8 5.4 6.8C6.3 6.8 6.9 7.6 6.9 8.5C6.9 9.4 6.3 10.2 5.4 10.2ZM10.8 10.2C10 10.2 9.3 9.4 9.3 8.5C9.3 7.6 9.9 6.8 10.8 6.8C11.7 6.8 12.3 7.6 12.3 8.5C12.3 9.4 11.7 10.2 10.8 10.2Z" fill="currentColor"/>
+  </svg>
+);
 
 export const ComponentsDemo: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
@@ -605,6 +623,397 @@ export const ComponentsDemo: React.FC = () => {
                   </Card>
                 </div>
               </div>
+            </Card>
+          </div>
+        </section>
+
+        {/* Hero Component */}
+        <section className="component-section">
+          <h2 className="title-1 mb-6">Hero 컴포넌트</h2>
+          
+          <div className="grid grid-2 gap-6">
+            {/* Hero with Background Pattern */}
+            <Card padding="none" className="demo-hero-container">
+              <Hero
+                size="small"
+                title="혁신적인 디자인 시스템"
+                subtitle="Modern UI Components"
+                description="Linear.app에서 영감을 받은 현대적이고 일관된 사용자 인터페이스 컴포넌트 라이브러리입니다."
+                actions={[
+                  {
+                    id: 'start',
+                    label: '시작하기',
+                    variant: 'primary',
+                    onClick: () => alert('시작하기 클릭!'),
+                  },
+                  {
+                    id: 'docs',
+                    label: '문서 보기',
+                    variant: 'secondary',
+                    href: '#docs',
+                  },
+                ]}
+                layout="center"
+                animation="fade-up"
+                style={{
+                  backgroundImage: `
+                    radial-gradient(circle at 20% 50%, rgba(113, 112, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(113, 112, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 80%, rgba(137, 137, 240, 0.08) 0%, transparent 50%)
+                  `
+                }}
+                overlayOpacity={0}
+              />
+            </Card>
+
+            {/* Hero with Abstract Background */}
+            <Card padding="none" className="demo-hero-container">
+              <Hero
+                size="small"
+                title="디자인의 새로운 기준"
+                description="프로덕션 준비가 완료된 컴포넌트로 더 빠르게 개발하세요."
+                actions={[
+                  {
+                    id: 'explore',
+                    label: '살펴보기',
+                    variant: 'primary',
+                    icon: <SearchIcon />,
+                    onClick: () => alert('살펴보기!'),
+                  },
+                ]}
+                layout="center"
+                textColor="light"
+                animation="slide-up"
+                style={{
+                  background: `
+                    linear-gradient(135deg, #667eea 0%, #764ba2 100%),
+                    url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M20 20c0 11.046-8.954 20-20 20s-20-8.954-20-20 8.954-20 20-20 20 8.954 20 20zm20 0c0 11.046-8.954 20-20 20s-20-8.954-20-20 8.954-20 20-20 20 8.954 20 20z'/%3E%3C/g%3E%3C/svg%3E")
+                  `,
+                  backgroundSize: 'cover, 40px 40px'
+                }}
+                overlayOpacity={0}
+              />
+            </Card>
+          </div>
+
+          {/* More Hero Examples */}
+          <div className="mt-6">
+            <h3 className="title-2 mb-4">배경 이미지와 패턴 예제</h3>
+            <div className="grid grid-3 gap-4">
+              {/* Geometric Pattern Hero */}
+              <Card padding="none" className="demo-hero-container" style={{ minHeight: '240px' }}>
+                <Hero
+                  size="small"
+                  title="기하학적 패턴"
+                  description="모던한 기하학적 패턴 배경"
+                  actions={[
+                    {
+                      id: 'view',
+                      label: '보기',
+                      variant: 'primary',
+                      size: 'small',
+                      onClick: () => alert('기하학적 패턴!'),
+                    },
+                  ]}
+                  layout="center"
+                  textColor="light"
+                  style={{
+                    background: `
+                      linear-gradient(45deg, #ff6b6b, #4ecdc4),
+                      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpolygon points='30,0 60,30 30,60 0,30'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+                    `,
+                    backgroundSize: 'cover, 60px 60px'
+                  }}
+                  overlayOpacity={0}
+                />
+              </Card>
+
+              {/* Dots Pattern Hero */}
+              <Card padding="none" className="demo-hero-container" style={{ minHeight: '240px' }}>
+                <Hero
+                  size="small"
+                  title="도트 패턴"
+                  description="클래식한 도트 패턴 배경"
+                  actions={[
+                    {
+                      id: 'explore',
+                      label: '탐색',
+                      variant: 'secondary',
+                      size: 'small',
+                      onClick: () => alert('도트 패턴!'),
+                    },
+                  ]}
+                  layout="center"
+                  style={{
+                    background: `
+                      linear-gradient(135deg, #a8edea 0%, #fed6e3 100%),
+                      radial-gradient(circle, rgba(255,255,255,0.2) 1px, transparent 1px)
+                    `,
+                    backgroundSize: 'cover, 20px 20px'
+                  }}
+                  overlayOpacity={0}
+                />
+              </Card>
+
+              {/* Mesh Gradient Hero */}
+              <Card padding="none" className="demo-hero-container" style={{ minHeight: '240px' }}>
+                <Hero
+                  size="small"
+                  title="메시 그라디언트"
+                  description="부드러운 메시 그라디언트"
+                  actions={[
+                    {
+                      id: 'start',
+                      label: '시작',
+                      variant: 'primary',
+                      size: 'small',
+                      onClick: () => alert('메시 그라디언트!'),
+                    },
+                  ]}
+                  layout="center"
+                  textColor="light"
+                  style={{
+                    background: `
+                      radial-gradient(ellipse at top left, #ff7b7b 0%, transparent 50%),
+                      radial-gradient(ellipse at top right, #4ecdc4 0%, transparent 50%),
+                      radial-gradient(ellipse at bottom left, #45b7d1 0%, transparent 50%),
+                      radial-gradient(ellipse at bottom right, #f39c12 0%, transparent 50%),
+                      linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+                    `
+                  }}
+                  overlayOpacity={0}
+                />
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Navbar Component */}
+        <section className="component-section">
+          <h2 className="title-1 mb-6">Navbar 컴포넌트</h2>
+          
+          <div className="demo-navbar-container">
+            <Card 
+              padding="none" 
+              className="navbar-demo navbar-demo--with-bg"
+              style={{
+                background: `
+                  linear-gradient(135deg, rgba(113, 112, 255, 0.05) 0%, rgba(137, 137, 240, 0.05) 100%),
+                  url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000' fill-opacity='0.02'%3E%3Cpath d='M0 0h20v20H0z'/%3E%3Cpath d='M10 0v20'/%3E%3Cpath d='M0 10h20'/%3E%3C/g%3E%3C/svg%3E")
+                `,
+                backgroundSize: 'cover, 20px 20px'
+              }}
+            >
+              <Navbar
+                logo={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '24px', height: '24px', backgroundColor: 'var(--color-brand-primary)', borderRadius: '4px' }} />
+                    <span>Linear</span>
+                  </div>
+                }
+                items={[
+                  {
+                    id: 'products',
+                    label: '제품',
+                    children: [
+                      { id: 'linear', label: 'Linear', href: '#linear' },
+                      { id: 'api', label: 'API', href: '#api' },
+                      { id: 'sdk', label: 'SDK', href: '#sdk' },
+                    ],
+                  },
+                  { id: 'pricing', label: '요금제', href: '#pricing' },
+                  { id: 'docs', label: '문서', href: '#docs' },
+                  { id: 'blog', label: '블로그', href: '#blog' },
+                  {
+                    id: 'company',
+                    label: '회사',
+                    children: [
+                      { id: 'about', label: '회사 소개', href: '#about' },
+                      { id: 'careers', label: '채용', href: '#careers', badge: '3' },
+                      { id: 'contact', label: '연락처', href: '#contact' },
+                    ],
+                  },
+                ]}
+                rightContent={
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Button variant="ghost" size="small">로그인</Button>
+                    <Button variant="primary" size="small">회원가입</Button>
+                  </div>
+                }
+                activeItem="pricing"
+              />
+            </Card>
+          </div>
+
+          <div className="mt-4">
+            <h3 className="title-2 mb-3">다양한 변형 및 배경</h3>
+            <div className="grid grid-3 gap-4">
+              {/* Transparent with Gradient Background */}
+              <Card 
+                padding="none"
+                style={{
+                  background: `linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)`,
+                  borderRadius: 'var(--border-radius-lg)',
+                  overflow: 'hidden'
+                }}
+              >
+                <Navbar
+                  variant="transparent"
+                  logo="Brand"
+                  items={[
+                    { id: 'home', label: '홈', href: '#' },
+                    { id: 'about', label: '소개', href: '#' },
+                  ]}
+                />
+              </Card>
+              
+              {/* Filled with Pattern Background */}
+              <Card 
+                padding="none"
+                style={{
+                  background: `
+                    linear-gradient(135deg, #667eea 0%, #764ba2 100%),
+                    url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M15 0l15 15-15 15L0 15z'/%3E%3C/g%3E%3C/svg%3E")
+                  `,
+                  backgroundSize: 'cover, 30px 30px',
+                  borderRadius: 'var(--border-radius-lg)',
+                  overflow: 'hidden'
+                }}
+              >
+                <Navbar
+                  variant="filled"
+                  logo="Brand"
+                  items={[
+                    { id: 'home', label: '홈', href: '#' },
+                    { id: 'about', label: '소개', href: '#' },
+                  ]}
+                />
+              </Card>
+              
+              {/* Default with Subtle Pattern */}
+              <Card 
+                padding="none"
+                style={{
+                  background: `
+                    linear-gradient(135deg, #a8edea 0%, #fed6e3 100%),
+                    url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Ccircle cx='6' cy='6' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+                  `,
+                  backgroundSize: 'cover, 12px 12px',
+                  borderRadius: 'var(--border-radius-lg)',
+                  overflow: 'hidden'
+                }}
+              >
+                <Navbar
+                  logo="Mobile"
+                  items={[
+                    { id: 'menu1', label: '메뉴 1', href: '#' },
+                    { id: 'menu2', label: '메뉴 2', href: '#' },
+                    { id: 'menu3', label: '메뉴 3', href: '#' },
+                  ]}
+                />
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer Component */}
+        <section className="component-section">
+          <h2 className="title-1 mb-6">Footer 컴포넌트</h2>
+          
+          <Card padding="none" className="demo-footer-container">
+            <Footer
+              logo={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '32px', height: '32px', backgroundColor: 'var(--color-brand-primary)', borderRadius: '6px' }} />
+                  <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Linear</span>
+                </div>
+              }
+              description="Linear.app에서 영감을 받은 현대적인 디자인 시스템으로 일관되고 아름다운 사용자 인터페이스를 구축하세요."
+              sections={[
+                {
+                  id: 'product',
+                  title: '제품',
+                  links: [
+                    { id: 'features', label: '기능', href: '#features' },
+                    { id: 'pricing', label: '요금제', href: '#pricing' },
+                    { id: 'changelog', label: '변경사항', href: '#changelog', external: true },
+                    { id: 'roadmap', label: '로드맵', href: '#roadmap' },
+                  ],
+                },
+                {
+                  id: 'developers',
+                  title: '개발자',
+                  links: [
+                    { id: 'docs', label: '문서', href: '#docs' },
+                    { id: 'api', label: 'API', href: '#api' },
+                    { id: 'sdk', label: 'SDK', href: '#sdk' },
+                    { id: 'github', label: 'GitHub', href: '#github', external: true },
+                  ],
+                },
+                {
+                  id: 'company',
+                  title: '회사',
+                  links: [
+                    { id: 'about', label: '회사 소개', href: '#about' },
+                    { id: 'careers', label: '채용', href: '#careers' },
+                    { id: 'blog', label: '블로그', href: '#blog' },
+                    { id: 'contact', label: '연락처', href: '#contact' },
+                  ],
+                },
+              ]}
+              socialLinks={[
+                {
+                  id: 'twitter',
+                  platform: 'Twitter',
+                  href: 'https://twitter.com',
+                  label: 'Twitter에서 팔로우하기',
+                  icon: <TwitterIcon />,
+                },
+                {
+                  id: 'github',
+                  platform: 'GitHub',
+                  href: 'https://github.com',
+                  label: 'GitHub에서 보기',
+                  icon: <GitHubIcon />,
+                },
+                {
+                  id: 'discord',
+                  platform: 'Discord',
+                  href: 'https://discord.com',
+                  label: 'Discord 참여하기',
+                  icon: <DiscordIcon />,
+                },
+              ]}
+              newsletter={{
+                title: '뉴스레터 구독',
+                description: '최신 업데이트와 디자인 인사이트를 받아보세요.',
+                placeholder: '이메일 주소를 입력하세요',
+                buttonText: '구독하기',
+                onSubmit: (email) => {
+                  alert(`뉴스레터 구독: ${email}`);
+                  return Promise.resolve();
+                },
+              }}
+              copyright="© 2024 Linear Design System. All rights reserved."
+              bottomLinks={[
+                { id: 'privacy', label: '개인정보처리방침', href: '#privacy' },
+                { id: 'terms', label: '서비스 약관', href: '#terms' },
+                { id: 'cookies', label: '쿠키 설정', onClick: () => alert('쿠키 설정') },
+              ]}
+            />
+          </Card>
+
+          <div className="mt-6">
+            <h3 className="title-2 mb-3">간단한 푸터</h3>
+            <Card padding="none">
+              <Footer
+                variant="minimal"
+                copyright="© 2024 Simple Company"
+                bottomLinks={[
+                  { id: 'privacy', label: '개인정보처리방침', href: '#' },
+                  { id: 'terms', label: '약관', href: '#' },
+                ]}
+              />
             </Card>
           </div>
         </section>

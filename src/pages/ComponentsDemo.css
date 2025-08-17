@@ -503,3 +503,28 @@
     font-size: 1.5rem;
   }
 }
+
+/* Hero demo styles */
+.demo-hero-container {
+  min-height: 300px;
+  overflow: hidden;
+}
+
+/* Navbar demo styles */
+.demo-navbar-container {
+  margin-bottom: var(--spacing-4);
+}
+
+.navbar-demo {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+/* Footer demo styles */
+.demo-footer-container {
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  background-color: var(--color-background-secondary);
+}
