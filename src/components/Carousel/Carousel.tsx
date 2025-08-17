@@ -45,7 +45,7 @@ export const Carousel: React.FC<CarouselProps> = ({
   // Auto-play functionality
   useEffect(() => {
     if (autoPlay && isPlaying && totalSlides > 1) {
-      intervalRef.current = setInterval(nextSlide, autoPlayInterval);
+      intervalRef.current = window.setInterval(nextSlide, autoPlayInterval);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
