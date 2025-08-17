@@ -10,6 +10,8 @@ Linear.app에서 영감을 받은 완전한 디자인 시스템과 재사용 가
 - **반응형 디자인**: 모든 디바이스에서 완벽한 경험
 - **CSS Custom Properties**: 테마 시스템과 다크 모드 지원
 - **모듈형 아키텍처**: 필요한 컴포넌트만 가져와서 사용
+- **🌐 완전한 API 통합**: 타입 안전한 HTTP 클라이언트, React 훅, 에러 핸들링
+- **🚀 프로덕션 준비**: 개발부터 배포까지 완전한 워크플로우
 
 ## 🚀 시작하기
 
@@ -157,6 +159,72 @@ const items: CarouselItem[] = [
 - `pauseOnHover`: boolean - 호버 시 일시정지
 - `onSlideChange`: (index: number) => void - 슬라이드 변경 콜백
 
+## 🌐 API 통합
+
+### HTTP 클라이언트
+
+```tsx
+import { httpClient } from './services/httpClient';
+
+// GET 요청
+const response = await httpClient.get('/api/users');
+
+// POST 요청
+const user = await httpClient.post('/api/users', {
+  name: '홍길동',
+  email: 'hong@example.com'
+});
+```
+
+### React 훅 사용
+
+```tsx
+import { useApi, useMutation } from './hooks/useApi';
+import { apiService } from './services/apiService';
+
+// 데이터 가져오기
+const { data, loading, error } = useApi(
+  () => apiService.users.getUsers(),
+  { immediate: true }
+);
+
+// 데이터 변경 (생성, 수정, 삭제)
+const { execute: createUser, loading: creating } = useMutation(
+  (userData) => apiService.users.createUser(userData)
+);
+```
+
+### 환경 설정
+
+**개발 환경** (`localhost:8080/api`로 프록시):
+```bash
+VITE_API_BASE_URL=/api
+VITE_ENABLE_API_LOGGING=true
+```
+
+**프로덕션 환경** (웹서버에서 프록시 설정):
+```bash
+VITE_API_BASE_URL=/api
+VITE_ENABLE_API_LOGGING=false
+```
+
+## 🚀 배포
+
+### 자동 배포 스크립트
+
+```bash
+# Nginx로 배포
+./scripts/deploy.sh nginx -d yourdomain.com -a your-api-server:8080
+
+# Apache로 배포
+./scripts/deploy.sh apache -d yourdomain.com
+
+# Docker 이미지 빌드
+./scripts/deploy.sh docker
+```
+
+자세한 배포 설정은 [docs/API_DEPLOYMENT.md](docs/API_DEPLOYMENT.md)를 참조하세요.
+
 ## 🎨 디자인 토큰
 
 ### 컬러 시스템
@@ -258,12 +326,26 @@ src/
 │   │   ├── Button.types.ts
 │   │   ├── Button.css
 │   │   └── index.ts
+│   ├── ApiDemo/         # API 통합 데모
+│   │   ├── ApiDemo.tsx
+│   │   └── ApiDemo.css
 │   └── ...
+├── hooks/               # 커스텀 React 훅
+│   └── useApi.ts        # API 통합 훅
+├── services/            # API 서비스
+│   ├── httpClient.ts    # HTTP 클라이언트
+│   └── apiService.ts    # 타입 안전 API 서비스
+├── config/              # 설정
+│   └── api.ts          # API 설정 및 엔드포인트
 ├── styles/              # 글로벌 스타일과 테마
 │   ├── theme.ts         # 디자인 토큰
 │   └── globals.css      # CSS Custom Properties
-└── pages/              # 데모 페이지
-    └── ComponentsDemo.tsx
+├── pages/              # 데모 페이지
+│   └── ComponentsDemo.tsx
+├── docs/               # 문서
+│   └── API_DEPLOYMENT.md # 배포 가이드
+└── scripts/            # 배포 스크립트
+    └── deploy.sh       # 자동 배포 스크립트
 ```
 
 ## 🤝 컨트리뷰션
