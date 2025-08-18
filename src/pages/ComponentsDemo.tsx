@@ -147,8 +147,8 @@ export const ComponentsDemo: React.FC = () => {
         </header>
 
         {/* Theme Overview */}
-        <section className="demo-section">
-          <h2 className="title-3">디자인 토큰</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">디자인 토큰</h2>
           <div className="theme-grid">
             <Card padding="medium" shadow="low">
               <h3 className="title-1">브랜드 컬러</h3>
@@ -193,8 +193,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Typography */}
-        <section className="demo-section">
-          <h2 className="title-3">타이포그래피</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">타이포그래피</h2>
           <Card padding="large" shadow="low">
             <div className="typography-showcase">
               <h1 className="title-6">Title 6 - 대형 제목</h1>
@@ -210,8 +210,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Buttons */}
-        <section className="demo-section">
-          <h2 className="title-3">버튼</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">버튼</h2>
           <div className="component-grid">
             <Card padding="medium" shadow="low">
               <h3 className="title-1 mb-4">기본 버튼</h3>
@@ -254,8 +254,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Inputs */}
-        <section className="demo-section">
-          <h2 className="title-3">입력 필드</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">입력 필드</h2>
           <div className="component-grid">
             <Card padding="medium" shadow="low">
               <h3 className="title-1 mb-4">기본 입력</h3>
@@ -316,8 +316,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Cards */}
-        <section className="demo-section">
-          <h2 className="title-3">카드</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">카드</h2>
           <div className="component-grid">
             <Card variant="default" padding="medium" shadow="low">
               <h3 className="title-1 mb-2">기본 카드</h3>
@@ -348,8 +348,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Badges */}
-        <section className="demo-section">
-          <h2 className="title-3">배지</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">배지</h2>
           <div className="component-grid">
             <Card padding="medium" shadow="low">
               <h3 className="title-1 mb-4">기본 배지</h3>
@@ -398,8 +398,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Carousel */}
-        <section className="demo-section">
-          <h2 className="title-3">캐러셀</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">캐러셀</h2>
           <div className="component-grid">
             <Card padding="medium" shadow="low">
               <h3 className="title-1 mb-4">기본 캐러셀</h3>
@@ -458,8 +458,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Cards with Images */}
-        <section className="demo-section">
-          <h2 className="title-3">이미지 카드</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">이미지 카드</h2>
           <div className="component-grid">
             <Card padding="none" shadow="medium" className="image-card">
               <div className="card-image">
@@ -557,8 +557,8 @@ export const ComponentsDemo: React.FC = () => {
         </section>
 
         {/* Component Usage Examples */}
-        <section className="demo-section">
-          <h2 className="title-3">실제 사용 예시</h2>
+        <section className="component-section">
+          <h2 className="title-1 mb-6">실제 사용 예시</h2>
           <div className="usage-examples">
             <Card padding="large" shadow="medium">
               <div className="example-header">

@@ -4,18 +4,30 @@
 
 .footer {
   width: 100%;
-  background-color: var(--color-background-secondary);
-  border-top: 1px solid var(--color-border);
+  background: linear-gradient(135deg, 
+    rgba(248, 250, 252, 1) 0%, 
+    rgba(241, 245, 249, 1) 100%
+  );
+  border-top: 1px solid rgba(203, 213, 225, 0.8);
   margin-top: auto;
+  position: relative;
 }
 
 .footer--dark {
-  background-color: var(--color-background-tertiary);
+  background: linear-gradient(135deg, 
+    rgba(15, 23, 42, 1) 0%, 
+    rgba(30, 41, 59, 1) 100%
+  );
+  border-top: 1px solid rgba(71, 85, 105, 0.8);
   color: var(--color-text-secondary);
 }
 
 .footer--light {
-  background-color: var(--color-background-primary);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(248, 250, 252, 1) 100%
+  );
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 /* Container */
@@ -23,6 +35,21 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--spacing-4);
+  position: relative;
+}
+
+/* Subtle background pattern overlay */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3Ccircle cx='15' cy='15' r='1'/%3E%3Ccircle cx='45' cy='15' r='1'/%3E%3Ccircle cx='15' cy='45' r='1'/%3E%3Ccircle cx='45' cy='45' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  pointer-events: none;
 }
 
 /* Main Content */
@@ -311,9 +338,33 @@
 
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
+  .footer {
+    background: linear-gradient(135deg, 
+      rgba(15, 23, 42, 1) 0%, 
+      rgba(30, 41, 59, 1) 100%
+    );
+    border-top: 1px solid rgba(71, 85, 105, 0.8);
+  }
+
+  .footer::before {
+    background-image: 
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3Ccircle cx='15' cy='15' r='1'/%3E%3Ccircle cx='45' cy='15' r='1'/%3E%3Ccircle cx='15' cy='45' r='1'/%3E%3Ccircle cx='45' cy='45' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
   .footer--dark {
-    background-color: var(--color-background-primary);
-    border-top-color: var(--color-border);
+    background: linear-gradient(135deg, 
+      rgba(2, 6, 23, 1) 0%, 
+      rgba(15, 23, 42, 1) 100%
+    );
+    border-top: 1px solid rgba(51, 65, 85, 0.8);
+  }
+
+  .footer--light {
+    background: linear-gradient(135deg, 
+      rgba(30, 41, 59, 1) 0%, 
+      rgba(51, 65, 85, 1) 100%
+    );
+    border-top: 1px solid rgba(71, 85, 105, 0.8);
   }
 
   .footer__social-link {

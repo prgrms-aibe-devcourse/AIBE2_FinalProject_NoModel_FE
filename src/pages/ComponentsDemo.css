@@ -521,10 +521,90 @@
   overflow: hidden;
 }
 
+.navbar-demo--with-bg {
+  position: relative;
+}
+
 /* Footer demo styles */
 .demo-footer-container {
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-lg);
   overflow: hidden;
   background-color: var(--color-background-secondary);
+}
+
+/* Grid utility classes */
+.grid {
+  display: grid;
+  gap: var(--spacing-4);
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.gap-4 {
+  gap: var(--spacing-4);
+}
+
+.gap-6 {
+  gap: var(--spacing-6);
+}
+
+/* Margin and padding utilities */
+.mt-4 {
+  margin-top: var(--spacing-4);
+}
+
+.mt-6 {
+  margin-top: var(--spacing-6);
+}
+
+.mb-3 {
+  margin-bottom: var(--spacing-3);
+}
+
+.mb-4 {
+  margin-bottom: var(--spacing-4);
+}
+
+.mb-6 {
+  margin-bottom: var(--spacing-6);
+}
+
+/* Component section styles */
+.component-section {
+  margin-bottom: var(--spacing-12);
+}
+
+.component-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1024px) {
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-2,
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  
+  .component-section {
+    margin-bottom: var(--spacing-8);
+  }
+}
+
+@media (max-width: 480px) {
+  .demo-hero-container {
+    min-height: 240px;
+  }
 }
