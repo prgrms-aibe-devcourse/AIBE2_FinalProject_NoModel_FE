@@ -6,7 +6,9 @@ import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { Badge } from './ui/badge';
-import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, User, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, User, CheckCircle, Chrome, Github, Zap, Shield, Clock, AlertCircle } from 'lucide-react';
+import { authService } from '../services/auth';
+import type { SignupRequest } from '../types/auth';
 
 interface SignupPageProps {
   onSignupSuccess: () => void;
@@ -29,6 +31,8 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
     marketing: false
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [success, setSuccess] = useState<string>('');
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -40,22 +44,52 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
+    
+    // Validation
     if (!agreements.terms || !agreements.privacy) {
-      alert('필수 약관에 동의해주세요.');
+      setError('필수 약관에 동의해주세요.');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
+      setError('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    if (formData.password.length < 8) {
+      setError('비밀번호는 8자 이상이어야 합니다.');
       return;
     }
     
     setIsLoading(true);
     
-    // Simulate signup API call
-    setTimeout(() => {
+    try {
+      const signupData: SignupRequest = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        agreeToTerms: agreements.terms,
+        agreeToPrivacy: agreements.privacy,
+        agreeToMarketing: agreements.marketing,
+      };
+
+      const result = await authService.signup(signupData);
+      
+      if (result.success) {
+        setSuccess('계정이 성공적으로 생성되었습니다! 로그인하시기 바랍니다.');
+        // Auto redirect to login after 2 seconds
+        setTimeout(() => {
+          onLogin();
+        }, 2000);
+      } else {
+        setError(result.error || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError('네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+    } finally {
       setIsLoading(false);
-      onSignupSuccess();
-    }, 1500);
+    }
   };
 
   const handleSocialSignup = (provider: string) => {
@@ -70,215 +104,135 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                       formData.confirmPassword && agreements.terms && agreements.privacy;
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{ 
-        backgroundColor: 'var(--color-background-primary)',
-        fontFamily: 'var(--font-family-regular)'
-      }}
-    >
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="linear-header">
-        <div className="linear-container h-full flex items-center justify-between">
+      <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background/95">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Button 
             variant="ghost" 
             onClick={onBack}
-            className="flex items-center gap-2"
-            style={{
-              color: 'var(--color-text-secondary)',
-              borderRadius: 'var(--radius-8)'
-            }}
+            className="flex items-center gap-2 hover:bg-muted/50"
           >
             <ArrowLeft className="w-4 h-4" />
             뒤로 가기
           </Button>
           
           <div className="flex items-center gap-3">
-            <div 
-              className="w-8 h-8 flex items-center justify-center"
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
+            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 
-              style={{ 
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
+            <h1 className="text-xl font-semibold text-foreground">
               NoModel
             </h1>
           </div>
 
-          <div className="w-24"></div> {/* Spacer for centering */}
+          <div className="w-24"></div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="w-full max-w-md mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>
+      <main className="py-8 flex items-center justify-center min-h-[calc(100vh-64px)]">
+        <div className="w-full max-w-md mx-auto px-6">
           <div className="text-center mb-8">
-            <Badge 
-              className="mb-4"
-              style={{
-                backgroundColor: 'var(--color-brand-accent-tint)',
-                color: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-rounded)',
-                fontSize: 'var(--font-size-small)',
-                fontWeight: 'var(--font-weight-medium)',
-                padding: '8px 16px'
-              }}
-            >
-              🎉 첫 번째 이미지 생성 무료!
+            <Badge className="mb-4 bg-primary/10 text-primary border border-primary/20 rounded-full px-4 py-2">
+              <Zap className="w-4 h-4 mr-2" />
+              첫 3장 이미지 생성 무료!
             </Badge>
             
-            <h1 
-              className="mb-2"
-              style={{
-                fontSize: '2rem',
-                fontWeight: 'var(--font-weight-semibold)',
-                lineHeight: '1.125',
-                letterSpacing: '-0.022em',
-                color: 'var(--color-text-primary)'
-              }}
-            >
+            <h1 className="text-3xl font-bold mb-2 text-foreground">
               무료로 시작하기
             </h1>
-            <p 
-              style={{ 
-                color: 'var(--color-text-secondary)',
-                fontSize: 'var(--font-size-regular)'
-              }}
-            >
+            <p className="text-muted-foreground">
               몇 초 만에 계정을 만들고 AI 이미지 생성을 시작하세요
             </p>
           </div>
 
-          <Card 
-            className="p-8"
-            style={{
-              backgroundColor: 'var(--color-background-primary)',
-              borderColor: 'var(--color-border-primary)',
-              borderRadius: 'var(--radius-16)',
-              boxShadow: 'var(--shadow-medium)'
-            }}
-          >
+          <Card className="p-8 shadow-lg border-0 bg-card/50 backdrop-blur-sm">
             {/* Benefits Banner */}
-            <div 
-              className="p-4 mb-6 rounded-lg"
-              style={{ backgroundColor: 'var(--color-background-secondary)' }}
-            >
-              <h3 
-                className="mb-2 text-sm"
-                style={{ 
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
+            <div className="p-6 mb-6 rounded-xl bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/10">
+              <h3 className="text-lg font-semibold mb-4 text-foreground flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-primary" />
                 무료 계정 혜택
               </h3>
-              <ul className="space-y-1">
+              <div className="grid grid-cols-1 gap-3">
                 {[
-                  '첫 번째 이미지 생성 무료',
-                  '다양한 AI 모델과 배경 선택',
-                  '고해상도 이미지 다운로드',
-                  '24/7 고객 지원'
-                ].map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-2 text-sm">
-                    <CheckCircle 
-                      className="w-4 h-4" 
-                      style={{ color: 'var(--color-semantic-green)' }}
-                    />
-                    <span style={{ color: 'var(--color-text-secondary)' }}>
-                      {benefit}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                  { icon: Zap, title: '첫 3장 무료 생성', desc: '신용카드 불필요' },
+                  { icon: Shield, title: '500+ AI 모델', desc: '다양한 스타일 선택' },
+                  { icon: Clock, title: '5분 내 완성', desc: '초고속 AI 처리' }
+                ].map((benefit, index) => {
+                  const IconComponent = benefit.icon;
+                  return (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <IconComponent className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-foreground">
+                          {benefit.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {benefit.desc}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Social Signup */}
             <div className="space-y-3 mb-6">
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialSignup('google')}
-                style={{
-                  borderRadius: 'var(--radius-8)',
-                  borderColor: 'var(--color-border-primary)',
-                  fontSize: 'var(--font-size-regular)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  height: '48px'
-                }}
               >
-                <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
+                <Chrome className="w-5 h-5 mr-3" />
                 Google로 계속하기
               </Button>
               
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialSignup('github')}
-                style={{
-                  borderRadius: 'var(--radius-8)',
-                  borderColor: 'var(--color-border-primary)',
-                  fontSize: 'var(--font-size-regular)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  height: '48px'
-                }}
               >
-                <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clipRule="evenodd" />
-                </svg>
+                <Github className="w-5 h-5 mr-3" />
                 GitHub로 계속하기
               </Button>
             </div>
 
             <div className="relative mb-6">
-              <Separator 
-                style={{ backgroundColor: 'var(--color-border-primary)' }}
-              />
-              <div 
-                className="absolute inset-0 flex items-center justify-center"
-              >
-                <span 
-                  className="px-4 text-sm"
-                  style={{ 
-                    backgroundColor: 'var(--color-background-primary)',
-                    color: 'var(--color-text-tertiary)'
-                  }}
-                >
+              <Separator />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="px-4 text-sm text-muted-foreground bg-card">
                   또는 이메일로 가입
                 </span>
               </div>
             </div>
 
+            {/* Status Messages */}
+            {error && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+            
+            {success && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <p className="text-sm text-green-700">{success}</p>
+              </div>
+            )}
+
             {/* Email Signup Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label 
-                  htmlFor="name"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontSize: 'var(--font-size-small)'
-                  }}
-                >
+                <Label htmlFor="name" className="text-sm font-medium text-foreground">
                   이름
                 </Label>
                 <div className="relative">
-                  <User 
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="name"
                     type="text"
@@ -286,34 +240,17 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     required
-                    className="pl-10"
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)',
-                      backgroundColor: 'var(--color-input-background)',
-                      fontSize: 'var(--font-size-regular)',
-                      height: '48px'
-                    }}
+                    className="pl-10 h-12 text-base bg-background border-2 focus:border-primary/50 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label 
-                  htmlFor="email"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontSize: 'var(--font-size-small)'
-                  }}
-                >
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
                   이메일
                 </Label>
                 <div className="relative">
-                  <Mail 
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
@@ -321,34 +258,17 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     required
-                    className="pl-10"
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)',
-                      backgroundColor: 'var(--color-input-background)',
-                      fontSize: 'var(--font-size-regular)',
-                      height: '48px'
-                    }}
+                    className="pl-10 h-12 text-base bg-background border-2 focus:border-primary/50 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label 
-                  htmlFor="password"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontSize: 'var(--font-size-small)'
-                  }}
-                >
+                <Label htmlFor="password" className="text-sm font-medium text-foreground">
                   비밀번호
                 </Label>
                 <div className="relative">
-                  <Lock 
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
@@ -357,43 +277,28 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                     onChange={(e) => handleInputChange('password', e.target.value)}
                     required
                     minLength={8}
-                    className="pl-10 pr-10"
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)',
-                      backgroundColor: 'var(--color-input-background)',
-                      fontSize: 'var(--font-size-regular)',
-                      height: '48px'
-                    }}
+                    className="pl-10 pr-10 h-12 text-base bg-background border-2 focus:border-primary/50 transition-colors"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 p-2"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 p-2 hover:bg-transparent"
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{ color: 'var(--color-text-tertiary)' }}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? 
+                      <EyeOff className="w-4 h-4 text-muted-foreground" /> : 
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    }
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label 
-                  htmlFor="confirmPassword"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    fontSize: 'var(--font-size-small)'
-                  }}
-                >
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                   비밀번호 확인
                 </Label>
                 <div className="relative">
-                  <Lock 
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
@@ -401,30 +306,40 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                     required
-                    className="pl-10 pr-10"
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)',
-                      backgroundColor: 'var(--color-input-background)',
-                      fontSize: 'var(--font-size-regular)',
-                      height: '48px'
-                    }}
+                    className="pl-10 pr-10 h-12 text-base bg-background border-2 focus:border-primary/50 transition-colors"
                   />
                   <Button
                     type="button"
                     variant="ghost"
-                    className="absolute right-1 top-1/2 transform -translate-y-1/2 p-2"
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 p-2 hover:bg-transparent"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    style={{ color: 'var(--color-text-tertiary)' }}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showConfirmPassword ? 
+                      <EyeOff className="w-4 h-4 text-muted-foreground" /> : 
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                    }
                   </Button>
                 </div>
               </div>
 
+              {/* Password Requirements */}
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-2">비밀번호 요구사항:</p>
+                <div className="grid grid-cols-2 gap-1 text-xs">
+                  <div className={`flex items-center gap-1 ${formData.password.length >= 8 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="w-3 h-3" />
+                    8자 이상
+                  </div>
+                  <div className={`flex items-center gap-1 ${formData.password === formData.confirmPassword && formData.confirmPassword ? 'text-green-600' : 'text-muted-foreground'}`}>
+                    <CheckCircle className="w-3 h-3" />
+                    비밀번호 일치
+                  </div>
+                </div>
+              </div>
+
               {/* Agreements */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-start space-x-2">
+              <div className="space-y-4 pt-2">
+                <div className="flex items-start space-x-3">
                   <Checkbox 
                     id="terms"
                     checked={agreements.terms}
@@ -433,24 +348,19 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                   />
                   <Label 
                     htmlFor="terms" 
-                    className="text-sm cursor-pointer leading-relaxed"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    className="text-sm cursor-pointer leading-relaxed text-muted-foreground"
                   >
-                    <span style={{ color: 'var(--color-semantic-red)' }}>*</span> 
+                    <span className="text-red-500">* </span> 
                     <Button 
                       variant="link" 
-                      className="text-sm p-0 h-auto"
-                      style={{ 
-                        color: 'var(--color-link-primary)',
-                        textDecoration: 'underline' 
-                      }}
+                      className="text-sm p-0 h-auto text-primary hover:text-primary/80 hover:underline"
                     >
                       이용약관
                     </Button>에 동의합니다
                   </Label>
                 </div>
 
-                <div className="flex items-start space-x-2">
+                <div className="flex items-start space-x-3">
                   <Checkbox 
                     id="privacy"
                     checked={agreements.privacy}
@@ -459,24 +369,19 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                   />
                   <Label 
                     htmlFor="privacy" 
-                    className="text-sm cursor-pointer leading-relaxed"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    className="text-sm cursor-pointer leading-relaxed text-muted-foreground"
                   >
-                    <span style={{ color: 'var(--color-semantic-red)' }}>*</span> 
+                    <span className="text-red-500">* </span> 
                     <Button 
                       variant="link" 
-                      className="text-sm p-0 h-auto"
-                      style={{ 
-                        color: 'var(--color-link-primary)',
-                        textDecoration: 'underline' 
-                      }}
+                      className="text-sm p-0 h-auto text-primary hover:text-primary/80 hover:underline"
                     >
                       개인정보처리방침
                     </Button>에 동의합니다
                   </Label>
                 </div>
 
-                <div className="flex items-start space-x-2">
+                <div className="flex items-start space-x-3">
                   <Checkbox 
                     id="marketing"
                     checked={agreements.marketing}
@@ -485,8 +390,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                   />
                   <Label 
                     htmlFor="marketing" 
-                    className="text-sm cursor-pointer leading-relaxed"
-                    style={{ color: 'var(--color-text-secondary)' }}
+                    className="text-sm cursor-pointer leading-relaxed text-muted-foreground"
                   >
                     마케팅 정보 수신에 동의합니다 (선택)
                   </Label>
@@ -495,19 +399,8 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
 
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full h-12 text-base font-medium rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
                 disabled={!isFormValid || isLoading}
-                style={{
-                  backgroundColor: 'var(--color-brand-primary)',
-                  color: 'var(--color-utility-white)',
-                  borderRadius: 'var(--radius-8)',
-                  fontSize: 'var(--font-size-regular)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  height: '48px',
-                  border: 'none',
-                  transition: 'all var(--animation-quick-transition) ease',
-                  opacity: (!isFormValid || isLoading) ? 0.6 : 1
-                }}
               >
                 {isLoading ? (
                   <>
@@ -522,25 +415,32 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
           </Card>
 
           {/* Login link */}
-          <div className="text-center mt-6">
-            <p 
-              className="text-sm"
-              style={{ color: 'var(--color-text-tertiary)' }}
-            >
+          <div className="text-center mt-8">
+            <p className="text-sm text-muted-foreground">
               이미 계정이 있으신가요?{' '}
               <Button 
                 variant="link" 
-                className="text-sm p-0"
+                className="text-sm p-0 h-auto font-semibold text-primary hover:text-primary/80 hover:underline"
                 onClick={onLogin}
-                style={{ 
-                  color: 'var(--color-link-primary)',
-                  textDecoration: 'none',
-                  fontWeight: 'var(--font-weight-medium)'
-                }}
               >
                 로그인하기
               </Button>
             </p>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="mt-12 text-center">
+            <p className="text-xs text-muted-foreground mb-4">
+              가입하면 다음에 동의하는 것으로 간주됩니다
+            </p>
+            <div className="flex justify-center space-x-6 text-xs text-muted-foreground">
+              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
+                이용약관
+              </Button>
+              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
+                개인정보처리방침
+              </Button>
+            </div>
           </div>
         </div>
       </main>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Sparkles, Zap, Target, TrendingUp, Camera, Users } from 'lucide-react';
+import { Sparkles, Zap, Target, TrendingUp, Camera, Users, ArrowRight, Play, CheckCircle, Star } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -11,74 +11,33 @@ interface LandingPageProps {
 
 export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
   return (
-    <div className="min-h-screen" style={{ fontFamily: 'var(--font-family-regular)' }}>
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
-        <div className="linear-container h-full flex items-center justify-between">
+      <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background/95">
+        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div 
-              className="w-8 h-8 flex items-center justify-center"
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
+            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+              <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 
-              className="text-xl"
-              style={{ 
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
+            <h1 className="text-xl font-semibold text-foreground">
               NoModel
             </h1>
           </div>
           <nav className="hidden md:flex items-center gap-8">
-            <a 
-              href="#features" 
-              className="transition-colors"
-              style={{ 
-                color: 'var(--color-text-tertiary)',
-                fontSize: 'var(--font-size-regular)',
-                fontWeight: 'var(--font-weight-normal)'
-              }}
-            >
-              기능
-            </a>
-            <a 
-              href="#pricing" 
-              className="transition-colors"
-              style={{ 
-                color: 'var(--color-text-tertiary)',
-                fontSize: 'var(--font-size-regular)',
-                fontWeight: 'var(--font-weight-normal)'
-              }}
-            >
-              가격
-            </a>
-            <a 
-              href="#about" 
-              className="transition-colors"
-              style={{ 
-                color: 'var(--color-text-tertiary)',
-                fontSize: 'var(--font-size-regular)',
-                fontWeight: 'var(--font-weight-normal)'
-              }}
-            >
-              소개
-            </a>
+            {['기능', '가격책정', '고객사례', '소개'].map((item, index) => (
+              <a 
+                key={index}
+                href={`#${item.toLowerCase()}`} 
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                {item}
+              </a>
+            ))}
             <Button 
               variant="outline" 
               size="sm"
               onClick={onLogin}
-              style={{
-                borderRadius: 'var(--radius-rounded)',
-                borderColor: 'var(--color-border-primary)',
-                fontSize: 'var(--font-size-regular)',
-                fontWeight: 'var(--font-weight-medium)'
-              }}
+              className="rounded-full"
             >
               로그인
             </Button>
@@ -87,262 +46,163 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </header>
 
       {/* Hero Section */}
-      <section 
-        className="py-20"
-        style={{ 
-          paddingInline: 'var(--spacing-page-padding-inline)',
-          paddingBlock: 'var(--spacing-page-padding-block)'
-        }}
-      >
-        <div className="linear-container text-center">
-          <Badge 
-            variant="secondary" 
-            className="mb-6 inline-flex items-center gap-2"
-            style={{
-              backgroundColor: 'var(--color-brand-accent-tint)',
-              color: 'var(--color-brand-primary)',
-              borderRadius: 'var(--radius-rounded)',
-              fontSize: 'var(--font-size-small)',
-              fontWeight: 'var(--font-weight-medium)',
-              padding: '8px 16px'
-            }}
-          >
-            <Zap className="w-4 h-4" />
-            AI 기반 이미지 생성
-          </Badge>
-          
-          <h1 
-            className="mb-6 tracking-tight"
-            style={{
-              fontSize: '4rem',
-              fontWeight: 'var(--font-weight-semibold)',
-              lineHeight: '1.06',
-              letterSpacing: '-0.022em',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            모델 없이도 <br />
-            <span style={{ color: 'var(--color-brand-primary)' }}>완벽한 제품 광고</span>
-          </h1>
-          
-          <p 
-            className="mb-12 max-w-2xl mx-auto"
-            style={{
-              fontSize: 'var(--font-size-large)',
-              fontWeight: 'var(--font-weight-normal)',
-              lineHeight: '1.6',
-              color: 'var(--color-text-secondary)'
-            }}
-          >
-            모델 고용 비용과 촬영 복잡성을 제거하여, 
-            누구나 쉽고 빠르게 전문적인 제품 광고 이미지를 생성하세요
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-            <Button 
-              size="lg" 
-              onClick={onGetStarted} 
-              className="linear-button linear-button-primary min-w-48"
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                color: 'var(--color-utility-white)',
-                borderRadius: 'var(--radius-rounded)',
-                fontSize: '16px',
-                fontWeight: 'var(--font-weight-medium)',
-                height: '48px',
-                padding: '0 24px',
-                border: 'none',
-                boxShadow: 'var(--shadow-low)',
-                transition: 'all var(--animation-quick-transition) ease'
-              }}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
+        
+        <div className="container mx-auto px-6 py-24 relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <Badge 
+              variant="secondary" 
+              className="mb-8 inline-flex items-center gap-2 rounded-full px-4 py-2 bg-primary/10 text-primary border border-primary/20"
             >
-              무료로 시작하기
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              style={{
-                borderRadius: 'var(--radius-rounded)',
-                borderColor: 'var(--color-border-primary)',
-                backgroundColor: 'transparent',
-                color: 'var(--color-text-primary)',
-                fontSize: '16px',
-                fontWeight: 'var(--font-weight-medium)',
-                height: '48px',
-                padding: '0 24px',
-                transition: 'all var(--animation-quick-transition) ease'
-              }}
-            >
-              <Camera className="w-4 h-4 mr-2" />
-              데모 보기
-            </Button>
-          </div>
+              <Zap className="w-4 h-4" />
+              AI 기반 제품 촬영 혁신
+            </Badge>
+            
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8">
+              모델 없이도{' '}
+              <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+                완벽한 제품 광고
+              </span>
+            </h1>
+            
+            <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
+              전통적인 모델 고용과 스튜디오 촬영의 복잡함을 AI로 해결하세요. 
+              몇 번의 클릭만으로 브랜드에 완벽하게 맞는 전문 제품 이미지를 생성합니다.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+              <Button 
+                size="lg" 
+                onClick={onGetStarted} 
+                className="min-w-48 h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                무료로 시작하기
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="min-w-48 h-14 text-lg rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                데모 영상 보기
+              </Button>
+            </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div 
-                className="text-3xl mb-1"
-                style={{
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-brand-primary)'
-                }}
-              >
-                90%
+            {/* Social Proof */}
+            <div className="mb-16">
+              <p className="text-sm text-muted-foreground mb-6">이미 1,000+ 브랜드가 신뢰하는 솔루션</p>
+              <div className="flex justify-center items-center gap-8 opacity-60">
+                {[1,2,3,4,5].map((i) => (
+                  <div key={i} className="w-24 h-8 bg-muted rounded" />
+                ))}
               </div>
-              <p 
-                className="text-sm"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                비용 절감
-              </p>
             </div>
-            <div className="text-center">
-              <div 
-                className="text-3xl mb-1"
-                style={{
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-brand-primary)'
-                }}
-              >
-                10분
-              </div>
-              <p 
-                className="text-sm"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                생성 시간
-              </p>
-            </div>
-            <div className="text-center">
-              <div 
-                className="text-3xl mb-1"
-                style={{
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-brand-primary)'
-                }}
-              >
-                1000+
-              </div>
-              <p 
-                className="text-sm"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              >
-                활용 기업
-              </p>
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              {[
+                { value: '90%', label: '비용 절감', desc: '기존 촬영 대비' },
+                { value: '5분', label: '생성 시간', desc: '이미지 당 평균' },
+                { value: '4.9★', label: '고객 만족도', desc: '1,200+ 리뷰 기준' }
+              ].map((stat, index) => (
+                <div key={index} className="text-center p-6 rounded-2xl bg-card border">
+                  <div className="text-4xl font-bold text-primary mb-2">
+                    {stat.value}
+                  </div>
+                  <div className="text-lg font-semibold mb-1">
+                    {stat.label}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {stat.desc}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section 
-        id="features" 
-        className="py-20"
-        style={{ 
-          backgroundColor: 'var(--color-background-secondary)',
-          paddingInline: 'var(--spacing-page-padding-inline)'
-        }}
-      >
-        <div className="linear-container">
+      <section className="py-24 bg-muted/30">
+        <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 
-              className="mb-4"
-              style={{
-                fontSize: '2rem',
-                fontWeight: 'var(--font-weight-semibold)',
-                lineHeight: '1.125',
-                letterSpacing: '-0.022em',
-                color: 'var(--color-text-primary)'
-              }}
-            >
+            <Badge variant="outline" className="mb-4">
               핵심 기능
+            </Badge>
+            <h2 className="text-4xl font-bold mb-4">
+              전문가 수준의 제품 이미지를 
+              <span className="text-primary"> AI로</span>
             </h2>
-            <p 
-              className="max-w-2xl mx-auto"
-              style={{
-                color: 'var(--color-text-secondary)',
-                fontSize: 'var(--font-size-regular)'
-              }}
-            >
-              전문적인 제품 이미지 생성을 위한 모든 도구가 하나로
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              복잡한 스튜디오 촬영 없이도 브랜드에 완벽하게 맞는 고품질 이미지를 생성하세요
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: Target,
-                title: "AI 배경 제거",
-                description: "제품 이미지에서 자동으로 배경을 분리하고 품질을 최적화합니다"
+                title: "AI 배경 처리",
+                description: "자동 배경 제거와 완벽한 품질 최적화로 전문가 수준의 결과물 제공",
+                highlight: "자동 배경 제거"
               },
               {
                 icon: Users,
-                title: "가상 모델 생성",
-                description: "다양한 연령, 성별, 인종의 AI 모델을 활용한 자연스러운 포즈"
+                title: "다양한 AI 모델",
+                description: "연령, 성별, 인종, 스타일을 자유롭게 선택할 수 있는 가상 모델 라이브러리",
+                highlight: "500+ 모델 선택"
               },
               {
                 icon: Sparkles,
-                title: "배경 & 스타일",
-                description: "스튜디오, 자연, 라이프스타일 배경과 다양한 스타일 옵션"
+                title: "전문 배경 & 조명",
+                description: "스튜디오, 라이프스타일, 자연경 등 20+ 배경과 전문가 레벨의 조명 설정",
+                highlight: "20+ 전문 배경"
               },
               {
                 icon: Zap,
-                title: "빠른 생성",
-                description: "기존 며칠의 작업을 몇 분 만에 완료하는 초고속 처리"
+                title: "초고속 생성",
+                description: "기존 수 시간에서 며칠의 작업을 단 5분 만에 완료하는 초고속 AI 엔진",
+                highlight: "95% 시간 단축"
               },
               {
                 icon: TrendingUp,
-                title: "확장성",
-                description: "다양한 제품군과 브랜드 스타일에 맞는 무제한 생성"
+                title: "무제한 확장성",
+                description: "모든 제품군과 브랜드 스타일에 대응하는 유연한 AI 시스템",
+                highlight: "모든 제품군 대응"
               },
               {
                 icon: Camera,
-                title: "고품질 출력",
-                description: "상업적 사용 가능한 고해상도 이미지로 바로 활용 가능"
+                title: "상업용 고품질",
+                description: "4K 이상 해상도와 인쇄 품질의 이미지를 상업적 라이선스로 제공",
+                highlight: "4K 상업용 품질"
               }
             ].map((feature, index) => {
               const IconComponent = feature.icon;
               return (
                 <Card 
                   key={index}
-                  className="p-6 hover:shadow-lg transition-shadow"
-                  style={{
-                    backgroundColor: 'var(--color-background-primary)',
-                    borderColor: 'var(--color-border-primary)',
-                    borderRadius: 'var(--radius-16)',
-                    boxShadow: 'var(--shadow-tiny)',
-                    transition: 'box-shadow var(--animation-regular-transition) ease'
-                  }}
+                  className="p-8 hover:shadow-xl transition-all duration-300 group border-0 bg-card/50 backdrop-blur-sm"
                 >
-                  <div 
-                    className="w-12 h-12 flex items-center justify-center mb-4"
-                    style={{
-                      borderRadius: 'var(--radius-12)',
-                      backgroundColor: 'var(--color-brand-accent-tint)'
-                    }}
-                  >
-                    <IconComponent 
-                      className="w-6 h-6" 
-                      style={{ color: 'var(--color-brand-primary)' }}
-                    />
+                  <div className="flex items-start gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
+                      <IconComponent className="w-7 h-7 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-xl font-semibold">
+                          {feature.title}
+                        </h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {feature.highlight}
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {feature.description}
+                      </p>
+                    </div>
                   </div>
-                  <h3 
-                    className="mb-2"
-                    style={{
-                      fontSize: 'var(--font-size-regular)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                  >
-                    {feature.title}
-                  </h3>
-                  <p 
-                    className="text-sm"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  >
-                    {feature.description}
-                  </p>
                 </Card>
               );
             })}
@@ -350,88 +210,186 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section 
-        className="py-20 text-center"
-        style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}
-      >
-        <div className="linear-container max-w-2xl">
-          <h2 
-            className="mb-4"
-            style={{
-              fontSize: '2rem',
-              fontWeight: 'var(--font-weight-semibold)',
-              lineHeight: '1.125',
-              letterSpacing: '-0.022em',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            지금 바로 시작하세요
-          </h2>
-          <p 
-            className="mb-8"
-            style={{
-              color: 'var(--color-text-secondary)',
-              fontSize: 'var(--font-size-regular)'
-            }}
-          >
-            첫 번째 이미지는 무료로 생성해보고, 
-            완벽한 제품 광고의 새로운 경험을 시작하세요
-          </p>
-          <Button 
-            size="lg" 
-            onClick={onGetStarted} 
-            className="min-w-48"
-            style={{
-              backgroundColor: 'var(--color-brand-primary)',
-              color: 'var(--color-utility-white)',
-              borderRadius: 'var(--radius-rounded)',
-              fontSize: '16px',
-              fontWeight: 'var(--font-weight-medium)',
-              height: '48px',
-              padding: '0 24px',
-              border: 'none',
-              boxShadow: 'var(--shadow-low)',
-              transition: 'all var(--animation-quick-transition) ease'
-            }}
-          >
-            무료 체험하기
-          </Button>
+      {/* How It Works */}
+      <section className="py-24">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">
+              작동 방식
+            </Badge>
+            <h2 className="text-4xl font-bold mb-4">
+              3단계로 완성하는 <span className="text-primary">전문 제품 이미지</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              {
+                step: "01",
+                title: "제품 이미지 업로드",
+                description: "제품 사진을 업로드하면 AI가 자동으로 배경을 제거하고 최적화합니다",
+                icon: Target
+              },
+              {
+                step: "02",
+                title: "모델 & 스타일 선택",
+                description: "브랜드에 맞는 모델과 배경, 조명 스타일을 선택하세요",
+                icon: Users
+              },
+              {
+                step: "03",
+                title: "완벽한 결과 다운로드",
+                description: "AI가 생성한 전문가 수준의 제품 광고 이미지를 다운로드하세요",
+                icon: CheckCircle
+              }
+            ].map((step, index) => {
+              const IconComponent = step.icon;
+              return (
+                <div key={index} className="text-center relative">
+                  {index < 2 && (
+                    <div className="hidden md:block absolute top-16 right-0 w-full h-0.5 bg-gradient-to-r from-primary to-transparent transform translate-x-1/2" />
+                  )}
+                  
+                  <div className="relative mb-6">
+                    <div className="w-32 h-32 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4 relative">
+                      <IconComponent className="w-12 h-12 text-primary" />
+                      <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold">
+                        {step.step}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <h3 className="text-xl font-semibold mb-3">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {step.description}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-24 bg-muted/30">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">
+              고객 후기
+            </Badge>
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="text-primary">1,000+</span> 브랜드가 선택한 이유
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "김민수",
+                role: "마케팅 디렉터, 패션브랜드 A",
+                rating: 5,
+                comment: "기존 모델 촬영비 90% 절약하면서도 더 높은 품질의 결과를 얻었습니다. 이제 매주 새로운 컨텐츠를 만들 수 있어요."
+              },
+              {
+                name: "이혜진",
+                role: "브랜드 매니저, 코스메틱 B",
+                comment: "다양한 모델과 배경으로 글로벌 마케팅이 가능해졌습니다. A/B 테스트도 쉽고 ROI가 300% 향상됐어요.",
+                rating: 5
+              },
+              {
+                name: "박정호",
+                role: "CEO, 스타트업 C",
+                comment: "스타트업에게는 정말 게임체인저입니다. 적은 예산으로도 대기업 수준의 마케팅 자료를 만들 수 있어요.",
+                rating: 5
+              }
+            ].map((testimonial, index) => (
+              <Card key={index} className="p-6 bg-card">
+                <div className="flex items-center gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-muted-foreground mb-6 leading-relaxed">
+                  "{testimonial.comment}"
+                </p>
+                <div>
+                  <div className="font-semibold">{testimonial.name}</div>
+                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-24 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
+        <div className="container mx-auto px-6 text-center">
+          <div className="max-w-3xl mx-auto">
+            <Badge variant="outline" className="mb-6">
+              한정 제공
+            </Badge>
+            
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              지금 시작하고 <span className="text-primary">무료로</span> 체험하세요
+            </h2>
+            
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              첫 3장의 이미지는 완전 무료! 비용 대비 효과를 직접 체험하고 판단하세요.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+              <Button 
+                size="lg" 
+                onClick={onGetStarted} 
+                className="min-w-64 h-16 text-xl rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300"
+              >
+                3장 무료로 시작하기
+                <ArrowRight className="w-6 h-6 ml-2" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={onLogin}
+                className="min-w-48 h-16 text-lg rounded-full border-2"
+              >
+                이미 계정이 있나요?
+              </Button>
+            </div>
+            
+            {/* Trust Indicators */}
+            <div className="flex flex-col md:flex-row justify-center items-center gap-8 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                신용카드 불필요
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                언제든 취소 가능
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                30일 무조건 환불
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer 
-        className="py-12 text-center"
-        style={{
-          borderTop: `1px solid var(--color-border-primary)`,
-          paddingInline: 'var(--spacing-page-padding-inline)'
-        }}
-      >
-        <div className="linear-container text-center">
+      <footer className="py-12 border-t bg-card">
+        <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div 
-              className="w-6 h-6 flex items-center justify-center"
-              style={{
-                borderRadius: 'var(--radius-6)',
-                backgroundColor: 'var(--color-brand-primary)'
-              }}
-            >
-              <Sparkles className="w-4 h-4" style={{ color: 'var(--color-utility-white)' }} />
+            <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span 
-              style={{
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
+            <span className="font-semibold text-foreground">
               NoModel
             </span>
           </div>
-          <p 
-            className="text-sm"
-            style={{ color: 'var(--color-text-tertiary)' }}
-          >
+          <p className="text-sm text-muted-foreground">
             © 2024 NoModel. 모든 권리 보유.
           </p>
         </div>
