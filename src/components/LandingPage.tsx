@@ -3,7 +3,7 @@ const { useState } = React;
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Sparkles, Zap, Target, TrendingUp, Camera, Users, ArrowRight, Play, CheckCircle, Star, Menu, X } from 'lucide-react';
+import { Sparkles, Zap, Target, TrendingUp, Camera, Users, Play, CheckCircle, Star, Menu, X, LogIn, UserCheck } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -104,7 +104,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               AI 기반 제품 촬영 혁신
             </Badge>
             
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 sm:mb-8">
+            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6 sm:mb-8">
               모델 없이도{' '}
               <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 완벽한 제품 광고
@@ -123,7 +123,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                 className="w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 무료로 시작하기
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <Sparkles className="w-5 h-5 ml-2" />
               </Button>
               <Button 
                 variant="outline" 
@@ -383,15 +383,15 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                 className="w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 3장 무료로 시작하기
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <Camera className="w-5 h-5 ml-2" />
               </Button>
               <Button 
-                variant="outline" 
-                size="lg"
+                variant="outline"
                 onClick={onLogin}
-                className="w-auto px-10 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-auto px-8 py-3 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 이미 계정이 있나요?
+                <UserCheck className="w-5 h-5 ml-2" />
               </Button>
             </div>
             
