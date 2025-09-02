@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
+import { authService } from './services/auth';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { ModelSelectionPage } from './components/ModelSelectionPage';
 import { ImageGenerationWorkflow } from './components/ImageGenerationWorkflow';
@@ -13,8 +14,10 @@ import { ModelMarketplace } from './components/ModelMarketplace';
 import { MyModels } from './components/MyModels';
 import { ModelReport } from './components/ModelReport';
 import { AdminPage } from './components/AdminPage';
+import { ComponentDemo } from './components/ComponentDemo';
+import LoginTest from './components/LoginTest';
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest';
 
 export interface UserModel {
   id: string;
@@ -169,31 +172,12 @@ export interface ModelReport {
 }
 
 export default function App() {
-  const [currentStage, setCurrentStage] = useState<AppStage>('mypage');
+  const [currentStage, setCurrentStage] = useState<AppStage>('landing');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);
   const [selectedProject, setSelectedProject] = useState<GeneratedProject | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>({
-    id: 'user-1',
-    name: '홍길동',
-    email: 'hong@example.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    bio: 'AI 기반 제품 이미지 생성에 관심이 많은 마케터입니다.',
-    company: '스타트업 코리아',
-    location: '서울, 대한민국',
-    website: 'https://example.com',
-    joinedAt: new Date('2024-01-15'),
-    planType: 'pro',
-    generatedCount: 47,
-    downloadCount: 152,
-    points: 2500,
-    totalEarned: 4200,
-    totalSpent: 1700,
-    modelsCreated: 3,
-    modelsEarnings: 1850,
-    isAdmin: true
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<GeneratedProject[]>([]);
   const [userModels, setUserModels] = useState<UserModel[]>([]);
   const [pointTransactions, setPointTransactions] = useState<PointTransaction[]>([]);
@@ -317,6 +301,43 @@ export default function App() {
     isAdmin: true
   };
 
+  // Check authentication status on app load
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const userInfo = authService.getStoredUserInfo();
+          if (userInfo) {
+            setUserProfile(userInfo);
+            setIsLoggedIn(true);
+            // If user is already logged in, go to main page
+            setCurrentStage('mypage');
+          } else {
+            // Try to fetch user profile
+            const profileData = await authService.getUserProfile();
+            if (profileData.success) {
+              setUserProfile(profileData.response);
+              setIsLoggedIn(true);
+              setCurrentStage('mypage');
+            } else {
+              // Failed to get profile, logout
+              authService.logout();
+              setIsLoggedIn(false);
+              setUserProfile(null);
+            }
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          authService.logout();
+          setIsLoggedIn(false);
+          setUserProfile(null);
+        }
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   const handleStageChange = (stage: AppStage) => {
     console.log('=== handleStageChange 호출됨 ===');
     console.log('이전 스테이지:', currentStage);
@@ -367,19 +388,40 @@ export default function App() {
     setCurrentStage('projectDetail');
   };
 
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
-    setUserProfile(mockUserProfile);
-    setCurrentStage('onboarding');
+  const handleLoginSuccess = async () => {
+    try {
+      // Get user profile after successful login
+      const profileData = await authService.getUserProfile();
+      if (profileData.success) {
+        setUserProfile(profileData.response);
+        setIsLoggedIn(true);
+        setCurrentStage('onboarding');
+      } else {
+        console.error('Failed to get user profile:', profileData.error);
+        // Still proceed with basic login
+        const storedUserInfo = authService.getStoredUserInfo();
+        if (storedUserInfo) {
+          setUserProfile(storedUserInfo);
+          setIsLoggedIn(true);
+          setCurrentStage('onboarding');
+        }
+      }
+    } catch (error) {
+      console.error('Login success handler error:', error);
+      // Use mock profile as fallback
+      setIsLoggedIn(true);
+      setUserProfile(mockUserProfile);
+      setCurrentStage('onboarding');
+    }
   };
 
   const handleSignupSuccess = () => {
-    setIsLoggedIn(true);
-    setUserProfile(mockUserProfile);
-    setCurrentStage('onboarding');
+    // After signup, redirect to login
+    setCurrentStage('login');
   };
 
   const handleLogout = () => {
+    authService.logout();
     setIsLoggedIn(false);
     setUserProfile(null);
     setCurrentStage('landing');
@@ -650,6 +692,13 @@ export default function App() {
           onBack={() => handleStageChange('mypage')}
           onReportStatusUpdate={handleReportStatusUpdate}
         />
+      )}
+
+      {currentStage === 'componentDemo' && (
+        <ComponentDemo />
+      )}
+      {currentStage === 'loginTest' && (
+        <LoginTest />
       )}
     </div>
   );
