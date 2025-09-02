@@ -222,7 +222,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                   className="p-8 hover:shadow-xl transition-all duration-300 group border-0 bg-card/50 backdrop-blur-sm"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-300">
+                    <div className="w-14 h-14 rounded-2xl bg-background flex items-center justify-center group-hover:bg-primary/5 transition-colors duration-300">
                       <IconComponent className="w-7 h-7 text-primary" />
                     </div>
                     <div className="flex-1">
