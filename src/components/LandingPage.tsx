@@ -3,7 +3,6 @@ const { useState } = React;
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Carousel } from './common/Carousel';
 import { Sparkles, Zap, Target, TrendingUp, Camera, Users, ArrowRight, Play, CheckCircle, Star, Menu, X } from 'lucide-react';
 
 interface LandingPageProps {
@@ -40,9 +39,9 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
             ))}
             <Button 
               variant="outline" 
-              size="sm"
+              size="default"
               onClick={onLogin}
-              className="rounded-full"
+              className="rounded-full px-6"
             >
               로그인
             </Button>
@@ -77,12 +76,12 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               ))}
               <Button 
                 variant="outline" 
-                size="sm"
+                size="default"
                 onClick={() => {
                   onLogin();
                   setMobileMenuOpen(false);
                 }}
-                className="rounded-full w-fit"
+                className="rounded-full w-fit px-6"
               >
                 로그인
               </Button>
@@ -105,7 +104,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               AI 기반 제품 촬영 혁신
             </Badge>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 sm:mb-8">
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6 sm:mb-8">
               모델 없이도{' '}
               <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 완벽한 제품 광고
@@ -117,11 +116,11 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               몇 번의 클릭만으로 브랜드에 완벽하게 맞는 전문 제품 이미지를 생성합니다.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16 max-w-md mx-auto">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16">
               <Button 
                 size="lg" 
                 onClick={onGetStarted} 
-                className="w-full sm:w-auto px-8 h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 무료로 시작하기
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -129,76 +128,13 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="w-full sm:w-auto px-8 h-14 text-lg rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 <Play className="w-5 h-5 mr-2" />
                 데모 영상 보기
               </Button>
             </div>
 
-            {/* Social Proof - Brand Logos Carousel */}
-            <div className="mb-16">
-              <p className="text-sm text-muted-foreground mb-6">이미 1,000+ 브랜드가 신뢰하는 솔루션</p>
-              <Carousel
-                items={[
-                  {
-                    id: 'brand-1',
-                    content: <div className="flex items-center justify-center h-12">
-                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">Nike</span>
-                      </div>
-                    </div>
-                  },
-                  {
-                    id: 'brand-2',
-                    content: <div className="flex items-center justify-center h-12">
-                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">Adidas</span>
-                      </div>
-                    </div>
-                  },
-                  {
-                    id: 'brand-3',
-                    content: <div className="flex items-center justify-center h-12">
-                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">Samsung</span>
-                      </div>
-                    </div>
-                  },
-                  {
-                    id: 'brand-4',
-                    content: <div className="flex items-center justify-center h-12">
-                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">Apple</span>
-                      </div>
-                    </div>
-                  },
-                  {
-                    id: 'brand-5',
-                    content: <div className="flex items-center justify-center h-12">
-                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">Google</span>
-                      </div>
-                    </div>
-                  },
-                  {
-                    id: 'brand-6',
-                    content: <div className="flex items-center justify-center h-12">
-                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">Microsoft</span>
-                      </div>
-                    </div>
-                  }
-                ]}
-                autoPlay={true}
-                autoPlayInterval={2500}
-                showIndicators={false}
-                showArrows={false}
-                slidesToShow={5}
-                className="max-w-4xl mx-auto opacity-60"
-                variant="fullWidth"
-              />
-            </div>
 
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -231,7 +167,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
             <Badge variant="outline" className="mb-4">
               핵심 기능
             </Badge>
-            <h2 className="text-4xl font-bold mb-4">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               전문가 수준의 제품 이미지를 
               <span className="text-primary"> AI로</span>
             </h2>
@@ -317,7 +253,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
             <Badge variant="outline" className="mb-4">
               작동 방식
             </Badge>
-            <h2 className="text-4xl font-bold mb-4">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               3단계로 완성하는 <span className="text-primary">전문 제품 이미지</span>
             </h2>
           </div>
@@ -379,7 +315,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
             <Badge variant="outline" className="mb-4">
               고객 후기
             </Badge>
-            <h2 className="text-4xl font-bold mb-4">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
               <span className="text-primary">1,000+</span> 브랜드가 선택한 이유
             </h2>
           </div>
@@ -432,7 +368,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               한정 제공
             </Badge>
             
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6">
               지금 시작하고 <span className="text-primary">무료로</span> 체험하세요
             </h2>
             
@@ -440,11 +376,11 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               첫 3장의 이미지는 완전 무료! 비용 대비 효과를 직접 체험하고 판단하세요.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16 max-w-xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16">
               <Button 
                 size="lg" 
                 onClick={onGetStarted} 
-                className="w-full sm:w-auto px-8 h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 3장 무료로 시작하기
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -453,7 +389,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                 variant="outline" 
                 size="lg"
                 onClick={onLogin}
-                className="w-full sm:w-auto px-6 h-14 text-lg rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 이미 계정이 있나요?
               </Button>
