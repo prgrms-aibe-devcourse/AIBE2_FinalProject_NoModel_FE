@@ -3,14 +3,29 @@ const { useState } = React;
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Sparkles, Zap, Target, TrendingUp, Camera, Users, Play, CheckCircle, Star, Menu, X, LogIn, UserCheck } from 'lucide-react';
+import { Sparkles, Zap, Target, TrendingUp, Camera, Users, Play, CheckCircle, Star, Menu, X, LogIn, UserCheck, LogOut, ShoppingBag, User, Palette } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
   onLogin: () => void;
+  onLogout: () => void;
+  onAdGeneration: () => void;
+  onModelCreation: () => void;
+  onMarketplace: () => void;
+  onMyPage: () => void;
+  isLoggedIn: boolean;
 }
 
-export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
+export function LandingPage({ 
+  onGetStarted, 
+  onLogin, 
+  onLogout, 
+  onAdGeneration, 
+  onModelCreation, 
+  onMarketplace, 
+  onMyPage, 
+  isLoggedIn 
+}: LandingPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
@@ -28,23 +43,74 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
           </div>
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            {['기능', '가격책정', '고객사례', '소개'].map((item, index) => (
-              <a 
-                key={index}
-                href={`#${item.toLowerCase()}`} 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-              >
-                {item}
-              </a>
-            ))}
-            <Button 
-              variant="outline" 
-              size="default"
-              onClick={onLogin}
-              className="rounded-full px-6"
-            >
-              로그인
-            </Button>
+            {!isLoggedIn ? (
+              // 로그인 전 네비게이션
+              <>
+{[
+                  { label: '기능', href: '#features' },
+                  { label: '가격책정', href: '#pricing' },
+                  { label: '고객사례', href: '#testimonials' },
+                  { label: '소개', href: '#about' }
+                ].map((item, index) => (
+                  <a 
+                    key={index}
+                    href={item.href} 
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+                <Button 
+                  variant="outline" 
+                  size="default"
+                  onClick={onLogin}
+                  className="rounded-full px-6"
+                >
+                  로그인
+                </Button>
+              </>
+            ) : (
+              // 로그인 후 네비게이션
+              <>
+                <button 
+                  onClick={onAdGeneration}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Camera className="w-4 h-4" />
+                  광고 생성
+                </button>
+                <button 
+                  onClick={onModelCreation}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Palette className="w-4 h-4" />
+                  모델 제작
+                </button>
+                <button 
+                  onClick={onMarketplace}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  마켓플레이스
+                </button>
+                <button 
+                  onClick={onMyPage}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  마이 페이지
+                </button>
+                <Button 
+                  variant="outline" 
+                  size="default"
+                  onClick={onLogout}
+                  className="rounded-full px-6"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  로그아웃
+                </Button>
+              </>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -64,27 +130,93 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
         {mobileMenuOpen && (
           <div className="md:hidden border-t bg-background backdrop-blur-lg">
             <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
-              {['기능', '가격책정', '고객사례', '소개'].map((item, index) => (
-                <a 
-                  key={index}
-                  href={`#${item.toLowerCase()}`} 
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item}
-                </a>
-              ))}
-              <Button 
-                variant="outline" 
-                size="default"
-                onClick={() => {
-                  onLogin();
-                  setMobileMenuOpen(false);
-                }}
-                className="rounded-full w-fit px-6"
-              >
-                로그인
-              </Button>
+              {!isLoggedIn ? (
+                // 로그인 전 모바일 메뉴
+                <>
+{[
+                    { label: '기능', href: '#features' },
+                    { label: '가격책정', href: '#pricing' },
+                    { label: '고객사례', href: '#testimonials' },
+                    { label: '소개', href: '#about' }
+                  ].map((item, index) => (
+                    <a 
+                      key={index}
+                      href={item.href} 
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="default"
+                    onClick={() => {
+                      onLogin();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="rounded-full w-fit px-6"
+                  >
+                    로그인
+                  </Button>
+                </>
+              ) : (
+                // 로그인 후 모바일 메뉴
+                <>
+                  <button 
+                    onClick={() => {
+                      onAdGeneration();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                  >
+                    <Camera className="w-4 h-4" />
+                    광고 생성
+                  </button>
+                  <button 
+                    onClick={() => {
+                      onModelCreation();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                  >
+                    <Palette className="w-4 h-4" />
+                    모델 제작
+                  </button>
+                  <button 
+                    onClick={() => {
+                      onMarketplace();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    마켓플레이스
+                  </button>
+                  <button 
+                    onClick={() => {
+                      onMyPage();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    마이 페이지
+                  </button>
+                  <Button 
+                    variant="outline" 
+                    size="default"
+                    onClick={() => {
+                      onLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="rounded-full w-fit px-6"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    로그아웃
+                  </Button>
+                </>
+              )}
             </nav>
           </div>
         )}
@@ -161,7 +293,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 sm:py-32 bg-muted/30">
+      <section id="features" className="py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
@@ -309,7 +441,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 sm:py-32 bg-muted/30">
+      <section id="testimonials" className="py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
@@ -361,7 +493,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 sm:py-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
+      <section id="pricing" className="py-20 sm:py-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-3xl mx-auto">
             <Badge variant="outline" className="mb-6">
@@ -415,7 +547,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t bg-card">
+      <footer id="about" className="py-8 border-t bg-card">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
             {/* Logo - Left */}
