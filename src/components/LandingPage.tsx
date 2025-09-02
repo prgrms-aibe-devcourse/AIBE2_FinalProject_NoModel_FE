@@ -16,10 +16,10 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background/95">
+      <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
+            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <h1 className="text-xl font-semibold text-foreground">
@@ -62,7 +62,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-background/95 backdrop-blur-lg">
+          <div className="md:hidden border-t bg-background backdrop-blur-lg">
             <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
               {['기능', '가격책정', '고객사례', '소개'].map((item, index) => (
                 <a 
@@ -415,19 +415,42 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 border-t bg-card">
-        <div className="container mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
+      <footer className="py-8 border-t bg-card">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
+            {/* Logo - Left */}
+            <div className="flex items-center justify-center md:justify-start gap-2">
+              <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <span className="font-semibold text-foreground">
+                NoModel
+              </span>
             </div>
-            <span className="font-semibold text-foreground">
-              NoModel
-            </span>
+
+            {/* Navigation Links - Center */}
+            <nav className="flex items-center justify-center gap-4 md:gap-6">
+              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                서비스 소개
+              </a>
+              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                가격
+              </a>
+              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                고객지원
+              </a>
+              <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                API 문서
+              </a>
+            </nav>
+
+            {/* Copyright - Right */}
+            <div className="flex justify-center md:justify-end">
+              <p className="text-sm text-muted-foreground">
+                © 2024 NoModel. 모든 권리 보유.
+              </p>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © 2024 NoModel. 모든 권리 보유.
-          </p>
         </div>
       </footer>
     </div>
