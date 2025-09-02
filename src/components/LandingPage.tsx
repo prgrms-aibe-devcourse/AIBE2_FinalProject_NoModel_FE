@@ -116,11 +116,11 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               몇 번의 클릭만으로 브랜드에 완벽하게 맞는 전문 제품 이미지를 생성합니다.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16">
+            <div className="flex flex-row gap-3 sm:gap-4 justify-center items-center mb-16 flex-wrap">
               <Button 
                 size="lg" 
                 onClick={onGetStarted} 
-                className="w-full sm:w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 무료로 시작하기
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -128,7 +128,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="w-full sm:w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 <Play className="w-5 h-5 mr-2" />
                 데모 영상 보기
@@ -376,11 +376,11 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               첫 3장의 이미지는 완전 무료! 비용 대비 효과를 직접 체험하고 판단하세요.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16">
+            <div className="flex flex-row gap-3 sm:gap-4 justify-center items-center mb-16 flex-wrap">
               <Button 
                 size="lg" 
                 onClick={onGetStarted} 
-                className="w-full sm:w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 3장 무료로 시작하기
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -389,7 +389,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                 variant="outline" 
                 size="lg"
                 onClick={onLogin}
-                className="w-full sm:w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 이미 계정이 있나요?
               </Button>
