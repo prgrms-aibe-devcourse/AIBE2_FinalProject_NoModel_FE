@@ -389,7 +389,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
                 variant="outline" 
                 size="lg"
                 onClick={onLogin}
-                className="w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-auto px-10 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 이미 계정이 있나요?
               </Button>
