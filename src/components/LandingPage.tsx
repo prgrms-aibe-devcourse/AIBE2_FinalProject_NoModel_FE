@@ -1,8 +1,10 @@
-import React from 'react';
+import * as React from 'react';
+const { useState } = React;
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Sparkles, Zap, Target, TrendingUp, Camera, Users, ArrowRight, Play, CheckCircle, Star } from 'lucide-react';
+import { Carousel } from './common/Carousel';
+import { Sparkles, Zap, Target, TrendingUp, Camera, Users, ArrowRight, Play, CheckCircle, Star, Menu, X } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -10,6 +12,8 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -23,6 +27,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               NoModel
             </h1>
           </div>
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             {['기능', '가격책정', '고객사례', '소개'].map((item, index) => (
               <a 
@@ -42,14 +47,55 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               로그인
             </Button>
           </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t bg-background/95 backdrop-blur-lg">
+            <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
+              {['기능', '가격책정', '고객사례', '소개'].map((item, index) => (
+                <a 
+                  key={index}
+                  href={`#${item.toLowerCase()}`} 
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item}
+                </a>
+              ))}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  onLogin();
+                  setMobileMenuOpen(false);
+                }}
+                className="rounded-full w-fit"
+              >
+                로그인
+              </Button>
+            </nav>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
         
-        <div className="container mx-auto px-6 py-24 relative">
+        <div className="container mx-auto px-4 sm:px-6 py-20 sm:py-32 relative">
           <div className="text-center max-w-4xl mx-auto">
             <Badge 
               variant="secondary" 
@@ -59,23 +105,23 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               AI 기반 제품 촬영 혁신
             </Badge>
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-8">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 sm:mb-8">
               모델 없이도{' '}
               <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 완벽한 제품 광고
               </span>
             </h1>
             
-            <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed">
               전통적인 모델 고용과 스튜디오 촬영의 복잡함을 AI로 해결하세요. 
               몇 번의 클릭만으로 브랜드에 완벽하게 맞는 전문 제품 이미지를 생성합니다.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16 max-w-md mx-auto">
               <Button 
                 size="lg" 
                 onClick={onGetStarted} 
-                className="min-w-48 h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 무료로 시작하기
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -83,21 +129,75 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               <Button 
                 variant="outline" 
                 size="lg"
-                className="min-w-48 h-14 text-lg rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-14 text-lg rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 <Play className="w-5 h-5 mr-2" />
                 데모 영상 보기
               </Button>
             </div>
 
-            {/* Social Proof */}
+            {/* Social Proof - Brand Logos Carousel */}
             <div className="mb-16">
               <p className="text-sm text-muted-foreground mb-6">이미 1,000+ 브랜드가 신뢰하는 솔루션</p>
-              <div className="flex justify-center items-center gap-8 opacity-60">
-                {[1,2,3,4,5].map((i) => (
-                  <div key={i} className="w-24 h-8 bg-muted rounded" />
-                ))}
-              </div>
+              <Carousel
+                items={[
+                  {
+                    id: 'brand-1',
+                    content: <div className="flex items-center justify-center h-12">
+                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-muted-foreground">Nike</span>
+                      </div>
+                    </div>
+                  },
+                  {
+                    id: 'brand-2',
+                    content: <div className="flex items-center justify-center h-12">
+                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-muted-foreground">Adidas</span>
+                      </div>
+                    </div>
+                  },
+                  {
+                    id: 'brand-3',
+                    content: <div className="flex items-center justify-center h-12">
+                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-muted-foreground">Samsung</span>
+                      </div>
+                    </div>
+                  },
+                  {
+                    id: 'brand-4',
+                    content: <div className="flex items-center justify-center h-12">
+                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-muted-foreground">Apple</span>
+                      </div>
+                    </div>
+                  },
+                  {
+                    id: 'brand-5',
+                    content: <div className="flex items-center justify-center h-12">
+                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-muted-foreground">Google</span>
+                      </div>
+                    </div>
+                  },
+                  {
+                    id: 'brand-6',
+                    content: <div className="flex items-center justify-center h-12">
+                      <div className="w-32 h-8 bg-muted rounded flex items-center justify-center">
+                        <span className="text-xs font-medium text-muted-foreground">Microsoft</span>
+                      </div>
+                    </div>
+                  }
+                ]}
+                autoPlay={true}
+                autoPlayInterval={2500}
+                showIndicators={false}
+                showArrows={false}
+                slidesToShow={5}
+                className="max-w-4xl mx-auto opacity-60"
+                variant="fullWidth"
+              />
             </div>
 
             {/* Stats */}
@@ -125,8 +225,8 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-6">
+      <section className="py-20 sm:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
               핵심 기능
@@ -211,8 +311,8 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* How It Works */}
-      <section className="py-24">
-        <div className="container mx-auto px-6">
+      <section className="py-20 sm:py-32">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
               작동 방식
@@ -273,8 +373,8 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Testimonials */}
-      <section className="py-24 bg-muted/30">
-        <div className="container mx-auto px-6">
+      <section className="py-20 sm:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
               고객 후기
@@ -325,7 +425,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
+      <section className="py-20 sm:py-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-3xl mx-auto">
             <Badge variant="outline" className="mb-6">
@@ -340,20 +440,20 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
               첫 3장의 이미지는 완전 무료! 비용 대비 효과를 직접 체험하고 판단하세요.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-16 max-w-xl mx-auto">
               <Button 
                 size="lg" 
                 onClick={onGetStarted} 
-                className="min-w-64 h-16 text-xl rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300"
+                className="w-full sm:w-auto px-8 h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 3장 무료로 시작하기
-                <ArrowRight className="w-6 h-6 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
               <Button 
                 variant="outline" 
                 size="lg"
                 onClick={onLogin}
-                className="min-w-48 h-16 text-lg rounded-full border-2"
+                className="w-full sm:w-auto px-6 h-14 text-lg rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 이미 계정이 있나요?
               </Button>
@@ -379,7 +479,7 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t bg-card">
+      <footer className="py-16 border-t bg-card">
         <div className="container mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center">

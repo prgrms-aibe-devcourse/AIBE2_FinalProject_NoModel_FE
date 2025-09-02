@@ -14,15 +14,16 @@ import {
   Bell, Shield, CreditCard, User, Mail, MapPin, Globe,
   AlertTriangle
 } from 'lucide-react';
-import { UserProfile } from '../App';
+import { UserProfile, PointTransaction } from '../App';
 
 interface ProfileSettingsProps {
   userProfile: UserProfile | null;
+  pointTransactions: PointTransaction[];
   onBack: () => void;
   onProfileUpdate: (updatedProfile: Partial<UserProfile>) => void;
 }
 
-export function ProfileSettings({ userProfile, onBack, onProfileUpdate }: ProfileSettingsProps) {
+export function ProfileSettings({ userProfile, pointTransactions, onBack, onProfileUpdate }: ProfileSettingsProps) {
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoading, setIsLoading] = useState(false);
   
