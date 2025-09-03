@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Alert, AlertDescription } from './ui/alert';
+import { NavigationBar } from './NavigationBar';
 import { 
   ArrowLeft, Shield, AlertTriangle, Eye, Clock, CheckCircle, XCircle,
   Flag, Copyright, Ban, MoreHorizontal, User, Calendar, Search,
@@ -26,6 +27,12 @@ interface AdminPageProps {
   modelReports: ModelReport[];
   onBack: () => void;
   onReportStatusUpdate: (reportId: string, status: ModelReport['status'], reviewNotes?: string, resolution?: ModelReport['resolution']) => void;
+  onLogin: () => void;
+  onLogout: () => void;
+  onAdGeneration: () => void;
+  onModelCreation: () => void;
+  onMarketplace: () => void;
+  onMyPage: () => void;
 }
 
 const reportTypeLabels = {
@@ -119,7 +126,18 @@ const mockStatsData = {
 
 const COLORS = ['#7170ff', '#4ea7fc', '#4cb782', '#fc7840', '#f2c94c'];
 
-export function AdminPage({ userProfile, modelReports, onBack, onReportStatusUpdate }: AdminPageProps) {
+export function AdminPage({ 
+  userProfile, 
+  modelReports, 
+  onBack, 
+  onReportStatusUpdate,
+  onLogin,
+  onLogout,
+  onAdGeneration,
+  onModelCreation,
+  onMarketplace,
+  onMyPage
+}: AdminPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -194,8 +212,19 @@ export function AdminPage({ userProfile, modelReports, onBack, onReportStatusUpd
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-      {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
+      <NavigationBar
+        onLogin={onLogin}
+        onLogout={onLogout}
+        onAdGeneration={onAdGeneration}
+        onModelCreation={onModelCreation}
+        onMarketplace={onMarketplace}
+        onMyPage={onMyPage}
+        isLoggedIn={true}
+        isLandingPage={false}
+      />
+
+      {/* Admin Header */}
+      <div className="linear-header border-b" style={{ backgroundColor: 'var(--color-background-primary)' }}>
         <div className="linear-container h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -230,7 +259,7 @@ export function AdminPage({ userProfile, modelReports, onBack, onReportStatusUpd
             ADMIN
           </Badge>
         </div>
-      </header>
+      </div>
 
       <main className="linear-container py-8">
         {/* Tab Navigation */}

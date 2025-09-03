@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
+import { NavigationBar } from './NavigationBar';
 import { 
   Sparkles, Plus, Search, Filter, Grid3X3, List, Calendar, Download, 
   Eye, MoreHorizontal, User, Settings, LogOut, TrendingUp, Image as ImageIcon,
@@ -170,9 +171,10 @@ interface MyPageProps {
   onMarketplace: () => void;
   onLogout: () => void;
   onAdmin: () => void;
+  onLogin: () => void;
 }
 
-export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onProfileSettings, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin }: MyPageProps) {
+export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onProfileSettings, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin }: MyPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -248,165 +250,16 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-      {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
-        <div className="linear-container h-full flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div 
-              className="w-8 h-8 flex items-center justify-center"
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
-            </div>
-            <h1 
-              style={{ 
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)'
-              }}
-            >
-              NoModel
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-              <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-              <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                {userProfile.points.toLocaleString()}P
-              </span>
-            </div>
-
-            {userProfile?.isAdmin && (
-              <Button 
-                variant="ghost"
-                onClick={() => {
-                  console.log('헤더에서 관리자 페이지 클릭됨');
-                  onAdmin();
-                }}
-                style={{
-                  color: 'var(--color-semantic-red)',
-                  borderRadius: 'var(--radius-8)',
-                  fontSize: 'var(--font-size-small)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  height: '40px',
-                  padding: '0 16px'
-                }}
-                title="관리자 페이지"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                관리자
-              </Button>
-            )}
-
-            <Button 
-              onClick={() => {
-                console.log('새 프로젝트 버튼 클릭됨');
-                onNewProject();
-              }}
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                color: 'var(--color-utility-white)',
-                borderRadius: 'var(--radius-8)',
-                fontSize: 'var(--font-size-regular)',
-                fontWeight: 'var(--font-weight-medium)',
-                height: '40px',
-                padding: '0 16px',
-                border: 'none'
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              새 프로젝트
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="relative h-10 w-10 rounded-full"
-                  onClick={() => console.log('프로필 아바타 클릭됨 - 드롭다운 열림')}
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-                    <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 z-[100]" align="end" forceMount style={{ zIndex: 100 }}>
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p 
-                      className="font-medium"
-                      style={{ color: 'var(--color-text-primary)' }}
-                    >
-                      {userProfile.name}
-                    </p>
-                    <p 
-                      className="w-[200px] truncate text-sm"
-                      style={{ color: 'var(--color-text-tertiary)' }}
-                    >
-                      {userProfile.email}
-                    </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Coins className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
-                      <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
-                        {userProfile.points.toLocaleString()}P
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={(e) => {
-                  console.log('내 AI 모델 클릭됨');
-                  e.preventDefault();
-                  onMyModels();
-                }}>
-                  <Users className="mr-2 h-4 w-4" />
-                  내 AI 모델
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={(e) => {
-                  console.log('모델 마켓플레이스 클릭됨');
-                  e.preventDefault();
-                  onMarketplace();
-                }}>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  모델 마켓플레이스
-                </DropdownMenuItem>
-                {userProfile?.isAdmin && (
-                  <DropdownMenuItem onClick={(e) => {
-                    console.log('관리자 페이지 클릭됨');
-                    e.preventDefault();
-                    onAdmin();
-                  }}>
-                    <Shield className="mr-2 h-4 w-4" />
-                    관리자 페이지
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={(e) => {
-                  console.log('프로필 설정 클릭됨');
-                  e.preventDefault();
-                  onProfileSettings();
-                }}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  프로필 설정
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={(e) => {
-                  console.log('로그아웃 클릭됨');
-                  e.preventDefault();
-                  onLogout();
-                }}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  로그아웃
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
+      <NavigationBar
+        onLogin={onLogin}
+        onLogout={onLogout}
+        onAdGeneration={onNewProject}
+        onModelCreation={onCreateModel}
+        onMarketplace={onMarketplace}
+        onMyPage={() => {}} // Already on MyPage
+        isLoggedIn={!!userProfile}
+        isLandingPage={false}
+      />
 
       {/* Main Content */}
       <main className="py-8 max-w-7xl mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>

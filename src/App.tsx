@@ -608,6 +608,11 @@ export default function App() {
           userProfile={userProfile}
           onCreateModel={() => handleStageChange('modelCreation')}
           onBrowseMarketplace={() => handleStageChange('modelMarketplace')}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
         />
       )}
       
@@ -632,6 +637,7 @@ export default function App() {
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onLogout={handleLogout}
           onAdmin={() => handleStageChange('admin')}
+          onLogin={() => handleStageChange('login')}
         />
       )}
 
@@ -669,6 +675,10 @@ export default function App() {
           onModelPurchase={handleModelPurchase}
           onCreateModel={() => handleStageChange('modelCreation')}
           onModelReport={handleModelReportRequest}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onMyPage={() => handleStageChange('mypage')}
         />
       )}
 
@@ -680,6 +690,11 @@ export default function App() {
           onBack={() => handleStageChange('mypage')}
           onCreateModel={() => handleStageChange('modelCreation')}
           onModelUpdate={handleModelUpdate}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
         />
       )}
 
@@ -698,6 +713,12 @@ export default function App() {
           modelReports={modelReports}
           onBack={() => handleStageChange('mypage')}
           onReportStatusUpdate={handleReportStatusUpdate}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
         />
       )}
 

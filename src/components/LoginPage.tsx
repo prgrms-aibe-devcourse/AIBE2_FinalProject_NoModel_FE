@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
+import { NavigationBar } from './NavigationBar';
 import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome, Github, AlertCircle } from 'lucide-react';
 import { authService } from '../services/auth';
 import type { LoginRequest } from '../types/auth';
@@ -67,30 +68,16 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background/95">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <Button 
-            variant="ghost" 
-            onClick={onBack}
-            className="flex items-center gap-2 hover:bg-muted/50"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            뒤로 가기
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary/80 shadow-sm">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <h1 className="text-xl font-semibold text-foreground">
-              NoModel
-            </h1>
-          </div>
-
-          <div className="w-24"></div> {/* Spacer for centering */}
-        </div>
-      </header>
+      <NavigationBar
+        onLogin={onLoginSuccess}
+        onLogout={() => {}}
+        onAdGeneration={() => {}}
+        onModelCreation={() => {}}
+        onMarketplace={() => {}}
+        onMyPage={() => {}}
+        isLoggedIn={false}
+        isLandingPage={false}
+      />
 
       {/* Main Content */}
       <main className="py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">

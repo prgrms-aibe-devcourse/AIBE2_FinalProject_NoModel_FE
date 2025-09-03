@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
+import { NavigationBar } from './NavigationBar';
 import { 
   ArrowLeft, Sparkles, Search, Plus, MoreHorizontal, Eye, Edit, 
   TrendingUp, Users, Coins, Calendar, Award, BarChart3,
@@ -22,6 +23,11 @@ interface MyModelsProps {
   onBack: () => void;
   onCreateModel: () => void;
   onModelUpdate: (model: UserModel) => void;
+  onLogin: () => void;
+  onLogout: () => void;
+  onAdGeneration: () => void;
+  onMarketplace: () => void;
+  onMyPage: () => void;
 }
 
 // Mock data for user models if none provided
@@ -131,7 +137,19 @@ const categoryNames: Record<string, string> = {
   lifestyle: '라이프스타일'
 };
 
-export function MyModels({ userProfile, userModels = defaultUserModels, pointTransactions, onBack, onCreateModel, onModelUpdate }: MyModelsProps) {
+export function MyModels({ 
+  userProfile, 
+  userModels = defaultUserModels, 
+  pointTransactions, 
+  onBack, 
+  onCreateModel, 
+  onModelUpdate,
+  onLogin,
+  onLogout,
+  onAdGeneration,
+  onMarketplace,
+  onMyPage
+}: MyModelsProps) {
   const [activeTab, setActiveTab] = useState('models');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -215,8 +233,19 @@ export function MyModels({ userProfile, userModels = defaultUserModels, pointTra
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-      {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
+      <NavigationBar
+        onLogin={onLogin}
+        onLogout={onLogout}
+        onAdGeneration={onAdGeneration}
+        onModelCreation={onCreateModel}
+        onMarketplace={onMarketplace}
+        onMyPage={onMyPage}
+        isLoggedIn={!!userProfile}
+        isLandingPage={false}
+      />
+
+      {/* Sub Header */}
+      <div className="linear-header border-b" style={{ backgroundColor: 'var(--color-background-primary)' }}>
         <div className="linear-container h-full flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
@@ -231,35 +260,17 @@ export function MyModels({ userProfile, userModels = defaultUserModels, pointTra
               <ArrowLeft className="w-4 h-4" />
               뒤로 가기
             </Button>
-            
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-8 h-8 flex items-center justify-center"
-                style={{
-                  backgroundColor: 'var(--color-brand-primary)',
-                  borderRadius: 'var(--radius-8)'
-                }}
-              >
-                <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
-              </div>
-              <h1 
-                style={{ 
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                NoModel
-              </h1>
-            </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-              <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-              <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                {userProfile.points.toLocaleString()}P
-              </span>
-            </div>
+            {userProfile && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
+                <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
+                <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
+                  {userProfile.points.toLocaleString()}P
+                </span>
+              </div>
+            )}
             <Button 
               onClick={onCreateModel}
               style={{
@@ -274,7 +285,7 @@ export function MyModels({ userProfile, userModels = defaultUserModels, pointTra
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="py-8 max-w-7xl mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>

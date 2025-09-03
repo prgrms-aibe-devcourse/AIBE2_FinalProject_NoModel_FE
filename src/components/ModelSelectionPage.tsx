@@ -5,6 +5,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { NavigationBar } from './NavigationBar';
 import { 
   ArrowLeft, Sparkles, Search, Users, ShoppingCart, Plus, 
   Crown, Wand2, Star, Eye, Coins, Filter
@@ -18,6 +19,11 @@ interface ModelSelectionPageProps {
   userProfile: UserProfile | null;
   onCreateModel: () => void;
   onBrowseMarketplace: () => void;
+  onLogin: () => void;
+  onLogout: () => void;
+  onAdGeneration: () => void;
+  onMarketplace: () => void;
+  onMyPage: () => void;
 }
 
 // Mock data for pre-made models
@@ -136,7 +142,19 @@ const categoryNames: Record<string, string> = {
   lifestyle: '라이프스타일'
 };
 
-export function ModelSelectionPage({ selectedCategory, onModelSelect, onBack, userProfile, onCreateModel, onBrowseMarketplace }: ModelSelectionPageProps) {
+export function ModelSelectionPage({ 
+  selectedCategory, 
+  onModelSelect, 
+  onBack, 
+  userProfile, 
+  onCreateModel, 
+  onBrowseMarketplace,
+  onLogin,
+  onLogout,
+  onAdGeneration,
+  onMarketplace,
+  onMyPage
+}: ModelSelectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('premade');
 
@@ -175,8 +193,19 @@ export function ModelSelectionPage({ selectedCategory, onModelSelect, onBack, us
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-      {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
+      <NavigationBar
+        onLogin={onLogin}
+        onLogout={onLogout}
+        onAdGeneration={onAdGeneration}
+        onModelCreation={onCreateModel}
+        onMarketplace={onMarketplace}
+        onMyPage={onMyPage}
+        isLoggedIn={!!userProfile}
+        isLandingPage={false}
+      />
+
+      {/* Sub Header */}
+      <div className="linear-header border-b" style={{ backgroundColor: 'var(--color-background-primary)' }}>
         <div className="linear-container h-full flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
@@ -191,26 +220,6 @@ export function ModelSelectionPage({ selectedCategory, onModelSelect, onBack, us
               <ArrowLeft className="w-4 h-4" />
               뒤로 가기
             </Button>
-            
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-8 h-8 flex items-center justify-center"
-                style={{
-                  backgroundColor: 'var(--color-brand-primary)',
-                  borderRadius: 'var(--radius-8)'
-                }}
-              >
-                <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
-              </div>
-              <h1 
-                style={{ 
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                NoModel
-              </h1>
-            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -236,7 +245,7 @@ export function ModelSelectionPage({ selectedCategory, onModelSelect, onBack, us
             </Badge>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="py-8 max-w-7xl mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>
