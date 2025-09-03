@@ -3,6 +3,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { NavigationBar } from './NavigationBar';
+import { SectionHeading } from './ui/section-heading';
 import { Sparkles, Zap, Target, TrendingUp, Camera, Users, CheckCircle, Star, UserCheck } from 'lucide-react';
 
 interface LandingPageProps {
@@ -53,12 +54,11 @@ export function LandingPage({
               AI 기반 제품 촬영 혁신
             </Badge>
             
-            <h1 className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight mb-6 sm:mb-8">
-              모델 없이도{' '}
-              <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-                완벽한 제품 광고
-              </span>
-            </h1>
+            <SectionHeading 
+              normalText="모델 없이도"
+              highlightedText="완벽한 제품 광고"
+              className="tracking-tight mb-6 sm:mb-8"
+            />
             
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 sm:mb-12 max-w-3xl mx-auto leading-relaxed">
               전통적인 모델 고용과 스튜디오 촬영의 복잡함을 AI로 해결하세요. 
@@ -117,11 +117,11 @@ export function LandingPage({
             <Badge variant="outline" className="mb-4">
               핵심 기능
             </Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              전문가 수준의 제품 이미지를 
-              <span className="text-primary"> AI로</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <SectionHeading 
+              normalText="전문가 수준의 제품 이미지를"
+              highlightedText="AI로"
+            />
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               복잡한 스튜디오 촬영 없이도 브랜드에 완벽하게 맞는 고품질 이미지를 생성하세요
             </p>
           </div>
@@ -203,9 +203,10 @@ export function LandingPage({
             <Badge variant="outline" className="mb-4">
               작동 방식
             </Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              3단계로 완성하는 <span className="text-primary">전문 제품 이미지</span>
-            </h2>
+            <SectionHeading 
+              normalText="3단계로 완성하는"
+              highlightedText="전문 제품 이미지"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
@@ -265,9 +266,10 @@ export function LandingPage({
             <Badge variant="outline" className="mb-4">
               고객 후기
             </Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              <span className="text-primary">1,000+</span> 브랜드가 선택한 이유
-            </h2>
+            <SectionHeading 
+              normalText="브랜드가 선택한 이유"
+              highlightedText="1,000+"
+            />
           </div>
 
           <div className="max-w-5xl mx-auto">
@@ -320,10 +322,11 @@ export function LandingPage({
             <Badge variant="outline" className="mb-4">
               구독 플랜
             </Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
-              <span className="text-primary">완벽한</span> 플랜을 선택하세요
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <SectionHeading 
+              normalText="플랜을 선택하세요"
+              highlightedText="완벽한"
+            />
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               프로젝트 규모에 맞는 플랜으로 AI 제품 이미지 생성을 시작하세요
             </p>
           </div>
