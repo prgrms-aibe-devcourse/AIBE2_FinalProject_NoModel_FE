@@ -568,6 +568,12 @@ export default function App() {
         <LandingPage 
           onGetStarted={() => handleStageChange('signup')}
           onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          isLoggedIn={isLoggedIn}
         />
       )}
 
