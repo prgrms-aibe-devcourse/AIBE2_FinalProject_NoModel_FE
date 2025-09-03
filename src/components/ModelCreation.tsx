@@ -220,7 +220,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
       </header>
 
       {/* Main Content */}
-      <main className="py-8 max-w-4xl mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>
+      <main className="py-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-6">

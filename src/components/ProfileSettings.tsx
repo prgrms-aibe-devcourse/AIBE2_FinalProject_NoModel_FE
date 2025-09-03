@@ -186,7 +186,7 @@ export function ProfileSettings({ userProfile, pointTransactions, onBack, onProf
       </header>
 
       {/* Main Content */}
-      <main className="py-8 max-w-4xl mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>
+      <main className="py-8 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 
             className="mb-2"

@@ -81,7 +81,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
 
       {/* Main Content */}
       <main className="py-12 flex items-center justify-center min-h-[calc(100vh-64px)]">
-        <div className="w-full max-w-md mx-auto px-6">
+        <div className="w-full max-w-md mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-2 text-foreground">
               로그인

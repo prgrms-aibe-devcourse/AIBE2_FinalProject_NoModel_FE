@@ -111,8 +111,7 @@ export function OnboardingFlow({ onComplete, onBack }: OnboardingFlowProps) {
       </header>
 
       <main 
-        className="py-12 max-w-4xl mx-auto"
-        style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}
+        className="py-12 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8"
       >
         {currentStep === 1 && (
           <div className="text-center mb-12">
