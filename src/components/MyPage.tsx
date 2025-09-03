@@ -257,12 +257,13 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         onModelCreation={onCreateModel}
         onMarketplace={onMarketplace}
         onMyPage={() => {}} // Already on MyPage
+        onHome={onNewProject}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
       />
 
       {/* Main Content */}
-      <main className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
         {/* User Stats */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
@@ -696,90 +697,102 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
             </h2>
           </div>
 
-          {/* Filters */}
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            <div className="flex flex-wrap gap-4 items-center">
-              {/* Search */}
-              <div className="relative w-64">
-                <Search 
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                  style={{ color: 'var(--color-text-tertiary)' }}
-                />
-                <Input
-                  placeholder="프로젝트 검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                  style={{
-                    borderRadius: 'var(--radius-8)',
-                    borderColor: 'var(--color-border-primary)',
-                    backgroundColor: 'var(--color-input-background)',
-                    fontSize: 'var(--font-size-regular)',
-                    height: '40px'
-                  }}
-                />
+          {/* Search and Filters Section */}
+          <div className="mb-8">
+            {/* Search Bar with Integrated Filters */}
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+              <div className="flex-1 max-w-2xl">
+                <div className="relative">
+                  <Search 
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                  />
+                  <Input
+                    placeholder="프로젝트 검색..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-12 text-base"
+                    style={{
+                      borderRadius: 'var(--radius-8)',
+                      borderColor: 'var(--color-border-primary)',
+                      backgroundColor: 'var(--color-input-background)',
+                      fontSize: 'var(--font-size-regular)'
+                    }}
+                  />
+                </div>
+                
+                {/* Filter Row - Close to Search */}
+                <div className="flex flex-wrap gap-3 mt-3 items-center">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  
+                  {/* Category Filter */}
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-36 h-9">
+                      <SelectValue placeholder="카테고리" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모든 카테고리</SelectItem>
+                      <SelectItem value="fashion">패션</SelectItem>
+                      <SelectItem value="beauty">뷰티</SelectItem>
+                      <SelectItem value="electronics">전자제품</SelectItem>
+                      <SelectItem value="home">홈&리빙</SelectItem>
+                      <SelectItem value="lifestyle">라이프스타일</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Status Filter */}
+                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                    <SelectTrigger className="w-28 h-9">
+                      <SelectValue placeholder="상태" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">모든 상태</SelectItem>
+                      <SelectItem value="completed">완료</SelectItem>
+                      <SelectItem value="processing">처리중</SelectItem>
+                      <SelectItem value="failed">실패</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Sort */}
+                  <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                    <SelectTrigger className="w-28 h-9">
+                      <SelectValue placeholder="정렬" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">최신순</SelectItem>
+                      <SelectItem value="oldest">오래된순</SelectItem>
+                      <SelectItem value="downloads">다운로드순</SelectItem>
+                      <SelectItem value="rating">평점순</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  <span className="text-sm text-muted-foreground">
+                    {filteredProjects.length}개 프로젝트
+                  </span>
+                </div>
               </div>
 
-              {/* Category Filter */}
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="카테고리" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 카테고리</SelectItem>
-                  <SelectItem value="fashion">패션</SelectItem>
-                  <SelectItem value="beauty">뷰티</SelectItem>
-                  <SelectItem value="electronics">전자제품</SelectItem>
-                  <SelectItem value="home">홈&리빙</SelectItem>
-                  <SelectItem value="lifestyle">라이프스타일</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Status Filter */}
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="상태" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">모든 상태</SelectItem>
-                  <SelectItem value="completed">완료</SelectItem>
-                  <SelectItem value="processing">처리중</SelectItem>
-                  <SelectItem value="failed">실패</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Sort */}
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-                <SelectTrigger className="w-36">
-                  <SelectValue placeholder="정렬" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">최신순</SelectItem>
-                  <SelectItem value="oldest">오래된순</SelectItem>
-                  <SelectItem value="downloads">다운로드순</SelectItem>
-                  <SelectItem value="rating">평점순</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* View Mode */}
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                style={{ borderRadius: 'var(--radius-8)' }}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-                style={{ borderRadius: 'var(--radius-8)' }}
-              >
-                <List className="w-4 h-4" />
-              </Button>
+              {/* View Mode */}
+              <div className="flex gap-1 bg-muted/30 rounded-lg p-1">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className="px-3 h-9"
+                  style={{ borderRadius: 'var(--radius-6)' }}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className="px-3 h-9"
+                  style={{ borderRadius: 'var(--radius-6)' }}
+                >
+                  <List className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
 

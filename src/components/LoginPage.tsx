@@ -75,6 +75,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
         onModelCreation={() => {}}
         onMarketplace={() => {}}
         onMyPage={() => {}}
+        onHome={onBack}
         isLoggedIn={false}
         isLandingPage={false}
       />

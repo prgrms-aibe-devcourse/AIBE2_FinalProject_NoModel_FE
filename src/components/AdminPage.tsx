@@ -219,6 +219,7 @@ export function AdminPage({
         onModelCreation={onModelCreation}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onHome={onBack}
         isLoggedIn={true}
         isLandingPage={false}
       />

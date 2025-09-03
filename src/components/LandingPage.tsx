@@ -37,6 +37,7 @@ export function LandingPage({
         onModelCreation={onModelCreation}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onHome={onGetStarted}
         isLoggedIn={isLoggedIn}
         isLandingPage={true}
       />

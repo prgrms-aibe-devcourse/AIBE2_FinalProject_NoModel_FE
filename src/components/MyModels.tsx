@@ -12,7 +12,7 @@ import { NavigationBar } from './NavigationBar';
 import { 
   ArrowLeft, Sparkles, Search, Plus, MoreHorizontal, Eye, Edit, 
   TrendingUp, Users, Coins, Calendar, Award, BarChart3,
-  Globe, EyeOff, DollarSign, Activity, Clock, Star
+  Globe, EyeOff, DollarSign, Activity, Clock, Star, Filter
 } from 'lucide-react';
 import { UserProfile, UserModel, PointTransaction } from '../App';
 
@@ -240,6 +240,7 @@ export function MyModels({
         onModelCreation={onCreateModel}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
       />
@@ -544,55 +545,75 @@ export function MyModels({
 
           {/* Models Tab */}
           <TabsContent value="models" className="space-y-6">
-            {/* Filters */}
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              <div className="flex flex-wrap gap-4 items-center">
-                {/* Search */}
-                <div className="relative w-64">
-                  <Search 
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  />
-                  <Input
-                    placeholder="모델 검색..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)',
-                      backgroundColor: 'var(--color-input-background)',
-                      fontSize: 'var(--font-size-regular)',
-                      height: '40px'
-                    }}
-                  />
+            {/* Search and Filters Section */}
+            <div className="mb-8">
+              {/* Search Bar with Integrated Filters */}
+              <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+                <div className="flex-1 max-w-xl">
+                  <div className="relative">
+                    <Search 
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                      style={{ color: 'var(--color-text-tertiary)' }}
+                    />
+                    <Input
+                      placeholder="내 모델 검색..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 h-12 text-base"
+                      style={{
+                        borderRadius: 'var(--radius-8)',
+                        borderColor: 'var(--color-border-primary)',
+                        backgroundColor: 'var(--color-input-background)',
+                        fontSize: 'var(--font-size-regular)'
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Filter Row - Close to Search */}
+                  <div className="flex flex-wrap gap-3 mt-3 items-center">
+                    <Filter className="w-4 h-4 text-muted-foreground" />
+                    
+                    {/* Category Filter */}
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="w-36 h-9">
+                        <SelectValue placeholder="카테고리" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">모든 카테고리</SelectItem>
+                        {Object.entries(categoryNames).map(([key, name]) => (
+                          <SelectItem key={key} value={key}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Sort */}
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                      <SelectTrigger className="w-28 h-9">
+                        <SelectValue placeholder="정렬" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="newest">최신순</SelectItem>
+                        <SelectItem value="popular">인기순</SelectItem>
+                        <SelectItem value="earnings">수익순</SelectItem>
+                        <SelectItem value="rating">평점순</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <span className="text-sm text-muted-foreground">
+                      {filteredModels.length}개 모델
+                    </span>
+                  </div>
                 </div>
 
-                {/* Category Filter */}
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="카테고리" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">모든 카테고리</SelectItem>
-                    {Object.entries(categoryNames).map(([key, name]) => (
-                      <SelectItem key={key} value={key}>{name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Sort */}
-                <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="정렬" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">최신순</SelectItem>
-                    <SelectItem value="popular">인기순</SelectItem>
-                    <SelectItem value="earnings">수익순</SelectItem>
-                    <SelectItem value="rating">평점순</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* Create Model Button */}
+                <Button 
+                  onClick={onCreateModel}
+                  className="h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  style={{ borderRadius: 'var(--radius-8)' }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  새 모델 만들기
+                </Button>
               </div>
             </div>
 

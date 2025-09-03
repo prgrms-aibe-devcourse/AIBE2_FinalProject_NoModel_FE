@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
+import { ProgressIndicator } from '../ui/progress-indicator';
 import { ArrowLeft, Upload, Palette, Sparkles, Edit, Download, User } from 'lucide-react';
 import { WorkflowStep } from '../ImageGenerationWorkflow';
 import { SelectedModel } from '../../App';
@@ -115,76 +115,19 @@ export function WorkflowHeader({ currentStep, selectedCategory, selectedModel, o
           </div>
 
           {/* Desktop Progress Steps */}
-          <div className="hidden md:flex items-center gap-1 flex-1 max-w-2xl mx-8">
-            {steps.map((step, index) => {
-              const isActive = step.id === currentStep;
-              const isCompleted = index < currentStepIndex;
-              const StepIcon = step.icon;
-
-              return (
-                <div key={step.id} className="flex items-center flex-1">
-                  <div 
-                    className={`flex items-center gap-2 px-3 py-2 transition-colors`}
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      backgroundColor: isActive 
-                        ? 'var(--color-brand-primary)' 
-                        : isCompleted 
-                          ? 'var(--color-semantic-green)' + '20'
-                          : 'var(--color-background-tertiary)',
-                      color: isActive 
-                        ? 'var(--color-utility-white)' 
-                        : isCompleted 
-                          ? 'var(--color-semantic-green)'
-                          : 'var(--color-text-tertiary)',
-                      transition: 'all var(--animation-quick-transition) ease'
-                    }}
-                  >
-                    <StepIcon className="w-4 h-4" />
-                    <span 
-                      className="text-sm"
-                      style={{
-                        fontWeight: 'var(--font-weight-medium)',
-                        fontSize: 'var(--font-size-small)'
-                      }}
-                    >
-                      {step.label}
-                    </span>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div 
-                      className={`h-px flex-1 mx-2`}
-                      style={{
-                        backgroundColor: isCompleted 
-                          ? 'var(--color-semantic-green)' + '40'
-                          : 'var(--color-border-primary)'
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          <ProgressIndicator 
+            steps={steps} 
+            currentStep={currentStep}
+            className="hidden md:flex"
+          />
 
           {/* Mobile Progress */}
-          <div className="md:hidden flex items-center gap-4">
-            <div 
-              className="text-sm"
-              style={{ color: 'var(--color-text-tertiary)' }}
-            >
-              {currentStepIndex + 1}/{steps.length}
-            </div>
-            <div className="w-20">
-              <Progress 
-                value={progress} 
-                className="h-2"
-                style={{
-                  backgroundColor: 'var(--color-background-tertiary)',
-                  borderRadius: 'var(--radius-rounded)'
-                }}
-              />
-            </div>
-          </div>
+          <ProgressIndicator 
+            steps={steps} 
+            currentStep={currentStep}
+            variant="compact"
+            className="md:hidden"
+          />
         </div>
 
         {/* Mobile Step Name */}

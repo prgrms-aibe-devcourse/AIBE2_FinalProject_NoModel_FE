@@ -113,6 +113,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
         onModelCreation={() => {}}
         onMarketplace={() => {}}
         onMyPage={() => {}}
+        onHome={onBack}
         isLoggedIn={false}
         isLandingPage={false}
       />

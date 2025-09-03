@@ -200,6 +200,7 @@ export function ModelSelectionPage({
         onModelCreation={onCreateModel}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
       />

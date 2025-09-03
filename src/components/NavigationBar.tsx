@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button } from './ui/button';
-import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, Coins, ArrowLeft } from 'lucide-react';
 
 interface NavigationBarProps {
   onLogin: () => void;
@@ -9,8 +10,13 @@ interface NavigationBarProps {
   onModelCreation: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onHome: () => void;
+  onBack?: () => void;
   isLoggedIn: boolean;
   isLandingPage?: boolean;
+  showBackButton?: boolean;
+  userPoints?: number;
+  pageTitle?: string;
 }
 
 export function NavigationBar({
@@ -20,21 +26,52 @@ export function NavigationBar({
   onModelCreation,
   onMarketplace,
   onMyPage,
+  onHome,
+  onBack,
   isLoggedIn,
-  isLandingPage = false
+  isLandingPage = false,
+  showBackButton = false,
+  userPoints,
+  pageTitle
 }: NavigationBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <h1 className="text-xl font-semibold text-foreground">
-            NoModel
-          </h1>
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          {showBackButton && onBack ? (
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={onBack}
+              className="flex items-center gap-2 hover:bg-muted/50 px-3 py-2 h-9"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">뒤로</span>
+            </Button>
+          ) : (
+            <button 
+              onClick={onHome}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200"
+            >
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-semibold text-foreground">
+                NoModel
+              </h1>
+            </button>
+          )}
+          
+          {pageTitle && (
+            <>
+              <div className="w-px h-6 bg-border mx-1" />
+              <h2 className="text-lg font-medium text-foreground hidden sm:block">
+                {pageTitle}
+              </h2>
+            </>
+          )}
         </div>
         
         {/* Desktop Navigation */}
@@ -42,21 +79,41 @@ export function NavigationBar({
           {!isLoggedIn ? (
             // 로그인 전 네비게이션
             <>
-              {isLandingPage && [
-                { label: '홈', href: '#home' },
-                { label: '기능', href: '#features' },
-                { label: '가격책정', href: '#pricing' },
-                { label: '고객사례', href: '#testimonials' },
-                { label: '가격', href: '#pricing' }
-              ].map((item, index) => (
-                <a 
-                  key={index}
-                  href={item.href} 
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {isLandingPage ? (
+                // 랜딩 페이지에서는 앵커 링크
+                <>
+                  {[
+                    { label: '홈', href: '#home' },
+                    { label: '기능', href: '#features' },
+                    { label: '고객사례', href: '#testimonials' },
+                    { label: '요금제', href: '#pricing' }
+                  ].map((item, index) => (
+                    <a 
+                      key={index}
+                      href={item.href} 
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                    >
+                      {item.label}
+                    </a>
+                  ))}
+                </>
+              ) : (
+                // 다른 페이지에서는 기능적 네비게이션
+                <>
+                  <button 
+                    onClick={onHome}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    홈
+                  </button>
+                  <button 
+                    onClick={onLogin}
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
+                  >
+                    시작하기
+                  </button>
+                </>
+              )}
               <Button 
                 variant="outline" 
                 size="default"
@@ -97,6 +154,21 @@ export function NavigationBar({
                 <User className="w-4 h-4" />
                 마이 페이지
               </button>
+              
+              {/* Points Display */}
+              {typeof userPoints === 'number' && (
+                <Badge 
+                  variant="secondary" 
+                  className="flex items-center gap-2 px-3 py-1 bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
+                  onClick={onMyPage}
+                >
+                  <Coins className="w-4 h-4 text-primary" />
+                  <span className="font-semibold text-primary">
+                    {userPoints.toLocaleString()}P
+                  </span>
+                </Badge>
+              )}
+              
               <Button 
                 variant="outline" 
                 size="default"
@@ -126,26 +198,52 @@ export function NavigationBar({
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t bg-background backdrop-blur-lg">
-          <nav className="container mx-auto px-6 py-4 flex flex-col gap-4">
+          <nav className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-4">
             {!isLoggedIn ? (
               // 로그인 전 모바일 메뉴
               <>
-                {isLandingPage && [
-                  { label: '홈', href: '#home' },
-                  { label: '기능', href: '#features' },
-                  { label: '가격책정', href: '#pricing' },
-                  { label: '고객사례', href: '#testimonials' },
-                  { label: '가격', href: '#pricing' }
-                ].map((item, index) => (
-                  <a 
-                    key={index}
-                    href={item.href} 
-                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {item.label}
-                  </a>
-                ))}
+                {isLandingPage ? (
+                  // 랜딩 페이지에서는 앵커 링크
+                  <>
+                    {[
+                      { label: '홈', href: '#home' },
+                      { label: '기능', href: '#features' },
+                      { label: '고객사례', href: '#testimonials' },
+                      { label: '요금제', href: '#pricing' }
+                    ].map((item, index) => (
+                      <a 
+                        key={index}
+                        href={item.href} 
+                        className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </>
+                ) : (
+                  // 다른 페이지에서는 기능적 네비게이션
+                  <>
+                    <button 
+                      onClick={() => {
+                        onHome();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 text-left"
+                    >
+                      홈
+                    </button>
+                    <button 
+                      onClick={() => {
+                        onLogin();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 text-left"
+                    >
+                      시작하기
+                    </button>
+                  </>
+                )}
                 <Button 
                   variant="outline" 
                   size="default"
@@ -201,6 +299,28 @@ export function NavigationBar({
                   <User className="w-4 h-4" />
                   마이 페이지
                 </button>
+                
+                {/* Mobile Points Display */}
+                {typeof userPoints === 'number' && (
+                  <div 
+                    onClick={() => {
+                      onMyPage();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Badge 
+                      variant="secondary" 
+                      className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 transition-colors w-fit"
+                    >
+                      <Coins className="w-4 h-4 text-primary" />
+                      <span className="font-semibold text-primary">
+                        {userPoints.toLocaleString()} 포인트
+                      </span>
+                    </Badge>
+                  </div>
+                )}
+                
                 <Button 
                   variant="outline" 
                   size="default"
