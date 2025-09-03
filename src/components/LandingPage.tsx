@@ -4,7 +4,8 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { NavigationBar } from './NavigationBar';
 import { SectionHeading } from './ui/section-heading';
-import { Sparkles, Zap, Target, TrendingUp, Camera, Users, CheckCircle, Star, UserCheck } from 'lucide-react';
+import { SectionHeader } from './ui/section-header';
+import { Sparkles, Zap, Target, TrendingUp, Camera, Users, CheckCircle, Star, UserCheck, DollarSign, Clock } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -93,14 +94,22 @@ export function LandingPage({
                 { value: '5분', label: '생성 시간', desc: '이미지 당 평균' },
                 { value: '4.9★', label: '고객 만족도', desc: '1,200+ 리뷰 기준' }
               ].map((stat, index) => (
-                <div key={index} className="text-center p-10 rounded-2xl bg-card border">
-                  <div className="text-6xl font-bold text-primary mb-4">
+                <div key={index} className="relative text-center p-8 rounded-3xl border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 group bg-card backdrop-blur-sm">
+                  {/* Subtle gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10 rounded-3xl"></div>
+                  
+                  {/* Value */}
+                  <div className="relative text-5xl font-bold mb-4 text-primary">
                     {stat.value}
                   </div>
-                  <div className="text-2xl font-semibold mb-2">
+                  
+                  {/* Label */}
+                  <div className="relative text-xl font-semibold mb-2">
                     {stat.label}
                   </div>
-                  <p className="text-lg text-muted-foreground">
+                  
+                  {/* Description */}
+                  <p className="relative text-sm text-muted-foreground">
                     {stat.desc}
                   </p>
                 </div>
@@ -113,18 +122,12 @@ export function LandingPage({
       {/* Features Section */}
       <section id="features" className="min-h-screen flex items-center py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">
-              핵심 기능
-            </Badge>
-            <SectionHeading 
-              normalText="전문가 수준의 제품 이미지를"
-              highlightedText="AI로"
-            />
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              복잡한 스튜디오 촬영 없이도 브랜드에 완벽하게 맞는 고품질 이미지를 생성하세요
-            </p>
-          </div>
+          <SectionHeader
+            badge="핵심 기능"
+            normalText="전문가 수준의 제품 이미지를"
+            highlightedText="AI로"
+            description="복잡한 스튜디오 촬영 없이도 브랜드에 완벽하게 맞는 고품질 이미지를 생성하세요"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {[
@@ -199,15 +202,11 @@ export function LandingPage({
       {/* How It Works */}
       <section className="min-h-screen flex items-center py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">
-              작동 방식
-            </Badge>
-            <SectionHeading 
-              normalText="3단계로 완성하는"
-              highlightedText="전문 제품 이미지"
-            />
-          </div>
+          <SectionHeader
+            badge="작동 방식"
+            normalText="3단계로 완성하는"
+            highlightedText="전문 제품 이미지"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
             {[
@@ -262,15 +261,11 @@ export function LandingPage({
       {/* Testimonials */}
       <section id="testimonials" className="min-h-screen flex items-center py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">
-              고객 후기
-            </Badge>
-            <SectionHeading 
-              normalText="브랜드가 선택한 이유"
-              highlightedText="1,000+"
-            />
-          </div>
+          <SectionHeader
+            badge="고객 후기"
+            normalText="브랜드가 선택한 이유"
+            highlightedText="1,000+"
+          />
 
           <div className="max-w-5xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -318,18 +313,12 @@ export function LandingPage({
       {/* Subscription Plans Section */}
       <section id="about pricing" className="min-h-screen flex items-center py-20 sm:py-32 bg-gradient-to-br from-muted/50 via-background to-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">
-              구독 플랜
-            </Badge>
-            <SectionHeading 
-              normalText="플랜을 선택하세요"
-              highlightedText="완벽한"
-            />
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              프로젝트 규모에 맞는 플랜으로 AI 제품 이미지 생성을 시작하세요
-            </p>
-          </div>
+          <SectionHeader
+            badge="구독 플랜"
+            normalText="플랜을 선택하세요"
+            highlightedText="완벽한"
+            description="프로젝트 규모에 맞는 플랜으로 AI 제품 이미지 생성을 시작하세요"
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
