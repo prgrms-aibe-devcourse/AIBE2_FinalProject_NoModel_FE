@@ -339,7 +339,7 @@ export function ModelMarketplace({
       </div>
 
       {/* Main Content */}
-      <main className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">

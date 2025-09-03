@@ -466,7 +466,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                 borderRadius: 'var(--radius-12)'
               }}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <div 
                   className="w-10 h-10 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: 'var(--color-semantic-orange)' + '20' }}
@@ -478,8 +478,8 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                 </div>
                 <div>
                   <p 
-                    className="text-sm"
-                    style={{ color: 'var(--color-text-tertiary)' }}
+                    className="text-sm font-medium mb-1"
+                    style={{ color: 'var(--color-text-secondary)' }}
                   >
                     보유 포인트
                   </p>
@@ -490,7 +490,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {userProfile.points.toLocaleString()}
+                    {userProfile.points.toLocaleString()} P
                   </p>
                 </div>
               </div>
@@ -769,29 +769,29 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                   <span className="text-sm text-muted-foreground">
                     {filteredProjects.length}개 프로젝트
                   </span>
-                </div>
-              </div>
 
-              {/* View Mode */}
-              <div className="flex gap-1 bg-muted/30 rounded-lg p-1">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('grid')}
-                  className="px-3 h-9"
-                  style={{ borderRadius: 'var(--radius-6)' }}
-                >
-                  <Grid3X3 className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setViewMode('list')}
-                  className="px-3 h-9"
-                  style={{ borderRadius: 'var(--radius-6)' }}
-                >
-                  <List className="w-4 h-4" />
-                </Button>
+                  {/* View Mode */}
+                  <div className="flex gap-1 bg-muted/30 rounded-lg p-1 ml-auto">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('grid')}
+                      className="px-3 h-9"
+                      style={{ borderRadius: 'var(--radius-6)' }}
+                    >
+                      <Grid3X3 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setViewMode('list')}
+                      className="px-3 h-9"
+                      style={{ borderRadius: 'var(--radius-6)' }}
+                    >
+                      <List className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
