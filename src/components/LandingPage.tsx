@@ -1,9 +1,8 @@
 import * as React from 'react';
-const { useState } = React;
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Sparkles, Zap, Target, TrendingUp, Camera, Users, Play, CheckCircle, Star, Menu, X, LogIn, UserCheck, LogOut, ShoppingBag, User, Palette } from 'lucide-react';
+import { Sparkles, Zap, Target, TrendingUp, Camera, Users, CheckCircle, Star, Menu, X, UserCheck, LogOut, ShoppingBag, User, Palette } from 'lucide-react';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -29,7 +28,7 @@ export function LandingPage({
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={{ scrollBehavior: 'smooth' }}>
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
@@ -47,10 +46,11 @@ export function LandingPage({
               // 로그인 전 네비게이션
               <>
 {[
+                  { label: '홈', href: '#home' },
                   { label: '기능', href: '#features' },
                   { label: '가격책정', href: '#pricing' },
                   { label: '고객사례', href: '#testimonials' },
-                  { label: '소개', href: '#about' }
+                  { label: '가격', href: '#pricing' }
                 ].map((item, index) => (
                   <a 
                     key={index}
@@ -134,10 +134,11 @@ export function LandingPage({
                 // 로그인 전 모바일 메뉴
                 <>
 {[
+                    { label: '홈', href: '#home' },
                     { label: '기능', href: '#features' },
                     { label: '가격책정', href: '#pricing' },
                     { label: '고객사례', href: '#testimonials' },
-                    { label: '소개', href: '#about' }
+                    { label: '가격', href: '#pricing' }
                   ].map((item, index) => (
                     <a 
                       key={index}
@@ -223,7 +224,7 @@ export function LandingPage({
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section id="home" className="relative overflow-hidden min-h-screen flex items-center">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
         
         <div className="container mx-auto px-4 sm:px-6 py-20 sm:py-32 relative">
@@ -260,29 +261,30 @@ export function LandingPage({
               <Button 
                 variant="outline" 
                 size="lg"
+                onClick={onLogin}
                 className="w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
-                <Play className="w-5 h-5 mr-2" />
-                데모 영상 보기
+                <UserCheck className="w-5 h-5 mr-2" />
+                회원가입
               </Button>
             </div>
 
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {[
                 { value: '90%', label: '비용 절감', desc: '기존 촬영 대비' },
                 { value: '5분', label: '생성 시간', desc: '이미지 당 평균' },
                 { value: '4.9★', label: '고객 만족도', desc: '1,200+ 리뷰 기준' }
               ].map((stat, index) => (
-                <div key={index} className="text-center p-6 rounded-2xl bg-card border">
-                  <div className="text-4xl font-bold text-primary mb-2">
+                <div key={index} className="text-center p-10 rounded-2xl bg-card border">
+                  <div className="text-6xl font-bold text-primary mb-4">
                     {stat.value}
                   </div>
-                  <div className="text-lg font-semibold mb-1">
+                  <div className="text-2xl font-semibold mb-2">
                     {stat.label}
                   </div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-lg text-muted-foreground">
                     {stat.desc}
                   </p>
                 </div>
@@ -293,7 +295,7 @@ export function LandingPage({
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 sm:py-32 bg-muted/30">
+      <section id="features" className="min-h-screen flex items-center py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
@@ -308,7 +310,7 @@ export function LandingPage({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {[
               {
                 icon: Target,
@@ -351,22 +353,22 @@ export function LandingPage({
               return (
                 <Card 
                   key={index}
-                  className="p-8 hover:shadow-xl transition-all duration-300 group border-0 bg-card/50 backdrop-blur-sm"
+                  className="p-12 hover:shadow-xl transition-all duration-300 group border-0 bg-card/50 backdrop-blur-sm"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-background flex items-center justify-center group-hover:bg-primary/5 transition-colors duration-300">
-                      <IconComponent className="w-7 h-7 text-primary" />
+                    <div className="w-20 h-20 rounded-2xl bg-background flex items-center justify-center group-hover:bg-primary/5 transition-colors duration-300">
+                      <IconComponent className="w-10 h-10 text-primary" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-xl font-semibold">
+                        <h3 className="text-2xl font-semibold">
                           {feature.title}
                         </h3>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge variant="secondary" className="text-sm px-3 py-1">
                           {feature.highlight}
                         </Badge>
                       </div>
-                      <p className="text-muted-foreground leading-relaxed">
+                      <p className="text-lg text-muted-foreground leading-relaxed">
                         {feature.description}
                       </p>
                     </div>
@@ -379,7 +381,7 @@ export function LandingPage({
       </section>
 
       {/* How It Works */}
-      <section className="py-20 sm:py-32">
+      <section className="min-h-screen flex items-center py-20 sm:py-32">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
@@ -390,7 +392,7 @@ export function LandingPage({
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-6xl mx-auto">
             {[
               {
                 step: "01",
@@ -419,18 +421,18 @@ export function LandingPage({
                   )}
                   
                   <div className="relative mb-6">
-                    <div className="w-32 h-32 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4 relative">
-                      <IconComponent className="w-12 h-12 text-primary" />
-                      <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-lg font-bold">
+                    <div className="w-40 h-40 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6 relative">
+                      <IconComponent className="w-16 h-16 text-primary" />
+                      <div className="absolute -top-4 -right-4 w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">
                         {step.step}
                       </div>
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-semibold mb-3">
+                  <h3 className="text-2xl font-semibold mb-4">
                     {step.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-lg text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -441,7 +443,7 @@ export function LandingPage({
       </section>
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-20 sm:py-32 bg-muted/30">
+      <section id="testimonials" className="min-h-screen flex items-center py-20 sm:py-32 bg-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
@@ -452,94 +454,183 @@ export function LandingPage({
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "김민수",
-                role: "마케팅 디렉터, 패션브랜드 A",
-                rating: 5,
-                comment: "기존 모델 촬영비 90% 절약하면서도 더 높은 품질의 결과를 얻었습니다. 이제 매주 새로운 컨텐츠를 만들 수 있어요."
-              },
-              {
-                name: "이혜진",
-                role: "브랜드 매니저, 코스메틱 B",
-                comment: "다양한 모델과 배경으로 글로벌 마케팅이 가능해졌습니다. A/B 테스트도 쉽고 ROI가 300% 향상됐어요.",
-                rating: 5
-              },
-              {
-                name: "박정호",
-                role: "CEO, 스타트업 C",
-                comment: "스타트업에게는 정말 게임체인저입니다. 적은 예산으로도 대기업 수준의 마케팅 자료를 만들 수 있어요.",
-                rating: 5
-              }
-            ].map((testimonial, index) => (
-              <Card key={index} className="p-6 bg-card">
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  ))}
-                </div>
-                <p className="text-muted-foreground mb-6 leading-relaxed">
-                  "{testimonial.comment}"
-                </p>
-                <div>
-                  <div className="font-semibold">{testimonial.name}</div>
-                  <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                </div>
-              </Card>
-            ))}
+          <div className="max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  name: "김민수",
+                  role: "마케팅 디렉터, 패션브랜드 A",
+                  rating: 5,
+                  comment: "기존 모델 촬영비 90% 절약하면서도 더 높은 품질의 결과를 얻었습니다. 이제 매주 새로운 컨텐츠를 만들 수 있어요."
+                },
+                {
+                  name: "이혜진",
+                  role: "브랜드 매니저, 코스메틱 B",
+                  comment: "다양한 모델과 배경으로 글로벌 마케팅이 가능해졌습니다. A/B 테스트도 쉽고 ROI가 300% 향상됐어요.",
+                  rating: 5
+                },
+                {
+                  name: "박정호",
+                  role: "CEO, 스타트업 C",
+                  comment: "스타트업에게는 정말 게임체인저입니다. 적은 예산으로도 대기업 수준의 마케팅 자료를 만들 수 있어요.",
+                  rating: 5
+                }
+              ].map((testimonial, index) => (
+                <Card key={index} className="p-6 bg-card border shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                    "{testimonial.comment}"
+                  </p>
+                  <div>
+                    <div className="text-sm font-semibold">{testimonial.name}</div>
+                    <div className="text-xs text-muted-foreground">{testimonial.role}</div>
+                  </div>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section id="pricing" className="py-20 sm:py-32 bg-gradient-to-r from-primary/10 via-secondary/10 to-primary/10">
-        <div className="container mx-auto px-6 text-center">
-          <div className="max-w-3xl mx-auto">
-            <Badge variant="outline" className="mb-6">
-              한정 제공
+
+      {/* Subscription Plans Section */}
+      <section id="about pricing" className="min-h-screen flex items-center py-20 sm:py-32 bg-gradient-to-br from-muted/50 via-background to-muted/30">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4">
+              구독 플랜
             </Badge>
-            
-            <h2 className="text-5xl md:text-6xl font-bold mb-6">
-              지금 시작하고 <span className="text-primary">무료로</span> 체험하세요
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+              <span className="text-primary">완벽한</span> 플랜을 선택하세요
             </h2>
-            
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              첫 3장의 이미지는 완전 무료! 비용 대비 효과를 직접 체험하고 판단하세요.
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              프로젝트 규모에 맞는 플랜으로 AI 제품 이미지 생성을 시작하세요
             </p>
-            
-            <div className="flex flex-row gap-3 sm:gap-4 justify-center items-center mb-16 flex-wrap">
-              <Button 
-                size="lg" 
-                onClick={onGetStarted} 
-                className="w-auto px-8 h-12 text-base rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                3장 무료로 시작하기
-                <Camera className="w-5 h-5 ml-2" />
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={onLogin}
-                className="w-auto px-8 py-3 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
-              >
-                이미 계정이 있나요?
-                <UserCheck className="w-5 h-5 ml-2" />
-              </Button>
-            </div>
-            
-            {/* Trust Indicators */}
-            <div className="flex flex-col md:flex-row justify-center items-center gap-8 text-sm text-muted-foreground">
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {[
+              {
+                name: "무료",
+                price: "₩0",
+                period: "/월",
+                description: "개인 사용자를 위한 무료 체험",
+                features: [
+                  "3장의 이미지 생성",
+                  "기본 AI 모델 접근",
+                  "표준 해상도 (1080p)",
+                  "5개 배경 템플릿",
+                  "이메일 지원"
+                ],
+                buttonText: "무료로 시작",
+                popular: false,
+                color: "green"
+              },
+              {
+                name: "프로",
+                price: "₩29,000",
+                period: "/월",
+                description: "소상공인과 프리랜서를 위한 플랜",
+                features: [
+                  "50장의 이미지 생성",
+                  "프리미엄 AI 모델 접근",
+                  "4K 고해상도",
+                  "20+ 배경 템플릿",
+                  "우선순위 지원",
+                  "상업적 라이선스",
+                  "배치 처리"
+                ],
+                buttonText: "프로 시작",
+                popular: true,
+                color: "blue"
+              },
+              {
+                name: "비즈니스",
+                price: "₩99,000",
+                period: "/월",
+                description: "기업과 대형 프로젝트를 위한 플랜",
+                features: [
+                  "무제한 이미지 생성",
+                  "모든 프리미엄 AI 모델",
+                  "8K 초고해상도",
+                  "모든 배경 & 스타일",
+                  "24/7 전담 지원",
+                  "API 접근 권한",
+                  "팀 협업 도구",
+                  "커스텀 모델 학습"
+                ],
+                buttonText: "비즈니스 시작",
+                popular: false,
+                color: "purple"
+              }
+            ].map((plan, index) => {
+              const colorClasses = {
+                green: "border-green-200 bg-green-50/50",
+                blue: "border-blue-200 bg-blue-50/50",
+                purple: "border-purple-200 bg-purple-50/50"
+              };
+              const buttonColorClasses = {
+                green: "bg-green-500 hover:bg-green-600 text-white",
+                blue: "bg-blue-500 hover:bg-blue-600 text-white",
+                purple: "bg-purple-500 hover:bg-purple-600 text-white"
+              };
+              
+              return (
+                <div key={index} className="flex items-center">
+                  <Card className={`relative p-8 h-full w-full ${colorClasses[plan.color]} hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer`}>
+                    <div className="p-6">
+                      <div className="text-center mb-8">
+                        <h3 className="text-2xl font-bold mb-3">{plan.name}</h3>
+                        <div className="mb-4">
+                          <span className="text-4xl font-bold">{plan.price}</span>
+                          <span className="text-lg text-muted-foreground">{plan.period}</span>
+                        </div>
+                        <p className="text-muted-foreground">{plan.description}</p>
+                      </div>
+                      
+                      <div className="space-y-5 mb-8">
+                        {plan.features.map((feature, featureIndex) => (
+                          <div key={featureIndex} className="flex items-start gap-4">
+                            <CheckCircle className={`w-5 h-5 text-${plan.color}-500 flex-shrink-0 mt-0.5`} />
+                            <span className="text-base leading-relaxed">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <Button 
+                        className={`w-full ${buttonColorClasses[plan.color]}`}
+                        size="lg"
+                        onClick={plan.name === "무료" ? onGetStarted : onLogin}
+                      >
+                        {plan.buttonText}
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              );
+            })}
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground mb-4">
+              모든 플랜에는 30일 무료 환불 보장이 포함되어 있습니다
+            </p>
+            <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
+                <CheckCircle className="w-4 h-4 text-green-500" />
                 신용카드 불필요
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                언제든 취소 가능
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                언제든 업그레이드 가능
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-500" />
-                30일 무조건 환불
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                24시간 고객지원
               </div>
             </div>
           </div>
@@ -547,7 +638,7 @@ export function LandingPage({
       </section>
 
       {/* Footer */}
-      <footer id="about" className="py-8 border-t bg-card">
+      <footer className="py-8 border-t bg-card">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-0 items-center">
             {/* Logo - Left */}
