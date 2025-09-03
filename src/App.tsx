@@ -322,14 +322,14 @@ export default function App() {
               setCurrentStage('mypage');
             } else {
               // Failed to get profile, logout
-              authService.logout();
+              await authService.logout();
               setIsLoggedIn(false);
               setUserProfile(null);
             }
           }
         } catch (error) {
           console.error('Auth check failed:', error);
-          authService.logout();
+          await authService.logout();
           setIsLoggedIn(false);
           setUserProfile(null);
         }
@@ -421,8 +421,8 @@ export default function App() {
     setCurrentStage('login');
   };
 
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     setIsLoggedIn(false);
     setUserProfile(null);
     setCurrentStage('landing');
