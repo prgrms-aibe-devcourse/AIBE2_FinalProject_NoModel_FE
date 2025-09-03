@@ -312,7 +312,7 @@ export function LandingPage({
 
 
       {/* Subscription Plans Section */}
-      <section id="about pricing" className="min-h-screen flex items-center py-20 sm:py-32 bg-gradient-to-br from-muted/50 via-background to-muted/30">
+      <section id="pricing" className="min-h-screen flex items-center py-20 sm:py-32 bg-gradient-to-br from-muted/50 via-background to-muted/30">
         <div className="container mx-auto px-4 sm:px-6">
           <SectionHeader
             badge="구독 플랜"
