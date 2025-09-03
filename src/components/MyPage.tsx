@@ -262,7 +262,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
       />
 
       {/* Main Content */}
-      <main className="py-8 max-w-7xl mx-auto" style={{ paddingInline: 'var(--spacing-page-padding-inline)' }}>
+      <main className="py-8 max-w-7xl mx-auto px-8">
         {/* User Stats */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
