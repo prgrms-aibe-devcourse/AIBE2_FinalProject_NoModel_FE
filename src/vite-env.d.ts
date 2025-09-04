@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_BASE_URL: string
+  readonly VITE_API_BASE: string
   // 다른 환경 변수들...
 }
 

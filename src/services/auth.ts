@@ -7,7 +7,7 @@ class AuthService {
   // Login API call - Cookie based authentication
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await PostAxiosInstance<LoginResponse>('/api/auth/login', credentials);
+      const response = await PostAxiosInstance<LoginResponse>('/auth/login', credentials);
       const data = response.data;
 
       // 쿠키 기반 인증이므로 body에서 토큰을 추출하지 않음
@@ -186,7 +186,7 @@ class AuthService {
       token = this.getAccessToken();
     }
 
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:8080'}${url}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'}${url}`, {
       ...options,
       headers: {
         ...options.headers,
@@ -200,7 +200,7 @@ class AuthService {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         const newToken = this.getAccessToken();
-        return fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:8080'}${url}`, {
+        return fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'}${url}`, {
           ...options,
           headers: {
             ...options.headers,

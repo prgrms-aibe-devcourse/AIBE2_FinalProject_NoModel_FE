@@ -2,7 +2,7 @@ import axios from 'axios';
 import { tokenCookies } from '../utils/cookieUtils';
 
 const axiosInstance = axios.create({ 
-  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:8080',
+  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080/api',
   withCredentials: true, // 쿠키를 포함하여 요청 전송
 });
 
