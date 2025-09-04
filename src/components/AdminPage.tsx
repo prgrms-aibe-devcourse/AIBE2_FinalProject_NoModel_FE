@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -21,6 +21,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { ModelReport, UserProfile } from '../App';
+import { fetchReportSummary, UiSummary } from '../services/reportApi';
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
@@ -146,6 +147,11 @@ export function AdminPage({
   const [selectedResolution, setSelectedResolution] = useState<ModelReport['resolution']>('no_action');
   const [activeTab, setActiveTab] = useState<string>('statistics');
 
+  // 신고 요약
+  const [summary, setSummary] = useState<UiSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
   // Filter reports
   const filteredReports = useMemo(() => {
     return modelReports.filter(report => {
@@ -157,15 +163,6 @@ export function AdminPage({
     }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }, [modelReports, searchQuery, statusFilter, typeFilter]);
 
-  // Admin stats
-  const adminStats = useMemo(() => {
-    const pending = modelReports.filter(r => r.status === 'pending').length;
-    const reviewed = modelReports.filter(r => r.status === 'reviewed').length;
-    const resolved = modelReports.filter(r => r.status === 'resolved').length;
-    const dismissed = modelReports.filter(r => r.status === 'dismissed').length;
-    
-    return { pending, reviewed, resolved, dismissed, total: modelReports.length };
-  }, [modelReports]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ko-KR', {
@@ -191,6 +188,35 @@ export function AdminPage({
     setReviewNotes('');
     setSelectedResolution('no_action');
   };
+
+  // 신고 요약
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setSummaryLoading(true);
+        setSummaryError(null);
+        const ui = await fetchReportSummary(); // 필요시 {startAt, endAt, targetType} 전달
+        if (!abort) setSummary(ui);
+      } catch (e: any) {
+        if (!abort) setSummaryError(e?.message ?? '요약 조회 실패');
+      } finally {
+        if (!abort) setSummaryLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const computedStats = useMemo(() => {
+    const pending = modelReports.filter(r => r.status === 'pending').length;
+    const reviewed = modelReports.filter(r => r.status === 'reviewed').length;
+    const resolved = modelReports.filter(r => r.status === 'resolved').length;
+    const dismissed = modelReports.filter(r => r.status === 'dismissed').length;
+    return { pending, reviewed, resolved, dismissed, total: modelReports.length };
+  }, [modelReports]);
+
+  const adminStats = summary ?? computedStats; // ← 카드에 이 값을 그대로 사용
+
 
   if (!userProfile?.isAdmin) {
     return (
@@ -570,6 +596,13 @@ export function AdminPage({
           {/* Reports Management */}
           <TabsContent value="reports" className="space-y-6">
             {/* Admin Stats */}
+            {summaryLoading && (
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>요약 불러오는 중…</p>
+            )}
+            {summaryError && (
+                <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>요약 에러: {summaryError}</p>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Card className="p-4" style={{
                 backgroundColor: 'var(--color-background-primary)',
