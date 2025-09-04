@@ -2,24 +2,18 @@ import axios from 'axios';
 import { tokenCookies } from '../utils/cookieUtils';
 
 const axiosInstance = axios.create({ 
-  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:8080'
+  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:8080',
+  withCredentials: true, // 쿠키를 포함하여 요청 전송
 });
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const accessToken = tokenCookies.getAccessToken();
-
-    // if (!accessToken) {
-    //   // 토큰이 없을 경우 로그아웃 처리
-    //   localStorage.clear();
-    //   window.location.href = '/login';
-    //   throw new Error('토큰 없음');
-    // }
-
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
+    // 쿠키 기반 인증을 사용하므로 Authorization 헤더 설정 불필요
+    // withCredentials: true 설정으로 쿠키가 자동 포함됨
+    
+    // 필요한 경우 다른 공통 헤더 설정
+    config.headers['Content-Type'] = config.headers['Content-Type'] || 'application/json';
+    
     return config;
   },
   (error) => {
@@ -27,20 +21,22 @@ axiosInstance.interceptors.request.use(
   },
 );
 
-// 토큰 관련 에러 처리
+// 인증 관련 에러 처리
 axiosInstance.interceptors.response.use(
   async (response) => {
     return response;
   },
 
   async (error) => {
-    // 토큰 만료나 잘못된 토큰일 때 로그아웃 처리
+    // 401 인증 에러 처리 (쿠키 만료 또는 유효하지 않은 쿠키)
     if (error.response?.status === 401 || error.response?.data?.code === 'AUTH_001') {
-      console.log('인증 오류 - 토큰 제거');
+      console.log('인증 오류 - 세션 만료');
+      
+      // 로컬 스토리지 정리 (필요한 경우)
       tokenCookies.clearAll();
       
-      // 로그인 페이지로 리다이렉트 (필요한 경우)
-      if (window.location.pathname !== '/') {
+      // 로그인 페이지로 리다이렉트
+      if (window.location.pathname !== '/' && window.location.pathname !== '/login') {
         window.location.href = '/';
       }
     }
