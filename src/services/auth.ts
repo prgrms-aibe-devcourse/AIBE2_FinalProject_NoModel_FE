@@ -186,7 +186,7 @@ class AuthService {
       token = this.getAccessToken();
     }
 
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:8080'}${url}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'}${url}`, {
       ...options,
       headers: {
         ...options.headers,
@@ -200,7 +200,7 @@ class AuthService {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         const newToken = this.getAccessToken();
-        return fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:8080'}${url}`, {
+        return fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'}${url}`, {
           ...options,
           headers: {
             ...options.headers,

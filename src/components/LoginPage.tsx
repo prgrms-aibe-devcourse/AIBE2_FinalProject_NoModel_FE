@@ -64,7 +64,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
 
   // ✅ 실제 소셜 로그인 시작: 백엔드 OAuth2 엔드포인트로 이동
   const handleSocialLogin = (provider: 'google' | 'github') => {
-    // 예: http://localhost:8080/api//oauth2/authorization/google|github
+    // 예: http://localhost:8080/api/oauth2/authorization/google|github
     window.location.href = `${API_BASE}/oauth2/authorization/${provider}`;
   };
 

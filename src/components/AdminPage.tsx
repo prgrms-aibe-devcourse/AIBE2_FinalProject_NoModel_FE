@@ -1,26 +1,55 @@
-import React, { useState, useMemo } from 'react';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Alert, AlertDescription } from './ui/alert';
-import { NavigationBar } from './NavigationBar';
-import { 
-  ArrowLeft, Shield, AlertTriangle, Eye, Clock, CheckCircle, XCircle,
-  Flag, Copyright, Ban, MoreHorizontal, User, Calendar, Search,
-  FileText, Trash2, AlertOctagon, BarChart3, TrendingUp, Users,
-  Star, Coins, ImageIcon, Activity, DollarSign, Download
+import React, {useEffect, useMemo, useState} from 'react';
+import {Button} from './ui/button';
+import {Card} from './ui/card';
+import {Badge} from './ui/badge';
+import {Input} from './ui/input';
+import {Textarea} from './ui/textarea';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from './ui/tabs';
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog';
+import {Alert, AlertDescription} from './ui/alert';
+import {NavigationBar} from './NavigationBar';
+import {
+  AlertOctagon,
+  ArrowLeft,
+  Ban,
+  BarChart3,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Coins,
+  Copyright,
+  Eye,
+  FileText,
+  Flag,
+  ImageIcon,
+  MoreHorizontal,
+  Search,
+  Shield,
+  Star,
+  User,
+  Users,
+  XCircle
 } from 'lucide-react';
-import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
-import { ModelReport, UserProfile } from '../App';
+import {ModelReport, UserProfile} from '../App';
+import type {AdminReportItem, ReportStatus} from '../services/reportApi';
+import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} from '../services/reportApi';
+
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
@@ -40,7 +69,9 @@ const reportTypeLabels = {
   copyright: '저작권 침해',
   spam: '스팸 또는 중복',
   fake: '가짜 또는 허위',
-  other: '기타'
+  other: '기타',
+  model: '모델',
+  review: '리뷰'
 };
 
 const reportTypeIcons = {
@@ -126,6 +157,35 @@ const mockStatsData = {
 
 const COLORS = ['#7170ff', '#4ea7fc', '#4cb782', '#fc7840', '#f2c94c'];
 
+const mapServerStatusToUi = (s: ReportStatus): ModelReport['status'] => {
+  switch (s) {
+    case 'PENDING': return 'pending';
+    case 'UNDER_REVIEW': return 'reviewed';
+    case 'RESOLVED':
+    case 'ACCEPTED': return 'resolved';
+    case 'REJECTED': return 'dismissed';
+    default: return 'pending';
+  }
+};
+
+const toModelReport = (r: AdminReportItem): ModelReport => ({
+  id: String(r.reportId),
+  status: mapServerStatusToUi(r.reportStatus),
+  reportType: 'other',                   // 서버에 타입 필드 없으니 기본값
+  modelName: `${r.targetType} #${r.targetId}`,
+  modelId: r.targetId,
+  modelImageUrl: '/placeholder-report.png', // 썸네일 없으면 플레이스홀더
+  reporterName: r.createdBy ?? '알 수 없음',
+  createdAt: new Date(r.createdAt),
+  reviewedAt: r.updatedAt ? new Date(r.updatedAt) : undefined,
+  description: r.reasonDetail ?? '',
+  reviewNotes: r.adminNote ?? undefined,
+  // UI에서 접근하는 선택 필드들 기본값
+  attachments: [],
+  resolution: undefined,
+});
+
+
 export function AdminPage({ 
   userProfile, 
   modelReports, 
@@ -146,26 +206,56 @@ export function AdminPage({
   const [selectedResolution, setSelectedResolution] = useState<ModelReport['resolution']>('no_action');
   const [activeTab, setActiveTab] = useState<string>('statistics');
 
+  // 신고 요약
+  const [summary, setSummary] = useState<UiSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  // 신고 목록
+  const [apiReports, setApiReports] = useState<ModelReport[]>([]);
+  const [listPage, setListPage] = useState(0);
+  const [listSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+
+  // UI 상태필터 → 서버 상태필터 매핑
+  const uiToServerStatus: Record<string, ReportStatus | undefined> = {
+    all: undefined,
+    pending: 'PENDING',
+    reviewed: 'UNDER_REVIEW',
+    resolved: 'RESOLVED',
+    dismissed: 'REJECTED',
+  };
+
+  // 신고 처리
+  const [processing, setProcessing] = useState(false);
+  const [reloadTick, setReloadTick] = useState(0);
+  const [openReportId, setOpenReportId] = useState<string | null>(null);
+
+  const uiToServerStatusForProcess: Record<ModelReport['status'], ReportStatus> = {
+    pending: 'PENDING',
+    reviewed: 'UNDER_REVIEW',
+    resolved: 'RESOLVED',
+    dismissed: 'REJECTED',
+  };
+
   // Filter reports
   const filteredReports = useMemo(() => {
-    return modelReports.filter(report => {
-      if (statusFilter !== 'all' && report.status !== statusFilter) return false;
-      if (typeFilter !== 'all' && report.reportType !== typeFilter) return false;
-      if (searchQuery && !report.modelName.toLowerCase().includes(searchQuery.toLowerCase()) && 
-          !report.reporterName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
-    }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }, [modelReports, searchQuery, statusFilter, typeFilter]);
+    return apiReports
+        .filter(report => {
+          if (typeFilter !== 'all' && report.reportType !== typeFilter) return false;
+          if (
+              searchQuery &&
+              !report.modelName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+              !report.reporterName.toLowerCase().includes(searchQuery.toLowerCase())
+          ) return false;
+          return true;
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }, [apiReports, searchQuery, typeFilter]);
 
-  // Admin stats
-  const adminStats = useMemo(() => {
-    const pending = modelReports.filter(r => r.status === 'pending').length;
-    const reviewed = modelReports.filter(r => r.status === 'reviewed').length;
-    const resolved = modelReports.filter(r => r.status === 'resolved').length;
-    const dismissed = modelReports.filter(r => r.status === 'dismissed').length;
-    
-    return { pending, reviewed, resolved, dismissed, total: modelReports.length };
-  }, [modelReports]);
+
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ko-KR', {
@@ -177,20 +267,100 @@ export function AdminPage({
     }).format(date);
   };
 
-  const handleStatusUpdate = (status: ModelReport['status']) => {
+  // 신고 요약
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setSummaryLoading(true);
+        setSummaryError(null);
+        const ui = await fetchReportSummary(); // 필요시 {startAt, endAt, targetType} 전달
+        if (!abort) setSummary(ui);
+      } catch (e: any) {
+        if (!abort) setSummaryError(e?.message ?? '요약 조회 실패');
+      } finally {
+        if (!abort) setSummaryLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const computedStats = useMemo(() => {
+    const pending = modelReports.filter(r => r.status === 'pending').length;
+    const reviewed = modelReports.filter(r => r.status === 'reviewed').length;
+    const resolved = modelReports.filter(r => r.status === 'resolved').length;
+    const dismissed = modelReports.filter(r => r.status === 'dismissed').length;
+    return { pending, reviewed, resolved, dismissed, total: modelReports.length };
+  }, [modelReports]);
+
+  const adminStats = summary ?? computedStats; // ← 카드에 이 값을 그대로 사용
+
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setListLoading(true);
+        setListError(null);
+        const pageRes = await fetchAdminReports({
+          page: listPage,
+          size: listSize,
+          reportStatus: uiToServerStatus[statusFilter], // 'all'이면 undefined로 전달
+          // targetType 필요하면 여기 추가: targetType: 'MODEL' | 'REVIEW'
+        });
+        if (abort) return;
+        setApiReports(pageRes.content.map(toModelReport));
+        setTotalPages(pageRes.totalPages);
+      } catch (e: any) {
+        if (!abort) setListError(e?.message ?? '신고 목록을 불러오지 못했습니다');
+      } finally {
+        if (!abort) setListLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, [listPage, listSize, statusFilter, reloadTick]);
+
+  const handleStatusUpdate = async (status: ModelReport['status']) => {
     if (!selectedReport) return;
-    
-    onReportStatusUpdate(
-      selectedReport.id, 
-      status, 
-      reviewNotes.trim() || undefined,
-      status === 'resolved' ? selectedResolution : undefined
-    );
-    
-    setSelectedReport(null);
-    setReviewNotes('');
-    setSelectedResolution('no_action');
+
+    try {
+      setProcessing(true);
+
+      const res = await processAdminReport(selectedReport.id, {
+        reportStatus: uiToServerStatusForProcess[status],
+        adminNote: reviewNotes.trim() || undefined,
+      });
+
+      // 1) ApiUtils.success(...) 언래핑 (서비스에서 이미 언래핑했다면 그대로 사용)
+      const serverItem: AdminReportItem = res as AdminReportItem;
+
+      // 2) UI 모델로 변환
+      const updated = toModelReport(serverItem);
+
+      // 3) 모달 내용(선택된 항목) 갱신
+      setSelectedReport(updated);
+
+      // 4) 리스트의 해당 카드도 동기화
+      setApiReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+
+      // 입력 초기화(선택)
+      setReviewNotes(updated.reviewNotes || '');
+      setSelectedResolution(updated.resolution || 'no_action');
+
+      // 요약도 갱신(선택)
+      try {
+        const ui = await fetchReportSummary();
+        setSummary(ui);
+      } catch {}
+
+    } catch (e: any) {
+      alert(e?.message ?? '신고 처리에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
   };
+
+
+
 
   if (!userProfile?.isAdmin) {
     return (
@@ -570,6 +740,13 @@ export function AdminPage({
           {/* Reports Management */}
           <TabsContent value="reports" className="space-y-6">
             {/* Admin Stats */}
+            {summaryLoading && (
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>요약 불러오는 중…</p>
+            )}
+            {summaryError && (
+                <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>요약 에러: {summaryError}</p>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <Card className="p-4" style={{
                 backgroundColor: 'var(--color-background-primary)',
@@ -723,23 +900,41 @@ export function AdminPage({
                   </SelectContent>
                 </Select>
 
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full md:w-40">
-                    <SelectValue placeholder="유형 필터" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">모든 유형</SelectItem>
-                    <SelectItem value="inappropriate_content">부적절한 콘텐츠</SelectItem>
-                    <SelectItem value="copyright">저작권 침해</SelectItem>
-                    <SelectItem value="spam">스팸</SelectItem>
-                    <SelectItem value="fake">가짜</SelectItem>
-                    <SelectItem value="other">기타</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/*<Select value={typeFilter} onValueChange={setTypeFilter}>*/}
+                {/*  <SelectTrigger className="w-full md:w-40">*/}
+                {/*    <SelectValue placeholder="유형 필터" />*/}
+                {/*  </SelectTrigger>*/}
+                {/*  <SelectContent>*/}
+                {/*    <SelectItem value="all">모든 유형</SelectItem>*/}
+                {/*    <SelectItem value="inappropriate_content">부적절한 콘텐츠</SelectItem>*/}
+                {/*    <SelectItem value="copyright">저작권 침해</SelectItem>*/}
+                {/*    <SelectItem value="spam">스팸</SelectItem>*/}
+                {/*    <SelectItem value="fake">가짜</SelectItem>*/}
+                {/*    <SelectItem value="other">기타</SelectItem>*/}
+                {/*  </SelectContent>*/}
+                {/*</Select>*/}
               </div>
             </Card>
 
             {/* Reports List */}
+            {listLoading && (
+                <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>목록 불러오는 중…</p>
+            )}
+            {listError && (
+                <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {listError}</p>
+            )}
+            <div className="flex items-center gap-2 justify-end">
+              <Button variant="outline" disabled={listPage === 0} onClick={() => setListPage(p => Math.max(0, p - 1))}>
+                이전
+              </Button>
+              <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>
+                {listPage + 1} / {Math.max(1, totalPages)}
+              </span>
+              <Button variant="outline" disabled={listPage + 1 >= totalPages} onClick={() => setListPage(p => p + 1)}>
+                다음
+              </Button>
+            </div>
+
             <div className="space-y-4">
               {filteredReports.length === 0 ? (
                 <Card className="p-8 text-center" style={{
@@ -770,13 +965,13 @@ export function AdminPage({
                   }}>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-4 flex-1">
-                        <img 
-                          src={report.modelImageUrl} 
-                          alt={report.modelName}
-                          className="w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                          style={{ borderRadius: 'var(--radius-12)' }}
-                          onClick={() => window.open(report.modelImageUrl, '_blank')}
-                        />
+                        {/*<img */}
+                        {/*  src={report.modelImageUrl} */}
+                        {/*  alt={report.modelName}*/}
+                        {/*  className="w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity"*/}
+                        {/*  style={{ borderRadius: 'var(--radius-12)' }}*/}
+                        {/*  onClick={() => window.open(report.modelImageUrl, '_blank')}*/}
+                        {/*/>*/}
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
                             <h3 style={{
@@ -838,17 +1033,17 @@ export function AdminPage({
                                 </span>
                               </div>
                             )}
-                            {report.attachments && report.attachments.length > 0 && (
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} />
-                                <span style={{ 
-                                  color: 'var(--color-text-secondary)',
-                                  fontSize: 'var(--font-size-small)'
-                                }}>
-                                  첨부파일: {report.attachments.length}개
-                                </span>
-                              </div>
-                            )}
+                            {/*{report.attachments && report.attachments.length > 0 && (*/}
+                            {/*  <div className="flex items-center gap-2">*/}
+                            {/*    <FileText className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} />*/}
+                            {/*    <span style={{ */}
+                            {/*      color: 'var(--color-text-secondary)',*/}
+                            {/*      fontSize: 'var(--font-size-small)'*/}
+                            {/*    }}>*/}
+                            {/*      첨부파일: {report.attachments.length}개*/}
+                            {/*    </span>*/}
+                            {/*  </div>*/}
+                            {/*)}*/}
                           </div>
 
                           <p style={{ 
@@ -1111,24 +1306,24 @@ export function AdminPage({
                                     />
                                   </div>
 
-                                  {selectedReport.status !== 'resolved' && selectedReport.status !== 'dismissed' && (
-                                    <div>
-                                      <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>
-                                        조치 방법
-                                      </label>
-                                      <Select value={selectedResolution} onValueChange={setSelectedResolution}>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="조치 방법을 선택하세요" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="no_action">조치 없음 - 신고 내용이 부적절함</SelectItem>
-                                          <SelectItem value="warning_issued">경고 발송 - 모델 제작자에게 경고</SelectItem>
-                                          <SelectItem value="model_removed">모델 삭제 - 해당 모델을 플랫폼에서 제거</SelectItem>
-                                          <SelectItem value="user_banned">사용자 차단 - 계정 정지 조치</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  )}
+                                  {/*{selectedReport.status !== 'resolved' && selectedReport.status !== 'dismissed' && (*/}
+                                  {/*  <div>*/}
+                                  {/*    <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-primary)' }}>*/}
+                                  {/*      조치 방법*/}
+                                  {/*    </label>*/}
+                                  {/*    <Select value={selectedResolution} onValueChange={setSelectedResolution}>*/}
+                                  {/*      <SelectTrigger>*/}
+                                  {/*        <SelectValue placeholder="조치 방법을 선택하세요" />*/}
+                                  {/*      </SelectTrigger>*/}
+                                  {/*      <SelectContent>*/}
+                                  {/*        <SelectItem value="no_action">조치 없음 - 신고 내용이 부적절함</SelectItem>*/}
+                                  {/*        <SelectItem value="warning_issued">경고 발송 - 모델 제작자에게 경고</SelectItem>*/}
+                                  {/*        <SelectItem value="model_removed">모델 삭제 - 해당 모델을 플랫폼에서 제거</SelectItem>*/}
+                                  {/*        <SelectItem value="user_banned">사용자 차단 - 계정 정지 조치</SelectItem>*/}
+                                  {/*      </SelectContent>*/}
+                                  {/*    </Select>*/}
+                                  {/*  </div>*/}
+                                  {/*)}*/}
 
                                   {(selectedReport.status === 'resolved' || selectedReport.status === 'dismissed') && selectedReport.resolution && (
                                     <div className="p-4 rounded-lg" style={{ 
@@ -1204,6 +1399,7 @@ export function AdminPage({
                           )}
                         </DialogContent>
                       </Dialog>
+
                     </div>
                   </Card>
                 ))
