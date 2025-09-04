@@ -7,7 +7,7 @@ class AuthService {
   // Login API call - Cookie based authentication
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await PostAxiosInstance<LoginResponse>('/auth/login', credentials);
+      const response = await PostAxiosInstance<LoginResponse>('/api/auth/login', credentials);
       const data = response.data;
 
       // 쿠키 기반 인증이므로 body에서 토큰을 추출하지 않음
