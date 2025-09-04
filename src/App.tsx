@@ -18,6 +18,19 @@ import { AdminPage } from './components/AdminPage';
 import { ComponentDemo } from './components/ComponentDemo';
 import LoginTest from './components/LoginTest';
 
+const OAUTH_CALLBACK_PATH =
+    (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
+
+function parseOAuthHash(hash: string) {
+  const h = hash.startsWith("#") ? hash.slice(1) : hash;
+  const p = new URLSearchParams(h);
+  return {
+    access: p.get("access"),
+    refresh: p.get("refresh"),
+    error: p.get("error"),
+  };
+}
+
 export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest';
 
 export interface UserModel {
@@ -415,6 +428,45 @@ export default function App() {
       setCurrentStage('onboarding');
     }
   };
+
+  useEffect(() => {
+    // 백엔드 성공 핸들러가 http://localhost:5173/oauth2/callback#access=...&refresh=... 로 보낸다고 가정
+    if (window.location.pathname === OAUTH_CALLBACK_PATH) {
+      const { access, refresh, error } = parseOAuthHash(window.location.hash);
+
+      if (error || !access || !refresh) {
+        console.error("OAuth2 callback error:", error);
+        // 나쁜 해시면 로그인 화면으로 돌려보냄
+        window.history.replaceState({}, "", "/");
+        setCurrentStage("login");
+        return;
+      }
+
+      // 토큰 저장 (authService에 setTokens가 없다면 localStorage에 직접 저장해도 됨)
+      if ((authService as any).setTokens) {
+        (authService as any).setTokens(access, refresh);
+      } else {
+        localStorage.setItem("access", access);
+        localStorage.setItem("refresh", refresh);
+      }
+
+      // 주소 정리: 해시/콜백 경로 제거
+      window.history.replaceState({}, "", "/");
+
+      // 로그인 후 처리(프로필 로딩/스테이지 이동)
+      void (async () => {
+        try {
+          await handleLoginSuccess();
+        } catch {
+          // 실패 시 최소한 마이페이지/온보딩 중 하나로 진입
+          setCurrentStage("onboarding");
+        }
+      })();
+    }
+    // 이 이펙트는 최초 마운트에서 1번만 수행
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const handleSignupSuccess = () => {
     // After signup, redirect to login
