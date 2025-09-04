@@ -7,7 +7,7 @@ class AuthService {
   // Login API call
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await PostAxiosInstance<LoginResponse>('/auth/login', credentials);
+      const response = await PostAxiosInstance<LoginResponse>('/api/auth/login', credentials);
       const data = response.data;
 
       // Store tokens if login successful
