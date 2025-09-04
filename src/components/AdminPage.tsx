@@ -1,28 +1,54 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Button } from './ui/button';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { Alert, AlertDescription } from './ui/alert';
-import { NavigationBar } from './NavigationBar';
-import { 
-  ArrowLeft, Shield, AlertTriangle, Eye, Clock, CheckCircle, XCircle,
-  Flag, Copyright, Ban, MoreHorizontal, User, Calendar, Search,
-  FileText, Trash2, AlertOctagon, BarChart3, TrendingUp, Users,
-  Star, Coins, ImageIcon, Activity, DollarSign, Download
+import React, {useEffect, useMemo, useState} from 'react';
+import {Button} from './ui/button';
+import {Card} from './ui/card';
+import {Badge} from './ui/badge';
+import {Input} from './ui/input';
+import {Textarea} from './ui/textarea';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './ui/select';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from './ui/tabs';
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog';
+import {Alert, AlertDescription} from './ui/alert';
+import {NavigationBar} from './NavigationBar';
+import {
+  AlertOctagon,
+  ArrowLeft,
+  Ban,
+  BarChart3,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Coins,
+  Copyright,
+  Eye,
+  FileText,
+  Flag,
+  ImageIcon,
+  MoreHorizontal,
+  Search,
+  Shield,
+  Star,
+  User,
+  Users,
+  XCircle
 } from 'lucide-react';
-import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
-import { ModelReport, UserProfile } from '../App';
-import { processAdminReport, fetchAdminReports, fetchReportSummary, UiSummary } from '../services/reportApi';
-import type { AdminReportItem, ReportStatus } from '../services/reportApi';
+import {ModelReport, UserProfile} from '../App';
+import type {AdminReportItem, ReportStatus} from '../services/reportApi';
+import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} from '../services/reportApi';
 
 
 interface AdminPageProps {
@@ -43,7 +69,9 @@ const reportTypeLabels = {
   copyright: '저작권 침해',
   spam: '스팸 또는 중복',
   fake: '가짜 또는 허위',
-  other: '기타'
+  other: '기타',
+  model: '모델',
+  review: '리뷰'
 };
 
 const reportTypeIcons = {
@@ -937,13 +965,13 @@ export function AdminPage({
                   }}>
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-start gap-4 flex-1">
-                        <img 
-                          src={report.modelImageUrl} 
-                          alt={report.modelName}
-                          className="w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity"
-                          style={{ borderRadius: 'var(--radius-12)' }}
-                          onClick={() => window.open(report.modelImageUrl, '_blank')}
-                        />
+                        {/*<img */}
+                        {/*  src={report.modelImageUrl} */}
+                        {/*  alt={report.modelName}*/}
+                        {/*  className="w-20 h-20 object-cover cursor-pointer hover:opacity-80 transition-opacity"*/}
+                        {/*  style={{ borderRadius: 'var(--radius-12)' }}*/}
+                        {/*  onClick={() => window.open(report.modelImageUrl, '_blank')}*/}
+                        {/*/>*/}
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-3">
                             <h3 style={{
@@ -1005,17 +1033,17 @@ export function AdminPage({
                                 </span>
                               </div>
                             )}
-                            {report.attachments && report.attachments.length > 0 && (
-                              <div className="flex items-center gap-2">
-                                <FileText className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} />
-                                <span style={{ 
-                                  color: 'var(--color-text-secondary)',
-                                  fontSize: 'var(--font-size-small)'
-                                }}>
-                                  첨부파일: {report.attachments.length}개
-                                </span>
-                              </div>
-                            )}
+                            {/*{report.attachments && report.attachments.length > 0 && (*/}
+                            {/*  <div className="flex items-center gap-2">*/}
+                            {/*    <FileText className="w-4 h-4" style={{ color: 'var(--color-text-tertiary)' }} />*/}
+                            {/*    <span style={{ */}
+                            {/*      color: 'var(--color-text-secondary)',*/}
+                            {/*      fontSize: 'var(--font-size-small)'*/}
+                            {/*    }}>*/}
+                            {/*      첨부파일: {report.attachments.length}개*/}
+                            {/*    </span>*/}
+                            {/*  </div>*/}
+                            {/*)}*/}
                           </div>
 
                           <p style={{ 
