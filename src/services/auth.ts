@@ -16,7 +16,7 @@ class AuthService {
         // 로그인 성공 시 쿠키가 자동으로 설정됨
         // 별도의 토큰 저장 로직 불필요
         console.log('Login successful, cookies set by backend');
-
+        
         // 성공 응답 반환 (토큰 정보는 없어도 됨)
         return {
           success: true,
