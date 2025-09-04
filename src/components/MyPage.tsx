@@ -258,6 +258,8 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         onMarketplace={onMarketplace}
         onMyPage={() => {}} // Already on MyPage
         onHome={onNewProject}
+        onAdmin={onAdmin}
+        isAdmin={!!userProfile?.isAdmin}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
       />
