@@ -49,7 +49,7 @@ import {
 import {ModelReport, UserProfile} from '../App';
 import type {AdminReportItem, ReportStatus} from '../services/reportApi';
 import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} from '../services/reportApi';
-import {DashboardMetrics, fetchStatisticsSummary} from '../services/statisticsApi';
+import {DashboardMetrics, fetchStatisticsSummary, fetchStatisticsMonthly, type MonthlyStat} from '../services/statisticsApi';
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
@@ -240,6 +240,11 @@ export function AdminPage({
   const [dashLoading, setDashLoading] = useState(false);
   const [dashError, setDashError] = useState<string | null>(null);
 
+  // 월별 통계
+  const [monthly, setMonthly] = useState<MonthlyStat[] | null>(null);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
+  const [monthlyError, setMonthlyError] = useState<string | null>(null);
+
   const uiToServerStatusForProcess: Record<ModelReport['status'], ReportStatus> = {
     pending: 'PENDING',
     reviewed: 'UNDER_REVIEW',
@@ -395,6 +400,29 @@ export function AdminPage({
     totalDownloads:      dash?.totalDownloads      ?? mockStatsData.totalStats.totalDownloads,
   }), [dash]);
 
+  // 월별 통계
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setMonthlyLoading(true);
+        setMonthlyError(null);
+        const data = await fetchStatisticsMonthly();
+        if (!abort) setMonthly(data);
+      } catch (e: any) {
+        if (!abort) setMonthlyError(e?.message ?? '월별 통계 조회 실패');
+      } finally {
+        if (!abort) setMonthlyLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const monthlyChartData = useMemo(() => {
+    if (!monthly) return mockStatsData.projectsByMonth; // fallback
+    // API 필드명이 이미 {month, projects, revenue}라 그대로 사용 가능
+    return monthly;
+  }, [monthly]);
 
   if (!userProfile?.isAdmin) {
     return (
@@ -621,8 +649,16 @@ export function AdminPage({
                 }}>
                   월별 프로젝트 생성 & 매출
                 </h3>
+
+                {monthlyLoading && (
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>월별 통계 불러오는 중…</p>
+                )}
+                {monthlyError && (
+                    <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {monthlyError}</p>
+                )}
+
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={mockStatsData.projectsByMonth}>
+                  <AreaChart data={monthlyChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-primary)" />
                     <XAxis dataKey="month" stroke="var(--color-text-tertiary)" />
                     <YAxis stroke="var(--color-text-tertiary)" />

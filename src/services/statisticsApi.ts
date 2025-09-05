@@ -26,3 +26,17 @@ export async function fetchStatisticsSummary(): Promise<DashboardMetrics> {
     if (!res.data.success || !res.data.response) throw new Error(res.data.error?.message ?? "summary failed");
     return res.data.response as DashboardMetrics;
 }
+
+// 월별 데이터 조회
+export type MonthlyStat = {
+    month: string;     // "10월"
+    projects: number;  // count
+    revenue: number;   // sum
+};
+
+export async function fetchStatisticsMonthly(): Promise<MonthlyStat[]> {
+    const res = await GetAxiosInstance("/admin/dashboard/monthly-stats");
+    if (!res.data.success || !res.data.response) throw new Error(res.data.error?.message ?? "월별 통계 조회 실패");
+    return res.data.response as MonthlyStat[];
+}
+
