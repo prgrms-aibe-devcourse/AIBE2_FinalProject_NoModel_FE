@@ -49,7 +49,10 @@ import {
 import {ModelReport, UserProfile} from '../App';
 import type {AdminReportItem, ReportStatus} from '../services/reportApi';
 import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} from '../services/reportApi';
-import {DashboardMetrics, fetchStatisticsSummary, fetchStatisticsMonthly, type MonthlyStat} from '../services/statisticsApi';
+import {
+  type DashboardMetrics, fetchStatisticsSummary,
+  fetchStatisticsMonthly, type MonthlyStat,
+  fetchDailyActivity, type DailyActivity} from '../services/statisticsApi';
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
@@ -245,6 +248,12 @@ export function AdminPage({
   const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [monthlyError, setMonthlyError] = useState<string | null>(null);
 
+
+  // 일별 통계
+  const [daily, setDaily] = useState<DailyActivity[] | null>(null);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [dailyError, setDailyError] = useState<string | null>(null);
+
   const uiToServerStatusForProcess: Record<ModelReport['status'], ReportStatus> = {
     pending: 'PENDING',
     reviewed: 'UNDER_REVIEW',
@@ -307,6 +316,7 @@ export function AdminPage({
 
   const adminStats = summary ?? computedStats; // ← 카드에 이 값을 그대로 사용
 
+  // 신고 목록
   useEffect(() => {
     let abort = false;
     (async () => {
@@ -331,6 +341,7 @@ export function AdminPage({
     return () => { abort = true; };
   }, [listPage, listSize, statusFilter, reloadTick]);
 
+  // 신고 처리
   const handleStatusUpdate = async (status: ModelReport['status']) => {
     if (!selectedReport) return;
 
@@ -388,6 +399,33 @@ export function AdminPage({
     })();
     return () => { abort = true; };
   }, []);
+
+  // 일별 통계
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setDailyLoading(true);
+        setDailyError(null);
+        const data = await fetchDailyActivity();
+        if (abort) return;
+        setDaily(data);
+      } catch (e: any) {
+        if (!abort) setDailyError(e?.message ?? '일별 통계 조회 실패');
+      } finally {
+        if (!abort) setDailyLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const DAY_ORDER = ['월','화','수','목','금','토','일'];
+
+  const dailyChartData = useMemo(() => {
+    if (!daily || daily.length === 0) return mockStatsData.dailyActivity; // fallback
+    // 응답이 토, 일, 월 … 처럼 섞여와도 월→일 순으로 정렬
+    return [...daily].sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
+  }, [daily]);
 
   const totals = useMemo(() => ({
     totalUsers:          dash?.totalUsers          ?? mockStatsData.totalStats.totalUsers,
@@ -738,8 +776,16 @@ export function AdminPage({
                 }}>
                   일별 사용자 활동 (최근 7일)
                 </h3>
+
+                {dailyLoading && (
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>일별 통계 불러오는 중…</p>
+                )}
+                {dailyError && (
+                    <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {dailyError}</p>
+                )}
+
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockStatsData.dailyActivity}>
+                  <BarChart data={dailyChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-primary)" />
                     <XAxis dataKey="day" stroke="var(--color-text-tertiary)" />
                     <YAxis stroke="var(--color-text-tertiary)" />

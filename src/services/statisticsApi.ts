@@ -40,3 +40,15 @@ export async function fetchStatisticsMonthly(): Promise<MonthlyStat[]> {
     return res.data.response as MonthlyStat[];
 }
 
+// 데일리 데이터 조회
+export type DailyActivity = {
+    day: string;
+    users: number;
+    projects: number;
+}
+
+export async function fetchDailyActivity(): Promise<DailyActivity[]> {
+    const res = await GetAxiosInstance("/admin/dashboard/daily-activity");
+    if (!res.data.success || !res.data.response) throw new Error(res.data.error?.message ?? "일별 통계 조회 실패");
+    return res.data.response as DailyActivity[];
+}
