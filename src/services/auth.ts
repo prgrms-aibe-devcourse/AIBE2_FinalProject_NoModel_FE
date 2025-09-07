@@ -153,9 +153,12 @@ class AuthService {
 
   // Check if user is authenticated - Cookie based
   isAuthenticated(): boolean {
-    // 쿠키 기반 인증에서는 쿠키 존재 여부를 서버에서 확인해야 함
-    // 클라이언트에서는 로컬에 저장된 사용자 정보로 임시 확인
-    return tokenCookies.getUserInfo() !== null;
+    // 쿠키 기반 인증에서는 accessToken과 refreshToken 존재 여부 확인
+    const accessToken = tokenCookies.getAccessToken();
+    const refreshToken = tokenCookies.getRefreshToken();
+    
+    // 둘 중 하나라도 있으면 인증된 것으로 간주
+    return !!(accessToken || refreshToken);
   }
 
   // Logout - clear cookies and local data

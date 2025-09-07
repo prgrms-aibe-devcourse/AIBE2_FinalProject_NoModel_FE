@@ -311,32 +311,32 @@ export default function App() {
     const checkAuthStatus = async () => {
       if (authService.isAuthenticated()) {
         try {
-          const userInfo = authService.getStoredUserInfo();
-          if (userInfo) {
-            setUserProfile(userInfo);
+          // 쿠키에 토큰이 있으면 서버에서 사용자 프로필 가져오기 시도
+          const profileData = await authService.getUserProfile();
+          if (profileData.success) {
+            setUserProfile(profileData.response);
             setIsLoggedIn(true);
-            // If user is already logged in, go to main page
             setCurrentStage('mypage');
+            console.log('인증 성공: 사용자 프로필 로드됨', profileData.response);
           } else {
-            // Try to fetch user profile
-            const profileData = await authService.getUserProfile();
-            if (profileData.success) {
-              setUserProfile(profileData.response);
-              setIsLoggedIn(true);
-              setCurrentStage('mypage');
-            } else {
-              // Failed to get profile, logout
-              await authService.logout();
-              setIsLoggedIn(false);
-              setUserProfile(null);
-            }
+            // 서버에서 프로필 가져오기 실패 시 로그아웃
+            console.log('인증 실패: 서버에서 프로필을 가져올 수 없음');
+            await authService.logout();
+            setIsLoggedIn(false);
+            setUserProfile(null);
+            setCurrentStage('landing');
           }
         } catch (error) {
           console.error('Auth check failed:', error);
           await authService.logout();
           setIsLoggedIn(false);
           setUserProfile(null);
+          setCurrentStage('landing');
         }
+      } else {
+        // 토큰이 없으면 랜딩 페이지로
+        console.log('토큰이 없음: 랜딩 페이지로 이동');
+        setCurrentStage('landing');
       }
     };
 
@@ -599,7 +599,9 @@ export default function App() {
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
           isLoggedIn={isLoggedIn}
+          isAdmin={userProfile?.isAdmin}
         />
       )}
 
@@ -705,6 +707,7 @@ export default function App() {
           onLogout={handleLogout}
           onAdGeneration={() => handleStageChange('onboarding')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
         />
       )}
 

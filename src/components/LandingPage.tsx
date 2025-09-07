@@ -15,7 +15,9 @@ interface LandingPageProps {
   onModelCreation: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onAdmin?: () => void;
   isLoggedIn: boolean;
+  isAdmin?: boolean;
 }
 
 export function LandingPage({ 
@@ -26,7 +28,9 @@ export function LandingPage({
   onModelCreation, 
   onMarketplace, 
   onMyPage, 
-  isLoggedIn 
+  onAdmin,
+  isLoggedIn,
+  isAdmin
 }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-background" style={{ scrollBehavior: 'smooth' }}>
@@ -37,7 +41,12 @@ export function LandingPage({
         onModelCreation={onModelCreation}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
-        onHome={onGetStarted}
+        onAdmin={onAdmin}
+        isAdmin={isAdmin}
+        onHome={() => {
+          // 홈버튼 클릭시 페이지 최상단으로 스크롤 (로그인 상태와 무관)
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         isLoggedIn={isLoggedIn}
         isLandingPage={true}
       />
