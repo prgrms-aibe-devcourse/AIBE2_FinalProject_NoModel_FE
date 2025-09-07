@@ -335,11 +335,6 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
             <Badge variant="secondary" className="text-xs">
               {displayData.categoryType}
             </Badge>
-            {displayData.isPublic && (
-              <Badge variant="outline" className="text-xs">
-                공개
-              </Badge>
-            )}
           </div>
           
           <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
@@ -368,7 +363,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
             {onModelSelect && (
               <Button 
                 size="sm" 
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   onModelSelect(model);
                 }}
@@ -482,7 +477,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
       {/* 검색 결과 */}
       {searchState.isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {Array.from({ length: 8 }, (_, i) => (
             <Card key={i} className="overflow-hidden">
               <Skeleton className="w-full h-48" />
               <div className="p-4 space-y-3">

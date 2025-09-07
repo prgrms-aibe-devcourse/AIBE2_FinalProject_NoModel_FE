@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardContent } from './ui/card';
 import { Skeleton } from './ui/skeleton';
 import {
-  Star, Users, Download, Eye, Calendar, Crown,
+  Star, Users, Download, Calendar, Crown,
   Image as ImageIcon, FileText, ExternalLink, Loader2
 } from 'lucide-react';
 import { getModelFullDetail } from '../services/modelApi';
@@ -145,33 +145,37 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
     );
   };
 
-  const ReviewItem = ({ review }: { review: ReviewResponse }) => (
-    <div className="flex gap-3 p-4 border rounded-lg">
-      <Avatar>
-        <AvatarFallback>
-          {review.reviewerName.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex-1">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="font-medium">{review.reviewerName}</span>
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="text-sm">{review.rating}</span>
+  const ReviewItem = ({ review }: { review: ReviewResponse }) => {
+    const reviewerName = review.reviewerName || '익명';
+    const reviewComment = review.comment || '';
+
+    return (
+      <div className="flex gap-3 p-4 border rounded-lg">
+        <Avatar>
+          <AvatarFallback>
+            {reviewerName.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-medium">{reviewerName}</span>
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span className="text-sm">{review.rating || 0}</span>
+            </div>
           </div>
+          <p className="text-sm text-gray-600 mb-2">{reviewComment}</p>
+          <p className="text-xs text-gray-400">
+            {review.createdAt ? formatDate(review.createdAt) : '날짜 정보 없음'}
+          </p>
         </div>
-        <p className="text-sm text-gray-600 mb-2">{review.comment}</p>
-        <p className="text-xs text-gray-400">{formatDate(review.createdAt)}</p>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>모델 상세 정보</DialogTitle>
-        </DialogHeader>
 
         {loading && (
           <div className="space-y-6">
@@ -200,7 +204,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
           </div>
         )}
 
-        {modelDetail && !loading && (
+        {modelDetail && !loading && !error && (
           <div className="space-y-6">
             {/* 기본 정보 */}
             <div className="flex items-start gap-4">
@@ -230,43 +234,33 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             </div>
 
             {/* 통계 정보 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Card>
-                <CardContent className="flex items-center gap-2 p-4">
-                  <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                  <div>
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Star className="h-6 w-6 text-yellow-400 fill-current flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-500">평점</p>
-                    <p className="font-semibold">{modelDetail.avgRating.toFixed(1)}</p>
+                    <p className="font-semibold text-lg">{modelDetail.avgRating.toFixed(1)}</p>
                   </div>
                 </CardContent>
               </Card>
               
               <Card>
-                <CardContent className="flex items-center gap-2 p-4">
-                  <Users className="h-5 w-5 text-blue-500" />
-                  <div>
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Users className="h-6 w-6 text-blue-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-500">리뷰</p>
-                    <p className="font-semibold">{modelDetail.reviewCount.toLocaleString()}</p>
+                    <p className="font-semibold text-lg">{modelDetail.reviewCount.toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardContent className="flex items-center gap-2 p-4">
-                  <Download className="h-5 w-5 text-green-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">다운로드</p>
-                    <p className="font-semibold">{modelDetail.downloadCount.toLocaleString()}</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="flex items-center gap-2 p-4">
-                  <Eye className="h-5 w-5 text-purple-500" />
-                  <div>
-                    <p className="text-sm text-gray-500">조회</p>
-                    <p className="font-semibold">{modelDetail.viewCount.toLocaleString()}</p>
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Download className="h-6 w-6 text-green-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-500 whitespace-nowrap">사용횟수</p>
+                    <p className="font-semibold text-lg">{modelDetail.downloadCount.toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>
