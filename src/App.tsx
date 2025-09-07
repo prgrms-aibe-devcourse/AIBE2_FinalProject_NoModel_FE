@@ -309,25 +309,32 @@ export default function App() {
   // Check authentication status on app load
   useEffect(() => {
     const checkAuthStatus = async () => {
-      if (authService.isAuthenticated()) {
+      console.log('🔍 인증 상태 확인 시작');
+      const isAuth = authService.isAuthenticated();
+      console.log('🔍 isAuthenticated() 결과:', isAuth);
+      
+      if (isAuth) {
         try {
+          console.log('🔍 서버에서 사용자 프로필 가져오기 시도');
           // 쿠키에 토큰이 있으면 서버에서 사용자 프로필 가져오기 시도
           const profileData = await authService.getUserProfile();
+          console.log('🔍 getUserProfile 응답:', profileData);
+          
           if (profileData.success) {
             setUserProfile(profileData.response);
             setIsLoggedIn(true);
             setCurrentStage('mypage');
-            console.log('인증 성공: 사용자 프로필 로드됨', profileData.response);
+            console.log('✅ 인증 성공: 사용자 프로필 로드됨', profileData.response);
           } else {
             // 서버에서 프로필 가져오기 실패 시 로그아웃
-            console.log('인증 실패: 서버에서 프로필을 가져올 수 없음');
+            console.log('❌ 인증 실패: 서버에서 프로필을 가져올 수 없음', profileData);
             await authService.logout();
             setIsLoggedIn(false);
             setUserProfile(null);
             setCurrentStage('landing');
           }
         } catch (error) {
-          console.error('Auth check failed:', error);
+          console.error('❌ Auth check failed:', error);
           await authService.logout();
           setIsLoggedIn(false);
           setUserProfile(null);

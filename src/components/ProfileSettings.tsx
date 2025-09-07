@@ -4,13 +4,12 @@ import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { 
-  ArrowLeft, Sparkles, Camera, Save, Eye, EyeOff, Crown, 
+  ArrowLeft, Sparkles, Save, Eye, EyeOff, Crown, 
   Bell, Shield, CreditCard, User, Mail, MapPin, Globe,
   AlertTriangle
 } from 'lucide-react';
@@ -110,10 +109,6 @@ export function ProfileSettings({ userProfile, pointTransactions, onBack, onProf
     }, 1000);
   };
 
-  const handleAvatarChange = () => {
-    // In real app, this would open file picker
-    console.log('Opening avatar picker...');
-  };
 
   if (!userProfile) {
     return <div>Loading...</div>;
@@ -283,45 +278,6 @@ export function ProfileSettings({ userProfile, pointTransactions, onBack, onProf
                 기본 정보
               </h3>
 
-              {/* Avatar Section */}
-              <div className="flex items-center gap-6 mb-8">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-                  <AvatarFallback style={{ fontSize: 'var(--font-size-title2)' }}>
-                    {userProfile.name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4 
-                    className="mb-2"
-                    style={{
-                      fontSize: 'var(--font-size-regular)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                  >
-                    프로필 사진
-                  </h4>
-                  <p 
-                    className="text-sm mb-3"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  >
-                    JPG, PNG 파일만 업로드 가능합니다 (최대 5MB)
-                  </p>
-                  <Button 
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAvatarChange}
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)'
-                    }}
-                  >
-                    <Camera className="w-4 h-4 mr-2" />
-                    사진 변경
-                  </Button>
-                </div>
-              </div>
 
               {/* Form Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
