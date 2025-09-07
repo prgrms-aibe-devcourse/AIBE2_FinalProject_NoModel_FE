@@ -177,7 +177,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="sr-only">
             모델 상세 정보
           </DialogTitle>
         </DialogHeader>
@@ -238,6 +238,52 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
               </div>
             </div>
 
+            {/* 이미지 갤러리 */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4">
+                이미지 갤러리 {imageFiles.length > 0 && `(${imageFiles.length})`}
+              </h4>
+              {imageFiles.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {imageFiles.map((image, index) => (
+                    <div
+                      key={image.fileId}
+                      className="relative group cursor-pointer rounded-lg overflow-hidden border hover:border-blue-300 transition-colors"
+                      onClick={() => handleImageClick(index)}
+                    >
+                      <img
+                        src={image.fileUrl}
+                        alt={image.fileName}
+                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/api/placeholder/300/200?text=Image+Not+Found';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <ImageIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      </div>
+                      {image.isPrimary && (
+                        <div className="absolute top-2 left-2">
+                          <Badge className="bg-blue-500 text-white text-xs">
+                            주요
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
+                        <p className="text-white text-xs truncate">{image.fileName}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                  <ImageIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>등록된 이미지가 없습니다.</p>
+                </div>
+              )}
+            </div>
+
             {/* 통계 정보 */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Card>
@@ -296,52 +342,6 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             )}
 
             <hr className="border-gray-200" />
-
-            {/* 이미지 갤러리 */}
-            <div>
-              <h4 className="text-lg font-semibold mb-4">
-                이미지 갤러리 {imageFiles.length > 0 && `(${imageFiles.length})`}
-              </h4>
-              {imageFiles.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {imageFiles.map((image, index) => (
-                    <div
-                      key={image.fileId}
-                      className="relative group cursor-pointer rounded-lg overflow-hidden border hover:border-blue-300 transition-colors"
-                      onClick={() => handleImageClick(index)}
-                    >
-                      <img
-                        src={image.fileUrl}
-                        alt={image.fileName}
-                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = '/api/placeholder/300/200?text=Image+Not+Found';
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                      </div>
-                      {image.isPrimary && (
-                        <div className="absolute top-2 left-2">
-                          <Badge className="bg-blue-500 text-white text-xs">
-                            주요
-                          </Badge>
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
-                        <p className="text-white text-xs truncate">{image.fileName}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                  <ImageIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                  <p>등록된 이미지가 없습니다.</p>
-                </div>
-              )}
-            </div>
 
             {/* 기타 파일 목록 */}
             {modelDetail.files.filter(file => !isImageFile(file.fileUrl)).length > 0 && (
