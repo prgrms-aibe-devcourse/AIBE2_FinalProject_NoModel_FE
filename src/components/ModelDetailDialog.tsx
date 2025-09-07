@@ -17,6 +17,7 @@ import {
 import { getModelFullDetail } from '../services/modelApi';
 import { AIModelDetailResponse, FileInfo, ReviewResponse } from '../types/model';
 import { toast } from 'sonner';
+import { ImageViewer } from './ImageViewer';
 
 interface ModelDetailDialogProps {
   modelId: number | null;
@@ -34,6 +35,11 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   const [modelDetail, setModelDetail] = useState<AIModelDetailResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // 이미지 뷰어 상태
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageFiles, setImageFiles] = useState<FileInfo[]>([]);
 
   useEffect(() => {
     if (open && modelId) {
@@ -54,6 +60,12 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
       const response = await getModelFullDetail(modelId);
       if (response.success) {
         setModelDetail(response.response);
+        
+        // 이미지 파일들 분리
+        const images = response.response.files.filter(file => 
+          file.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+        );
+        setImageFiles(images);
       } else {
         setError('모델 정보를 불러올 수 없습니다.');
       }
@@ -81,32 +93,57 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
     }
   };
 
-  const FilePreview = ({ file }: { file: FileInfo }) => (
-    <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="flex-shrink-0">
-        {file.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-          <ImageIcon className="h-8 w-8 text-blue-500" />
-        ) : (
-          <FileText className="h-8 w-8 text-gray-500" />
-        )}
+  const handleImageClick = (imageIndex: number) => {
+    setCurrentImageIndex(imageIndex);
+    setImageViewerOpen(true);
+  };
+
+  const isImageFile = (fileUrl: string) => {
+    return fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  };
+
+  const FilePreview = ({ file, imageIndex }: { file: FileInfo; imageIndex?: number }) => {
+    const isImage = isImageFile(file.fileUrl);
+
+    return (
+      <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+        <div className="flex-shrink-0">
+          {isImage ? (
+            <div 
+              className="relative cursor-pointer group"
+              onClick={() => imageIndex !== undefined && handleImageClick(imageIndex)}
+            >
+              <img
+                src={file.fileUrl}
+                alt={file.fileName}
+                className="w-12 h-12 object-cover rounded border group-hover:opacity-75 transition-opacity"
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <ImageIcon className="h-6 w-6 text-white drop-shadow-lg" />
+              </div>
+            </div>
+          ) : (
+            <FileText className="h-8 w-8 text-gray-500" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{file.fileName}</p>
+          {file.isPrimary && (
+            <Badge variant="outline" className="text-xs mt-1">
+              주요 파일
+            </Badge>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => window.open(file.fileUrl, '_blank')}
+        >
+          <ExternalLink className="h-4 w-4" />
+        </Button>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{file.fileName}</p>
-        {file.isPrimary && (
-          <Badge variant="outline" className="text-xs mt-1">
-            주요 파일
-          </Badge>
-        )}
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => window.open(file.fileUrl, '_blank')}
-      >
-        <ExternalLink className="h-4 w-4" />
-      </Button>
-    </div>
-  );
+    );
+  };
 
   const ReviewItem = ({ review }: { review: ReviewResponse }) => (
     <div className="flex gap-3 p-4 border rounded-lg">
@@ -251,14 +288,62 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
 
             <hr className="border-gray-200" />
 
-            {/* 파일 목록 */}
-            {modelDetail.files.length > 0 && (
-              <div>
-                <h4 className="text-lg font-semibold mb-4">관련 파일</h4>
-                <div className="space-y-2">
-                  {modelDetail.files.map((file) => (
-                    <FilePreview key={file.fileId} file={file} />
+            {/* 이미지 갤러리 */}
+            <div>
+              <h4 className="text-lg font-semibold mb-4">
+                이미지 갤러리 {imageFiles.length > 0 && `(${imageFiles.length})`}
+              </h4>
+              {imageFiles.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {imageFiles.map((image, index) => (
+                    <div
+                      key={image.fileId}
+                      className="relative group cursor-pointer rounded-lg overflow-hidden border hover:border-blue-300 transition-colors"
+                      onClick={() => handleImageClick(index)}
+                    >
+                      <img
+                        src={image.fileUrl}
+                        alt={image.fileName}
+                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/api/placeholder/300/200?text=Image+Not+Found';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                        <ImageIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      </div>
+                      {image.isPrimary && (
+                        <div className="absolute top-2 left-2">
+                          <Badge className="bg-blue-500 text-white text-xs">
+                            주요
+                          </Badge>
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
+                        <p className="text-white text-xs truncate">{image.fileName}</p>
+                      </div>
+                    </div>
                   ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                  <ImageIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p>등록된 이미지가 없습니다.</p>
+                </div>
+              )}
+            </div>
+
+            {/* 기타 파일 목록 */}
+            {modelDetail.files.filter(file => !isImageFile(file.fileUrl)).length > 0 && (
+              <div>
+                <h4 className="text-lg font-semibold mb-4">기타 파일</h4>
+                <div className="space-y-2">
+                  {modelDetail.files
+                    .filter(file => !isImageFile(file.fileUrl))
+                    .map((file) => (
+                      <FilePreview key={file.fileId} file={file} />
+                    ))}
                 </div>
               </div>
             )}
@@ -290,6 +375,15 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             </div>
           </div>
         )}
+
+        {/* 이미지 뷰어 */}
+        <ImageViewer
+          images={imageFiles}
+          currentIndex={currentImageIndex}
+          open={imageViewerOpen}
+          onOpenChange={setImageViewerOpen}
+          onImageChange={setCurrentImageIndex}
+        />
       </DialogContent>
     </Dialog>
   );
