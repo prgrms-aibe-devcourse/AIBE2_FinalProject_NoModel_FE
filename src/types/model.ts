@@ -3,18 +3,28 @@ export interface AIModelDocument {
   id: string; // 문서 ID
   modelId: number; // 실제 모델 ID
   modelName: string;
-  shortDescription: string;
-  categoryType: string;
-  developer: string;
-  thumbnailUrl?: string;
-  rating: number;
-  downloadCount: number;
+  suggest: string;
+  prompt: string;
   tags: string[];
+  ownType: string; // USER, ADMIN
+  ownerId: number;
+  ownerName: string;
+  price: number;
   isPublic: boolean;
-  modelType: 'ADMIN' | 'USER'; // 관리자/사용자 모델 구분
-  userId?: number; // 사용자 모델인 경우 생성자 ID
+  usageCount: number;
+  rating: number;
+  reviewCount: number;
   createdAt: string;
   updatedAt: string;
+  
+  // 호환성을 위한 추가 필드들 (프론트엔드에서 사용)
+  shortDescription?: string;
+  categoryType?: string;
+  developer?: string;
+  thumbnailUrl?: string;
+  downloadCount?: number;
+  modelType?: 'ADMIN' | 'USER';
+  userId?: number;
 }
 
 // Search request parameters
@@ -53,13 +63,13 @@ export interface PartialSearchParams {
   size?: number;
 }
 
-// Page response structure
+// Page response structure (Spring Data Page)
 export interface PageResponse<T> {
   content: T[];
-  pageable: {
+  pageable?: {
     pageNumber: number;
     pageSize: number;
-    sort: {
+    sort?: {
       direction: string;
       property: string;
     };
@@ -68,6 +78,9 @@ export interface PageResponse<T> {
   totalPages: number;
   first: boolean;
   last: boolean;
+  number: number; // Spring Data Page의 현재 페이지 번호
+  size: number;   // Spring Data Page의 페이지 크기
+  numberOfElements: number; // 현재 페이지의 요소 수
 }
 
 // API response wrapper

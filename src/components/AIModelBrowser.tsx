@@ -155,7 +155,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
           ...prev,
           models: isLoadMore ? [...prev.models, ...response.response.content] : response.response.content,
           hasMore: !response.response.last,
-          page: response.response.pageable.pageNumber,
+          page: response.response.number || response.response.pageable?.pageNumber || page,
           totalElements: response.response.totalElements,
           isLoading: false,
           isLoadingMore: false
@@ -264,103 +264,126 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     onModelReport(model);
   };
 
-  const ModelCard = ({ model }: { model: AIModelDocument }) => (
-    <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200">
-      <div className="relative">
-        <img
-          src={model.thumbnailUrl || '/api/placeholder/300/300'}
-          alt={model.modelName}
-          className="w-full h-48 object-cover"
-          loading="lazy"
-        />
-        <div className="absolute top-2 left-2">
-          {model.modelType === 'ADMIN' && (
-            <Badge className="bg-yellow-500 text-white">
-              <Crown className="h-3 w-3 mr-1" />
-              관리자
-            </Badge>
-          )}
-        </div>
-        <div className="absolute top-2 right-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white/80 hover:bg-white">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleModelReport(model)}>
-                <Flag className="h-4 w-4 mr-2" />
-                신고하기
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <Badge variant="secondary" className="text-xs">
-            {model.categoryType}
-          </Badge>
-          {model.isPublic && (
-            <Badge variant="outline" className="text-xs">
-              공개
-            </Badge>
-          )}
-        </div>
-        
-        <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
-          {model.modelName}
-        </h3>
-        
-        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-          {model.shortDescription}
-        </p>
-        
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="text-sm font-medium">{model.rating}</span>
-          </div>
-          <div className="flex items-center gap-1 text-gray-500">
-            <Users className="h-4 w-4" />
-            <span className="text-sm">{model.downloadCount.toLocaleString()}</span>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            by {model.developer}
-          </div>
-          {onModelSelect && (
-            <Button 
-              size="sm" 
-              onClick={() => onModelSelect(model)}
-              className="h-8"
-            >
-              선택
-            </Button>
-          )}
-        </div>
-        
-        {model.tags && model.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {model.tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {model.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{model.tags.length - 3}
+  const ModelCard = ({ model }: { model: AIModelDocument }) => {
+    // 백엔드 데이터 구조에 맞게 필드 매핑
+    const displayData = {
+      thumbnailUrl: model.thumbnailUrl || '/api/placeholder/300/300',
+      modelName: model.modelName,
+      shortDescription: model.shortDescription || model.prompt || '',
+      categoryType: model.categoryType || model.ownType,
+      developer: model.developer || model.ownerName,
+      rating: model.rating || 0,
+      downloadCount: model.downloadCount || model.usageCount || 0,
+      isAdmin: model.modelType === 'ADMIN' || model.ownType === 'ADMIN',
+      isPublic: model.isPublic,
+      tags: model.tags || [],
+    };
+
+    return (
+      <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200">
+        <div className="relative">
+          <img
+            src={displayData.thumbnailUrl}
+            alt={displayData.modelName}
+            className="w-full h-48 object-cover"
+            loading="lazy"
+          />
+          <div className="absolute top-2 left-2">
+            {displayData.isAdmin && (
+              <Badge className="bg-yellow-500 text-white">
+                <Crown className="h-3 w-3 mr-1" />
+                관리자
               </Badge>
             )}
           </div>
-        )}
-      </div>
-    </Card>
-  );
+          <div className="absolute top-2 right-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white/80 hover:bg-white">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleModelReport(model)}>
+                  <Flag className="h-4 w-4 mr-2" />
+                  신고하기
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-2">
+            <Badge variant="secondary" className="text-xs">
+              {displayData.categoryType}
+            </Badge>
+            {displayData.isPublic && (
+              <Badge variant="outline" className="text-xs">
+                공개
+              </Badge>
+            )}
+          </div>
+          
+          <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
+            {displayData.modelName}
+          </h3>
+          
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            {displayData.shortDescription}
+          </p>
+          
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1">
+              <Star className="h-4 w-4 text-yellow-400 fill-current" />
+              <span className="text-sm font-medium">{displayData.rating.toFixed(1)}</span>
+            </div>
+            <div className="flex items-center gap-1 text-gray-500">
+              <Users className="h-4 w-4" />
+              <span className="text-sm">{displayData.downloadCount.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              by {displayData.developer}
+            </div>
+            {onModelSelect && (
+              <Button 
+                size="sm" 
+                onClick={() => onModelSelect(model)}
+                className="h-8"
+              >
+                선택
+              </Button>
+            )}
+          </div>
+          
+          {displayData.tags && displayData.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-3">
+              {displayData.tags.slice(0, 3).map((tag, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {displayData.tags.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{displayData.tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+          
+          {/* 가격 정보 추가 */}
+          {model.price && model.price > 0 && (
+            <div className="mt-2 text-sm text-green-600 font-medium">
+              {model.price.toLocaleString()}원
+            </div>
+          )}
+        </div>
+      </Card>
+    );
+  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -439,8 +462,8 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
       {/* 검색 결과 */}
       {searchState.isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <Card key={index} className="overflow-hidden">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i} className="overflow-hidden">
               <Skeleton className="w-full h-48" />
               <div className="p-4 space-y-3">
                 <div className="flex justify-between">
