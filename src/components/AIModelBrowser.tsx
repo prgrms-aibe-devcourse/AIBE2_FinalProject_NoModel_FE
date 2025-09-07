@@ -20,6 +20,7 @@ import {
 import { AIModelDocument, ModelSearchResponse } from '../types/model';
 import { toast } from 'sonner';
 import { UserProfile } from '../App';
+import { ModelDetailDialog } from './ModelDetailDialog';
 
 interface AIModelBrowserProps {
   userProfile: UserProfile | null;
@@ -77,6 +78,10 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     page: 0,
     totalElements: 0
   });
+
+  // 모델 상세 다이얼로그 상태
+  const [selectedModelId, setSelectedModelId] = useState<number | null>(null);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const suggestionTimeoutRef = useRef<NodeJS.Timeout>();
@@ -264,6 +269,18 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     onModelReport(model);
   };
 
+  const handleModelCardClick = (model: AIModelDocument) => {
+    setSelectedModelId(model.modelId);
+    setDetailDialogOpen(true);
+  };
+
+  const handleDetailDialogModelSelect = (modelId: number) => {
+    const model = searchState.models.find(m => m.modelId === modelId);
+    if (model && onModelSelect) {
+      onModelSelect(model);
+    }
+  };
+
   const ModelCard = ({ model }: { model: AIModelDocument }) => {
     // 백엔드 데이터 구조에 맞게 필드 매핑
     const displayData = {
@@ -280,8 +297,8 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     };
 
     return (
-      <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200">
-        <div className="relative">
+      <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer">
+        <div className="relative" onClick={() => handleModelCardClick(model)}>
           <img
             src={displayData.thumbnailUrl}
             alt={displayData.modelName}
@@ -296,7 +313,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
               </Badge>
             )}
           </div>
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white/80 hover:bg-white">
@@ -313,7 +330,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
           </div>
         </div>
         
-        <div className="p-4">
+        <div className="p-4" onClick={() => handleModelCardClick(model)}>
           <div className="flex items-center justify-between mb-2">
             <Badge variant="secondary" className="text-xs">
               {displayData.categoryType}
@@ -351,7 +368,10 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
             {onModelSelect && (
               <Button 
                 size="sm" 
-                onClick={() => onModelSelect(model)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onModelSelect(model);
+                }}
                 className="h-8"
               >
                 선택
@@ -516,6 +536,14 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
           </div>
         </>
       )}
+
+      {/* 모델 상세 다이얼로그 */}
+      <ModelDetailDialog
+        modelId={selectedModelId}
+        open={detailDialogOpen}
+        onOpenChange={setDetailDialogOpen}
+        onModelSelect={onModelSelect ? handleDetailDialogModelSelect : undefined}
+      />
     </div>
   );
 };

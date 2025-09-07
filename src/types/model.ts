@@ -94,6 +94,42 @@ export type ModelSearchResponse = ApiResponse<PageResponse<AIModelDocument>>;
 export type ModelSuggestionsResponse = ApiResponse<AIModelDocument[]>;
 export type ModelDetailResponse = ApiResponse<AIModelDocument>;
 
+// Model detail types
+export interface FileInfo {
+  fileId: number;
+  fileUrl: string;
+  fileName: string;
+  isPrimary: boolean;
+}
+
+export interface ReviewResponse {
+  reviewId: number;
+  reviewerName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface AIModelDetailResponse {
+  modelId: number;
+  modelName: string;
+  description: string;
+  ownType: string;
+  ownerName: string;
+  ownerId: number;
+  price: number;
+  avgRating: number;
+  reviewCount: number;
+  downloadCount: number;
+  viewCount: number;
+  files: FileInfo[];
+  reviews: ReviewResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ModelDetailApiResponse = ApiResponse<AIModelDetailResponse>;
+
 // Model report types
 export interface ModelReportRequest {
   reasonDetail: string;

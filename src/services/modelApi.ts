@@ -9,6 +9,7 @@ import type {
   ModelSearchResponse,
   ModelSuggestionsResponse,
   ModelDetailResponse,
+  ModelDetailApiResponse,
   ModelReportRequest,
   ModelReportResponse,
   MyReportsResponse,
@@ -167,7 +168,7 @@ export const searchByPartialName = async (params: PartialSearchParams): Promise<
 };
 
 /**
- * 모델 상세 정보 조회 API
+ * 모델 상세 정보 조회 API (Elasticsearch)
  */
 export const getModelDetail = async (documentId: string): Promise<ModelDetailResponse> => {
   try {
@@ -178,6 +179,22 @@ export const getModelDetail = async (documentId: string): Promise<ModelDetailRes
     return response.data;
   } catch (error) {
     console.error('모델 상세 조회 API 에러:', error);
+    throw error;
+  }
+};
+
+/**
+ * 모델 상세 정보 조회 API (JPA - 완전한 상세 정보)
+ */
+export const getModelFullDetail = async (modelId: number): Promise<ModelDetailApiResponse> => {
+  try {
+    const response = await GetAxiosInstance<ModelDetailApiResponse>(
+      `/models/${modelId}`
+    );
+    
+    return response.data;
+  } catch (error) {
+    console.error('모델 완전한 상세 조회 API 에러:', error);
     throw error;
   }
 };
