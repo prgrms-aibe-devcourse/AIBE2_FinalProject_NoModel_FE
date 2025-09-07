@@ -12,6 +12,7 @@ export interface AIModelDocument {
   price: number;
   isPublic: boolean;
   usageCount: number;
+  viewCount: number; // 조회수 추가
   rating: number;
   reviewCount: number;
   createdAt: string;

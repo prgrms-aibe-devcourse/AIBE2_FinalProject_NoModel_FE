@@ -7,8 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Skeleton } from './ui/skeleton';
 import { 
-  Search, Star, Users, MoreHorizontal, Flag, 
-  AlertCircle, Loader2, Crown, Sparkles, TrendingUp
+  Search, Star, Download, MoreHorizontal, Flag, 
+  AlertCircle, Loader2, Crown, Sparkles, TrendingUp, Eye
 } from 'lucide-react';
 import { 
   searchModels, 
@@ -291,6 +291,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
       developer: model.developer || model.ownerName,
       rating: model.rating || 0,
       downloadCount: model.downloadCount || model.usageCount || 0,
+      viewCount: model.viewCount || 0,
       isAdmin: model.modelType === 'ADMIN' || model.ownType === 'ADMIN',
       isPublic: model.isPublic,
       tags: model.tags || [],
@@ -337,24 +338,19 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
             </Badge>
           </div>
           
-          <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors">
-            {displayData.modelName}
-          </h3>
-          
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-            {displayData.shortDescription}
-          </p>
-          
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+              {displayData.modelName}
+            </h3>
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 text-yellow-400 fill-current" />
               <span className="text-sm font-medium">{displayData.rating.toFixed(1)}</span>
             </div>
-            <div className="flex items-center gap-1 text-gray-500">
-              <Users className="h-4 w-4" />
-              <span className="text-sm">{displayData.downloadCount.toLocaleString()}</span>
-            </div>
           </div>
+          
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            {displayData.shortDescription}
+          </p>
           
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-500">
@@ -389,12 +385,22 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
             </div>
           )}
           
-          {/* 가격 정보 추가 */}
-          {model.price && model.price > 0 && (
-            <div className="mt-2 text-sm text-green-600 font-medium">
-              {model.price.toLocaleString()}원
+          {/* 가격 및 통계 정보 */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t">
+            <div className="text-sm text-green-600 font-medium">
+              {model.price && model.price > 0 ? `${model.price.toLocaleString()}원` : '무료'}
             </div>
-          )}
+            <div className="flex items-center gap-3 text-gray-500 text-xs">
+              <div className="flex items-center gap-1">
+                <Eye className="h-3 w-3" />
+                <span>{displayData.viewCount.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Download className="h-3 w-3" />
+                <span>{displayData.downloadCount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </Card>
     );

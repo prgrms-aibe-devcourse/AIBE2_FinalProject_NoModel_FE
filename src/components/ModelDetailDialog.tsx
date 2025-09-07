@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardContent } from './ui/card';
 import { Skeleton } from './ui/skeleton';
 import {
-  Star, Users, Download, Calendar, Crown,
+  Star, Users, Download, Eye, Calendar, Crown,
   Image as ImageIcon, FileText, ExternalLink, Loader2
 } from 'lucide-react';
 import { getModelFullDetail } from '../services/modelApi';
@@ -176,6 +176,11 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            모델 상세 정보
+          </DialogTitle>
+        </DialogHeader>
 
         {loading && (
           <div className="space-y-6">
@@ -213,7 +218,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                   {modelDetail.modelName.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+              <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-xl font-bold">{modelDetail.modelName}</h3>
                   {modelDetail.ownType === 'ADMIN' && (
@@ -225,16 +230,16 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                 </div>
                 <p className="text-gray-600 mb-2">by {modelDetail.ownerName}</p>
                 <p className="text-sm text-gray-600">{modelDetail.description}</p>
+                {onModelSelect && (
+                  <Button onClick={handleModelSelect} className="mt-4">
+                    모델 선택
+                  </Button>
+                )}
               </div>
-              {onModelSelect && (
-                <Button onClick={handleModelSelect}>
-                  이 모델 선택
-                </Button>
-              )}
             </div>
 
             {/* 통계 정보 */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="flex items-center gap-3 p-4">
                   <Star className="h-6 w-6 text-yellow-400 fill-current flex-shrink-0" />
@@ -251,6 +256,16 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-500">리뷰</p>
                     <p className="font-semibold text-lg">{modelDetail.reviewCount.toLocaleString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="flex items-center gap-3 p-4">
+                  <Eye className="h-6 w-6 text-purple-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-gray-500">조회수</p>
+                    <p className="font-semibold text-lg">{modelDetail.viewCount.toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>
