@@ -3,6 +3,7 @@ import { Menu, X, Search, Bell, ChevronDown } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { DefaultAvatar } from './DefaultAvatar';
 
 export interface NavItem {
   id: string;
@@ -207,11 +208,11 @@ export function Navbar({
           className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-muted"
           onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
         >
-          <div 
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold"
-          >
-            {userMenu.user.name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
+          <DefaultAvatar 
+            name={userMenu.user.name}
+            imageUrl={userMenu.user.avatar}
+            className="w-8 h-8"
+          />
           <div className="text-left hidden md:block">
             <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
               {userMenu.user.name}

@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { StarRating } from './StarRating';
 import { ProjectRatingForm } from './ProjectRatingForm';
 import { 
@@ -398,12 +398,11 @@ export function ProjectDetail({ project, onBack, onEditProject, onRatingSubmit, 
                   </h3>
                   
                   <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={project.model.imageUrl} alt={project.model.name} />
-                      <AvatarFallback>
-                        <User className="w-6 h-6" />
-                      </AvatarFallback>
-                    </Avatar>
+                    <DefaultAvatar 
+                      name={project.model.name}
+                      imageUrl={project.model.imageUrl}
+                      className="h-12 w-12"
+                    />
                     <div className="flex-1">
                       <h4 
                         className="mb-1"

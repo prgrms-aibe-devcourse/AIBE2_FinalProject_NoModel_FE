@@ -7,8 +7,8 @@ import {
 } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardContent } from './ui/card';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { Skeleton } from './ui/skeleton';
 import {
   Star, Users, Download, Eye, Calendar, Crown,
@@ -151,11 +151,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
 
     return (
       <div className="flex gap-3 p-4 border rounded-lg">
-        <Avatar>
-          <AvatarFallback>
-            {reviewerName.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <DefaultAvatar 
+          name={reviewerName}
+          className="h-10 w-10"
+        />
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <span className="font-medium">{reviewerName}</span>
@@ -213,11 +212,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
           <div className="space-y-6">
             {/* 기본 정보 */}
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback>
-                  {modelDetail.modelName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <DefaultAvatar 
+                name={modelDetail.ownerName}
+                className="h-16 w-16"
+              />
               <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-xl font-bold">{modelDetail.modelName}</h3>

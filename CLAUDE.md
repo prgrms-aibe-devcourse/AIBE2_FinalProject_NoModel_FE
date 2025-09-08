@@ -32,6 +32,7 @@ This is a React + Vite application for an AI product advertisement image generat
 1. **Page Components** (`src/components/`): Major views like LandingPage, LoginPage, ModelMarketplace, etc.
 2. **Workflow Components** (`src/components/workflow/`): Image generation workflow stages
 3. **UI Components** (`src/components/ui/`): Reusable shadcn/ui components built on Radix UI primitives
+4. **Common Components** (`src/components/common/`): Shared reusable components including DefaultAvatar
 
 ### Key Data Models
 
@@ -53,6 +54,15 @@ The project uses CSS variables for theming defined in `src/index.css` with a com
 ### Path Aliases
 
 The Vite config (`vite.config.ts`) defines an alias `@` → `./src` for cleaner imports.
+
+### Avatar System
+
+The application uses a consistent default avatar system:
+
+- **DefaultAvatar Component** (`src/components/common/DefaultAvatar.tsx`): Unified avatar component that displays profile images when available, or generated initials with consistent colors
+- **Avatar Utilities** (`src/utils/avatar.ts`): Helper functions for generating initials, color schemes, and managing profile images
+- **Integration**: Used throughout the app for user profiles, model creators, and review authors
+- **Future Plans**: Backend profile image management will be added later to replace the current default system
 
 ### External Dependencies
 

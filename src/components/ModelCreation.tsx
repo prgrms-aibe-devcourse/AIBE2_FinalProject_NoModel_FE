@@ -131,7 +131,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
         },
         creatorId: userProfile.id,
         creatorName: userProfile.name,
-        creatorAvatar: userProfile.name?.charAt(0)?.toUpperCase() || 'U',
+        creatorAvatar: undefined, // 기본 아바타는 DefaultAvatar 컴포넌트에서 처리
         price: formData.price,
         usageCount: 0,
         rating: 0,

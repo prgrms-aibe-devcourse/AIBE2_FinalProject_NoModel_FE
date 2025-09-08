@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { NavigationBar } from './NavigationBar';
 import { 
   ArrowLeft, Sparkles, Search, Users, ShoppingCart, Plus, 
@@ -585,11 +585,11 @@ export function ModelSelectionPage({
                     </h3>
                     
                     <div className="flex items-center gap-2 mb-2">
-                      <Avatar className="h-5 w-5">
-                        <AvatarFallback style={{ fontSize: 'var(--font-size-micro)' }}>
-                          {model.creator.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <DefaultAvatar 
+                        name={model.creator}
+                        className="h-5 w-5"
+                        fallbackClassName="text-xs"
+                      />
                       <span 
                         className="text-sm"
                         style={{ color: 'var(--color-text-tertiary)' }}

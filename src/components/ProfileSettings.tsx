@@ -14,6 +14,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { UserProfile, PointTransaction } from '../App';
+import { DefaultAvatar } from './common/DefaultAvatar';
 
 interface ProfileSettingsProps {
   userProfile: UserProfile | null;
@@ -278,6 +279,42 @@ export function ProfileSettings({ userProfile, pointTransactions, onBack, onProf
                 기본 정보
               </h3>
 
+              {/* Profile Avatar */}
+              <div className="flex items-center gap-6 mb-8 p-4 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
+                <DefaultAvatar 
+                  name={userProfile.name}
+                  imageUrl={userProfile.avatar}
+                  className="w-20 h-20"
+                />
+                <div>
+                  <h4 
+                    className="mb-2"
+                    style={{
+                      fontSize: 'var(--font-size-regular)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  >
+                    프로필 이미지
+                  </h4>
+                  <p 
+                    className="text-sm mb-3"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                  >
+                    프로필 이미지는 추후 업데이트 예정입니다. 현재는 이름의 첫 글자로 자동 생성됩니다.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    disabled
+                    style={{
+                      borderRadius: 'var(--radius-8)',
+                      opacity: 0.5
+                    }}
+                  >
+                    이미지 업로드 (준비 중)
+                  </Button>
+                </div>
+              </div>
 
               {/* Form Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -3,7 +3,6 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { AlertTriangle, Loader2, Flag, X } from 'lucide-react';
 import { reportModel } from '../services/modelApi';
 import { AIModelDocument } from '../types/model';
