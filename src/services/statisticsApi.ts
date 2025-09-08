@@ -52,3 +52,16 @@ export async function fetchDailyActivity(): Promise<DailyActivity[]> {
     if (!res.data.success || !res.data.response) throw new Error(res.data.error?.message ?? "일별 통계 조회 실패");
     return res.data.response as DailyActivity[];
 }
+
+// 평접 조회
+export type RatingItem = {
+    rating: number;
+    count: number;
+    percentage: number;
+};
+
+export async function fetchRatingDistribution(): Promise<RatingItem[]> {
+    const res = await GetAxiosInstance("/admin/dashboard/rating-distribution");
+    if (!res.data.success || !res.data.response) throw new Error(res.data.error?.message ?? "평점 조회 실패");
+    return res.data.response as RatingItem[];
+}

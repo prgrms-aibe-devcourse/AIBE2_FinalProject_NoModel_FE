@@ -52,7 +52,8 @@ import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} fr
 import {
   type DashboardMetrics, fetchStatisticsSummary,
   fetchStatisticsMonthly, type MonthlyStat,
-  fetchDailyActivity, type DailyActivity} from '../services/statisticsApi';
+  fetchDailyActivity, type DailyActivity,
+  fetchRatingDistribution, type RatingItem } from '../services/statisticsApi';
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
@@ -248,11 +249,15 @@ export function AdminPage({
   const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [monthlyError, setMonthlyError] = useState<string | null>(null);
 
-
   // 일별 통계
   const [daily, setDaily] = useState<DailyActivity[] | null>(null);
   const [dailyLoading, setDailyLoading] = useState(false);
   const [dailyError, setDailyError] = useState<string | null>(null);
+
+  // 평점 조회
+  const [ratingDist, setRatingDist] = useState<RatingItem[] | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
 
   const uiToServerStatusForProcess: Record<ModelReport['status'], ReportStatus> = {
     pending: 'PENDING',
@@ -461,6 +466,36 @@ export function AdminPage({
     // API 필드명이 이미 {month, projects, revenue}라 그대로 사용 가능
     return monthly;
   }, [monthly]);
+
+  // 평점 조회
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setRatingLoading(true);
+        setRatingError(null);
+        const data = await fetchRatingDistribution();
+        if (!abort) setRatingDist(data);
+      } catch (e: any) {
+        if (!abort) setRatingError(e?.message ?? '평점 분포 조회 실패');
+      } finally {
+        if (!abort) setRatingLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const ratingChartData = useMemo(() => {
+    if (!ratingDist || ratingDist.length === 0) return mockStatsData.ratingDistribution;
+    // UI는 'x점' 라벨을 기대하므로 변환
+    return ratingDist
+        .sort((a, b) => a.rating - b.rating)
+        .map((r) => ({
+          rating: `${r.rating}점`,
+          count: r.count,
+          percentage: r.percentage,
+        }));
+  }, [ratingDist]);
 
   if (!userProfile?.isAdmin) {
     return (
@@ -817,8 +852,16 @@ export function AdminPage({
                 }}>
                   평점 분포
                 </h3>
+
+                {ratingLoading && (
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>평점 분포 불러오는 중…</p>
+                )}
+                {ratingError && (
+                    <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {ratingError}</p>
+                )}
+
                 <div className="space-y-4">
-                  {mockStatsData.ratingDistribution.map((item, index) => (
+                  {ratingChartData.map((item, index) => (
                     <div key={item.rating} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span style={{ 
