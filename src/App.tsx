@@ -145,6 +145,8 @@ export interface UserProfile {
   planType: 'free' | 'pro' | 'enterprise';
   points: number;
   role: 'USER' | 'ADMIN';
+  modelCount: number;
+  projectCount: number;
 }
 
 export interface ModelReport {
@@ -207,7 +209,7 @@ export default function App() {
       status: 'reviewed',
       createdAt: new Date('2024-01-27T09:15:00'),
       reviewedAt: new Date('2024-01-27T16:20:00'),
-      reviewedBy: 'admin-1',
+      reviewedBy: 1,
       reviewNotes: '해당 이미지의 저작권 확인이 필요합니다. 원본 이미지 소스를 조사 중입니다.',
     },
     {
@@ -222,7 +224,7 @@ export default function App() {
       status: 'resolved',
       createdAt: new Date('2024-01-26T11:45:00'),
       reviewedAt: new Date('2024-01-26T15:30:00'),
-      reviewedBy: 'admin-1',
+      reviewedBy: 1,
       reviewNotes: '조사 결과 해당 모델은 적절한 AI 생성 과정을 통해 만들어진 것으로 확인됩니다. 실제 인물을 모방한 것이 아니므로 문제없습니다.',
       resolution: 'no_action'
     },
@@ -254,7 +256,7 @@ export default function App() {
       status: 'dismissed',
       createdAt: new Date('2024-01-24T16:10:00'),
       reviewedAt: new Date('2024-01-24T20:30:00'),
-      reviewedBy: 'admin-1',
+      reviewedBy: 1,
       reviewNotes: '해당 모델은 성인 모델이며, "학생"은 대학생을 의미하는 컨셉으로 확인됩니다. 부적절한 콘텐츠 생성을 방지하는 필터가 적용되어 있어 문제없습니다.',
       resolution: 'no_action'
     },

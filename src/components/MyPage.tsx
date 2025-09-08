@@ -530,7 +530,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {userProfile.modelsCreated}
+                    {userProfile.modelCount || 0}
                   </p>
                 </div>
               </div>
@@ -581,7 +581,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     className="text-sm"
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
-                    새로운 AI 모델을 만들어 수익을 창출하세요
+                    새로운 AI 모델을 만들고 프로젝트를 생성해보세요
                   </p>
                 </div>
               </div>
@@ -629,7 +629,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     className="text-sm"
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
-                    다른 크리에이터의 모델을 구매하세요
+                    다른 모델들을 사용해보세요
                   </p>
                 </div>
               </div>
