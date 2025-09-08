@@ -9,6 +9,7 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
+import { DynamicFontSize } from './common/DynamicFontSize';
 import { 
   ArrowLeft, Sparkles, Search, Plus, MoreHorizontal, Eye, Edit, 
   TrendingUp, Users, Coins, Calendar, Award, BarChart3,
@@ -271,9 +272,16 @@ export function MyModels({
             {userProfile && (
               <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
                 <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-                <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                  {userProfile.points.toLocaleString()}P
-                </span>
+                <DynamicFontSize
+                  text={`${userProfile.points.toLocaleString()}P`}
+                  baseSize="var(--font-size-small)"
+                  maxWidth="80px"
+                  minSize="10px"
+                  style={{
+                    color: 'var(--color-text-primary)',
+                    fontWeight: 'var(--font-weight-medium)'
+                  }}
+                />
               </div>
             )}
             <Button 
@@ -299,7 +307,6 @@ export function MyModels({
           <div className="flex items-center gap-4 mb-6">
             <DefaultAvatar 
               name={userProfile.name}
-              imageUrl={userProfile.avatar}
               className="w-12 h-12"
             />
             <div>
@@ -592,7 +599,7 @@ export function MyModels({
                     </Select>
 
                     {/* Sort */}
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                    <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as typeof sortBy)}>
                       <SelectTrigger className="w-28 h-9">
                         <SelectValue placeholder="정렬" />
                       </SelectTrigger>

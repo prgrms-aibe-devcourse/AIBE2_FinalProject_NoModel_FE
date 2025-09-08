@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
+import { DynamicFontSize } from './common/DynamicFontSize';
 import { 
   Sparkles, Plus, Search, Filter, Grid3X3, List, Calendar, Download, 
   Eye, MoreHorizontal, User, Settings, LogOut, TrendingUp, Image as ImageIcon,
@@ -484,15 +485,15 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                   >
                     보유 포인트
                   </p>
-                  <p 
+                  <DynamicFontSize
+                    text={`${userProfile.points.toLocaleString()} P`}
+                    baseSize="var(--font-size-title3)"
+                    maxWidth="140px"
+                    minSize="12px"
                     style={{
-                      fontSize: 'var(--font-size-title3)',
-                      fontWeight: 'var(--font-weight-semibold)',
                       color: 'var(--color-text-primary)'
                     }}
-                  >
-                    {userProfile.points.toLocaleString()} P
-                  </p>
+                  />
                 </div>
               </div>
             </Card>
