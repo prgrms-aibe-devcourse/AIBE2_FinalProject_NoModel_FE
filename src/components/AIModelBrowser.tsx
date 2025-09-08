@@ -248,18 +248,12 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     };
   }, [searchTerm, activeTab, performSearch]);
 
-  // 탭 변경 시 초기 로드
+  // 탭 변경 시 초기 로드 (검색 탭 제외)
   useEffect(() => {
-    if (activeTab === 'search') {
-      // 검색 탭에서는 검색어가 없을 때만 인기 모델 로드
-      if (!searchTerm) {
-        performSearch(activeTab, '', 0, false);
-      }
-    } else {
-      // 다른 탭들은 바로 로드
+    if (activeTab !== 'search') {
       performSearch(activeTab, '', 0, false);
     }
-  }, [activeTab]);
+  }, [activeTab, performSearch]);
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
