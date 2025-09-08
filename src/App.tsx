@@ -648,6 +648,7 @@ export default function App() {
           onAdGeneration={() => handleStageChange('onboarding')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
         />
       )}
       
@@ -731,6 +732,7 @@ export default function App() {
           onAdGeneration={() => handleStageChange('onboarding')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
         />
       )}
 
