@@ -68,7 +68,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [searchTerm, setSearchTerm] = useState('');
-  const [suggestions, setSuggestions] = useState<AIModelDocument[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchState, setSearchState] = useState<SearchState>({
     models: [],
@@ -206,7 +206,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     };
   }, [loadMoreCallback]);
 
-  // 검색어 변경 시 자동완성
+  // 검색어 변경 시 자동완성 (검색 탭에서만)
   useEffect(() => {
     if (activeTab !== 'search') return;
 
@@ -214,9 +214,14 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
       clearTimeout(suggestionTimeoutRef.current);
     }
 
-    suggestionTimeoutRef.current = setTimeout(() => {
-      fetchSuggestions(searchTerm);
-    }, 300);
+    if (searchTerm.trim()) {
+      suggestionTimeoutRef.current = setTimeout(() => {
+        fetchSuggestions(searchTerm);
+      }, 300);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
 
     return () => {
       if (suggestionTimeoutRef.current) {
@@ -225,15 +230,16 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     };
   }, [searchTerm, activeTab, fetchSuggestions]);
 
-  // 검색어 변경 시 디바운스 검색
+  // 검색 탭에서 검색어가 없을 때만 인기 모델 로드
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+    if (activeTab === 'search' && !searchTerm) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      searchTimeoutRef.current = setTimeout(() => {
+        performSearch(activeTab, '', 0, false);
+      }, 100);
     }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      performSearch(activeTab, searchTerm, 0, false);
-    }, activeTab === 'search' && searchTerm ? 500 : 0);
 
     return () => {
       if (searchTimeoutRef.current) {
@@ -244,7 +250,15 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
 
   // 탭 변경 시 초기 로드
   useEffect(() => {
-    performSearch(activeTab, searchTerm, 0, false);
+    if (activeTab === 'search') {
+      // 검색 탭에서는 검색어가 없을 때만 인기 모델 로드
+      if (!searchTerm) {
+        performSearch(activeTab, '', 0, false);
+      }
+    } else {
+      // 다른 탭들은 바로 로드
+      performSearch(activeTab, '', 0, false);
+    }
   }, [activeTab]);
 
   const handleTabChange = (tab: TabType) => {
@@ -254,10 +268,21 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     setShowSuggestions(false);
   };
 
-  const handleSuggestionClick = (suggestion: AIModelDocument) => {
-    setSearchTerm(suggestion.modelName);
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchTerm(suggestion);
     setShowSuggestions(false);
-    performSearch('search', suggestion.modelName, 0, false);
+  };
+
+  const handleSearchSubmit = () => {
+    if (activeTab === 'search') {
+      performSearch('search', searchTerm, 0, false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit();
+    }
   };
 
   const handleModelReport = (model: AIModelDocument) => {
@@ -439,48 +464,56 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
 
       {/* 검색 입력 - 검색 탭에서만 표시 */}
       {activeTab === 'search' && (
-        <div className="relative">
+        <div className="space-y-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
               ref={inputRef}
-              placeholder="AI 모델 검색... (빈 칸이면 인기 모델 표시)"
+              placeholder="AI 모델 검색... (Enter로 검색)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onFocus={() => setShowSuggestions(suggestions.length > 0)}
+              onKeyPress={handleKeyPress}
+              onFocus={() => {
+                if (suggestions.length > 0) {
+                  setShowSuggestions(true);
+                }
+              }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               className="pl-10 h-12"
             />
           </div>
           
-          {/* 자동완성 목록 */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-              {suggestions.map((suggestion, index) => (
-                <div
-                  key={suggestion.id}
-                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                >
-                  <div className="flex items-center gap-3">
-                    <img 
-                      src={suggestion.thumbnailUrl || '/api/placeholder/40/40'}
-                      alt={suggestion.modelName}
-                      className="w-10 h-10 object-cover rounded"
-                    />
-                    <div>
-                      <div className="font-medium text-sm">{suggestion.modelName}</div>
-                      <div className="text-xs text-gray-500">{suggestion.developer}</div>
+          {/* 자동완성 전용 공간 - 고정 높이로 공간 확보 */}
+          <div 
+            className="transition-all duration-200 overflow-hidden"
+            style={{
+              height: showSuggestions && suggestions.length > 0 
+                ? `${Math.min(suggestions.length * 60, 240) + 16}px` 
+                : '0px'
+            }}
+          >
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="mt-2 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium text-sm text-gray-800">{suggestion}</span>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* 검색 결과 */}
+      <div>
       {searchState.isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }, (_, i) => (
@@ -545,6 +578,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         onOpenChange={setDetailDialogOpen}
         onModelSelect={onModelSelect ? handleDetailDialogModelSelect : undefined}
       />
+      </div>
     </div>
   );
 };

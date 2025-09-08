@@ -92,7 +92,7 @@ export interface ApiResponse<T> {
 }
 
 export type ModelSearchResponse = ApiResponse<PageResponse<AIModelDocument>>;
-export type ModelSuggestionsResponse = ApiResponse<AIModelDocument[]>;
+export type ModelSuggestionsResponse = ApiResponse<string[]>;
 export type ModelDetailResponse = ApiResponse<AIModelDocument>;
 
 // Model detail types

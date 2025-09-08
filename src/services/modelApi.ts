@@ -131,11 +131,8 @@ export const getPopularModels = async (params: PopularModelParams = {}): Promise
  */
 export const getModelNameSuggestions = async (prefix: string): Promise<ModelSuggestionsResponse> => {
   try {
-    const searchParams = new URLSearchParams();
-    searchParams.append('prefix', prefix);
-
     const response = await GetAxiosInstance<ModelSuggestionsResponse>(
-      `/models/search/suggestions?${searchParams.toString()}`
+      `/models/search/suggestions?prefix=${encodeURIComponent(prefix)}`
     );
     
     return response.data;
