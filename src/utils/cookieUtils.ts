@@ -1,3 +1,30 @@
+// Base64 encoding/decoding utilities for safe cookie storage
+const base64Utils = {
+  encode: (str: string): string => {
+    try {
+      // Unicode 문자열을 안전하게 Base64로 인코딩
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      }));
+    } catch (error) {
+      console.error('Base64 encoding error:', error);
+      return str; // 실패 시 원본 반환
+    }
+  },
+
+  decode: (str: string): string => {
+    try {
+      // Base64를 Unicode 문자열로 안전하게 디코딩
+      return decodeURIComponent(Array.prototype.map.call(atob(str), (c: string) => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+    } catch (error) {
+      console.error('Base64 decoding error:', error);
+      return str; // 실패 시 원본 반환
+    }
+  }
+};
+
 // Cookie utility functions for token management
 export const cookieUtils = {
   // Set cookie with expiration
@@ -32,6 +59,33 @@ export const cookieUtils = {
   // Check if cookie exists and is not expired
   isCookieValid: (name: string): boolean => {
     return cookieUtils.getCookie(name) !== null;
+  },
+
+  // Set cookie with Base64 encoding (for complex data)
+  setEncodedCookie: (name: string, value: string, maxAge?: number) => {
+    try {
+      const encodedValue = base64Utils.encode(value);
+      cookieUtils.setCookie(name, encodedValue, maxAge);
+    } catch (error) {
+      console.error('Encoded cookie set error:', error);
+      // 폴백으로 원본 값 저장
+      cookieUtils.setCookie(name, value, maxAge);
+    }
+  },
+
+  // Get cookie with Base64 decoding (for complex data)
+  getEncodedCookie: (name: string): string | null => {
+    try {
+      const encodedValue = cookieUtils.getCookie(name);
+      if (!encodedValue) {
+        return null;
+      }
+      return base64Utils.decode(encodedValue);
+    } catch (error) {
+      console.error('Encoded cookie get error:', error);
+      // 폴백으로 원본 값 반환
+      return cookieUtils.getCookie(name);
+    }
   }
 };
 
@@ -103,15 +157,36 @@ export const tokenCookies = {
     return token;
   },
 
-  // Set user info
+  // Set user info (Base64 encoded for safe cookie storage)
   setUserInfo: (userInfo: any) => {
-    cookieUtils.setCookie(tokenCookies.USER_INFO, JSON.stringify(userInfo));
+    try {
+      const jsonString = JSON.stringify(userInfo);
+      const encodedUserInfo = base64Utils.encode(jsonString);
+      cookieUtils.setCookie(tokenCookies.USER_INFO, encodedUserInfo);
+      console.log('✅ 사용자 정보 쿠키 저장 성공 (Base64 인코딩)');
+    } catch (error) {
+      console.error('❌ 사용자 정보 쿠키 저장 실패:', error);
+    }
   },
 
-  // Get user info
+  // Get user info (Base64 decoded from cookie)
   getUserInfo: (): any | null => {
-    const userInfo = cookieUtils.getCookie(tokenCookies.USER_INFO);
-    return userInfo ? JSON.parse(userInfo) : null;
+    try {
+      const encodedUserInfo = cookieUtils.getCookie(tokenCookies.USER_INFO);
+      if (!encodedUserInfo) {
+        return null;
+      }
+      
+      const decodedUserInfo = base64Utils.decode(encodedUserInfo);
+      const userInfo = JSON.parse(decodedUserInfo);
+      console.log('✅ 사용자 정보 쿠키 읽기 성공 (Base64 디코딩)');
+      return userInfo;
+    } catch (error) {
+      console.error('❌ 사용자 정보 쿠키 읽기 실패:', error);
+      // 오류 발생 시 쿠키 삭제하여 재로그인 유도
+      cookieUtils.removeCookie(tokenCookies.USER_INFO);
+      return null;
+    }
   },
 
   // Check if user is authenticated
