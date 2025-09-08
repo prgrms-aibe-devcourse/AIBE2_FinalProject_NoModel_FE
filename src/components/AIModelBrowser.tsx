@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -40,6 +40,142 @@ interface SearchState {
 }
 
 type TabType = 'search' | 'admin' | 'mymodels';
+
+// ModelCard 컴포넌트를 바깥으로 분리하고 React.memo 적용
+const ModelCard = memo(({ 
+  model, 
+  onModelReport, 
+  onModelSelect, 
+  onModelCardClick 
+}: { 
+  model: AIModelDocument;
+  onModelReport: (model: AIModelDocument) => void;
+  onModelSelect?: (model: AIModelDocument) => void;
+  onModelCardClick: (model: AIModelDocument) => void;
+}) => {
+  // 백엔드 데이터 구조에 맞게 필드 매핑
+  const displayData = {
+    thumbnailUrl: model.thumbnailUrl || '/api/placeholder/300/300',
+    modelName: model.modelName,
+    shortDescription: model.shortDescription || model.prompt || '',
+    categoryType: model.categoryType || model.ownType,
+    developer: model.developer || model.ownerName,
+    rating: model.rating || 0,
+    downloadCount: model.downloadCount || model.usageCount || 0,
+    viewCount: model.viewCount || 0,
+    isAdmin: model.modelType === 'ADMIN' || model.ownType === 'ADMIN',
+    isPublic: model.isPublic,
+    tags: model.tags || [],
+  };
+
+  return (
+    <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer">
+      <div className="relative" onClick={() => onModelCardClick(model)}>
+        <img
+          src={displayData.thumbnailUrl}
+          alt={displayData.modelName}
+          className="w-full h-48 object-cover"
+          loading="lazy"
+        />
+        <div className="absolute top-2 left-2">
+          {displayData.isAdmin && (
+            <Badge className="bg-yellow-500 text-white">
+              <Crown className="h-3 w-3 mr-1" />
+              관리자
+            </Badge>
+          )}
+        </div>
+        <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white/80 hover:bg-white">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onModelReport(model)}>
+                <Flag className="h-4 w-4 mr-2" />
+                신고하기
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      
+      <div className="p-4" onClick={() => onModelCardClick(model)}>
+        <div className="flex items-center justify-between mb-2">
+          <Badge variant="secondary" className="text-xs">
+            {displayData.categoryType}
+          </Badge>
+        </div>
+        
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+            {displayData.modelName}
+          </h3>
+          <div className="flex items-center gap-1">
+            <Star className="h-4 w-4 text-yellow-400 fill-current" />
+            <span className="text-sm font-medium">{displayData.rating.toFixed(1)}</span>
+          </div>
+        </div>
+        
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          {displayData.shortDescription}
+        </p>
+        
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-500">
+            by {displayData.developer}
+          </div>
+          {onModelSelect && (
+            <Button 
+              size="sm" 
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                onModelSelect(model);
+              }}
+              className="h-8"
+            >
+              선택
+            </Button>
+          )}
+        </div>
+        
+        {displayData.tags && displayData.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-3">
+            {displayData.tags.slice(0, 3).map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+            {displayData.tags.length > 3 && (
+              <Badge variant="outline" className="text-xs">
+                +{displayData.tags.length - 3}
+              </Badge>
+            )}
+          </div>
+        )}
+        
+        {/* 가격 및 통계 정보 */}
+        <div className="flex items-center justify-between mt-3 pt-3 border-t">
+          <div className="text-sm text-green-600 font-medium">
+            {model.price && model.price > 0 ? `${model.price.toLocaleString()}원` : '무료'}
+          </div>
+          <div className="flex items-center gap-3 text-gray-500 text-xs">
+            <div className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              <span>{displayData.viewCount.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Download className="h-3 w-3" />
+              <span>{displayData.downloadCount.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+});
 
 const TAB_CONFIG = {
   search: {
@@ -300,130 +436,6 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     }
   };
 
-  const ModelCard = ({ model }: { model: AIModelDocument }) => {
-    // 백엔드 데이터 구조에 맞게 필드 매핑
-    const displayData = {
-      thumbnailUrl: model.thumbnailUrl || '/api/placeholder/300/300',
-      modelName: model.modelName,
-      shortDescription: model.shortDescription || model.prompt || '',
-      categoryType: model.categoryType || model.ownType,
-      developer: model.developer || model.ownerName,
-      rating: model.rating || 0,
-      downloadCount: model.downloadCount || model.usageCount || 0,
-      viewCount: model.viewCount || 0,
-      isAdmin: model.modelType === 'ADMIN' || model.ownType === 'ADMIN',
-      isPublic: model.isPublic,
-      tags: model.tags || [],
-    };
-
-    return (
-      <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer">
-        <div className="relative" onClick={() => handleModelCardClick(model)}>
-          <img
-            src={displayData.thumbnailUrl}
-            alt={displayData.modelName}
-            className="w-full h-48 object-cover"
-            loading="lazy"
-          />
-          <div className="absolute top-2 left-2">
-            {displayData.isAdmin && (
-              <Badge className="bg-yellow-500 text-white">
-                <Crown className="h-3 w-3 mr-1" />
-                관리자
-              </Badge>
-            )}
-          </div>
-          <div className="absolute top-2 right-2" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 bg-white/80 hover:bg-white">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => handleModelReport(model)}>
-                  <Flag className="h-4 w-4 mr-2" />
-                  신고하기
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        
-        <div className="p-4" onClick={() => handleModelCardClick(model)}>
-          <div className="flex items-center justify-between mb-2">
-            <Badge variant="secondary" className="text-xs">
-              {displayData.categoryType}
-            </Badge>
-          </div>
-          
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-              {displayData.modelName}
-            </h3>
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 text-yellow-400 fill-current" />
-              <span className="text-sm font-medium">{displayData.rating.toFixed(1)}</span>
-            </div>
-          </div>
-          
-          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-            {displayData.shortDescription}
-          </p>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-500">
-              by {displayData.developer}
-            </div>
-            {onModelSelect && (
-              <Button 
-                size="sm" 
-                onClick={(e: React.MouseEvent) => {
-                  e.stopPropagation();
-                  onModelSelect(model);
-                }}
-                className="h-8"
-              >
-                선택
-              </Button>
-            )}
-          </div>
-          
-          {displayData.tags && displayData.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
-              {displayData.tags.slice(0, 3).map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-              {displayData.tags.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{displayData.tags.length - 3}
-                </Badge>
-              )}
-            </div>
-          )}
-          
-          {/* 가격 및 통계 정보 */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t">
-            <div className="text-sm text-green-600 font-medium">
-              {model.price && model.price > 0 ? `${model.price.toLocaleString()}원` : '무료'}
-            </div>
-            <div className="flex items-center gap-3 text-gray-500 text-xs">
-              <div className="flex items-center gap-1">
-                <Eye className="h-3 w-3" />
-                <span>{displayData.viewCount.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Download className="h-3 w-3" />
-                <span>{displayData.downloadCount.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-  };
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -549,7 +561,13 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {searchState.models.map((model) => (
-              <ModelCard key={model.id} model={model} />
+              <ModelCard 
+                key={model.id} 
+                model={model}
+                onModelReport={handleModelReport}
+                onModelSelect={onModelSelect}
+                onModelCardClick={handleModelCardClick}
+              />
             ))}
           </div>
 
