@@ -5,7 +5,6 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
@@ -269,12 +268,12 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         {/* User Stats */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-              <AvatarFallback style={{ fontSize: 'var(--font-size-title3)' }}>
-                {userProfile.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+            <div 
+              className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold"
+              style={{ fontSize: 'var(--font-size-title3)' }}
+            >
+              {userProfile.name.charAt(0).toUpperCase()}
+            </div>
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 

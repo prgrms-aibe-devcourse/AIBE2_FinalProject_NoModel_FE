@@ -24,6 +24,7 @@ interface ModelSelectionPageProps {
   onAdGeneration: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onAdmin?: () => void;
 }
 
 // Mock data for pre-made models
@@ -153,7 +154,8 @@ export function ModelSelectionPage({
   onLogout,
   onAdGeneration,
   onMarketplace,
-  onMyPage
+  onMyPage,
+  onAdmin
 }: ModelSelectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('premade');
@@ -200,6 +202,8 @@ export function ModelSelectionPage({
         onModelCreation={onCreateModel}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onAdmin={onAdmin}
+        isAdmin={userProfile?.isAdmin}
         onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}

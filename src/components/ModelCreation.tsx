@@ -131,7 +131,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
         },
         creatorId: userProfile.id,
         creatorName: userProfile.name,
-        creatorAvatar: userProfile.avatar,
+        creatorAvatar: userProfile.name?.charAt(0)?.toUpperCase() || 'U',
         price: formData.price,
         usageCount: 0,
         rating: 0,

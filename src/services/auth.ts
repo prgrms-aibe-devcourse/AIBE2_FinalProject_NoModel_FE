@@ -1,7 +1,7 @@
 import { LoginRequest, LoginResponse, SignupRequest, SignupResponse } from '../types/auth';
 import { PostAxiosInstance, GetAxiosInstance } from './ApiService';
 import { AxiosError } from 'axios';
-import { tokenCookies } from '../utils/cookieUtils';
+import { tokenCookies, cookieUtils } from '../utils/cookieUtils';
 
 class AuthService {
   // Login API call - Cookie based authentication
@@ -10,25 +10,19 @@ class AuthService {
       const response = await PostAxiosInstance<LoginResponse>('/auth/login', credentials);
       const data = response.data;
 
-      // 쿠키 기반 인증이므로 body에서 토큰을 추출하지 않음
-      // 백엔드가 Set-Cookie 헤더로 토큰을 설정함
       if (data.success) {
-        // 로그인 성공 시 쿠키가 자동으로 설정됨
-        // 별도의 토큰 저장 로직 불필요
-        console.log('Login successful, cookies set by backend');
+        // HttpOnly 쿠키는 백엔드가 Set-Cookie 헤더로 설정함
+        console.log('Login successful, HttpOnly cookies set by backend');
         
-        // 성공 응답 반환 (토큰 정보는 없어도 됨)
-        return {
-          success: true,
-          response: {
-            grantType: 'Bearer',
-            accessToken: 'cookie-based',
-            accessTokenValidTime: 3600000,
-            refreshToken: 'cookie-based',
-            refreshTokenValidTime: 86400000
-          },
-          error: null
-        };
+        // HttpOnly 쿠키는 JS로 읽을 수 없으므로 localStorage에 로그인 상태 저장
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // 사용자 정보가 있으면 저장
+        if (data.response?.user) {
+          tokenCookies.setUserInfo(data.response.user);
+        }
+        
+        return data;
       }
 
       return data;
@@ -153,9 +147,19 @@ class AuthService {
 
   // Check if user is authenticated - Cookie based
   isAuthenticated(): boolean {
-    // 쿠키 기반 인증에서는 쿠키 존재 여부를 서버에서 확인해야 함
-    // 클라이언트에서는 로컬에 저장된 사용자 정보로 임시 확인
-    return tokenCookies.getUserInfo() !== null;
+    // HttpOnly 쿠키는 JavaScript로 읽을 수 없음
+    // localStorage에 로그인 상태를 저장하여 확인
+    const userInfo = tokenCookies.getUserInfo();
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    console.log('🔍 인증 상태 확인 (HttpOnly 쿠키):');
+    console.log('  - localStorage isLoggedIn:', isLoggedIn);
+    console.log('  - userInfo 존재:', !!userInfo);
+    console.log('  - 최종 결과:', isLoggedIn || !!userInfo);
+    
+    // HttpOnly 쿠키는 읽을 수 없으므로 
+    // 로그인 시 localStorage에 상태를 저장하고 그것을 확인
+    return isLoggedIn || !!userInfo;
   }
 
   // Logout - clear cookies and local data
@@ -168,6 +172,7 @@ class AuthService {
     } finally {
       // 로컬 데이터 정리
       tokenCookies.clearAll();
+      localStorage.removeItem('isLoggedIn');
     }
   }
 

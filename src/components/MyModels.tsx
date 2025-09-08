@@ -28,6 +28,7 @@ interface MyModelsProps {
   onAdGeneration: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onAdmin?: () => void;
 }
 
 // Mock data for user models if none provided
@@ -148,7 +149,8 @@ export function MyModels({
   onLogout,
   onAdGeneration,
   onMarketplace,
-  onMyPage
+  onMyPage,
+  onAdmin
 }: MyModelsProps) {
   const [activeTab, setActiveTab] = useState('models');
   const [searchQuery, setSearchQuery] = useState('');
@@ -240,6 +242,8 @@ export function MyModels({
         onModelCreation={onCreateModel}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onAdmin={onAdmin}
+        isAdmin={userProfile?.isAdmin}
         onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
