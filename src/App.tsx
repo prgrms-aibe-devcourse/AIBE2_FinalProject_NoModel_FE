@@ -128,7 +128,7 @@ export interface GeneratedProject {
 
 export interface PointTransaction {
   id: string;
-  userId: string;
+  userId: number;
   type: 'earned' | 'spent' | 'bonus' | 'refund';
   amount: number;
   description: string;
@@ -138,24 +138,13 @@ export interface PointTransaction {
 }
 
 export interface UserProfile {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  avatar?: string;
-  bio?: string;
-  company?: string;
-  location?: string;
-  website?: string;
   joinedAt: Date;
   planType: 'free' | 'pro' | 'enterprise';
-  generatedCount: number;
-  downloadCount: number;
-  points: number; // 현재 포인트
-  totalEarned: number; // 총 획득 포인트
-  totalSpent: number; // 총 사용 포인트
-  modelsCreated: number; // 생성한 모델 수
-  modelsEarnings: number; // 모델 판매 수익
-  isAdmin?: boolean; // 관리자 여부
+  points: number;
+  role: 'USER' | 'ADMIN';
 }
 
 export interface ModelReport {
@@ -171,7 +160,7 @@ export interface ModelReport {
   status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
   createdAt: Date;
   reviewedAt?: Date;
-  reviewedBy?: string;
+  reviewedBy?: number;
   reviewNotes?: string;
   resolution?: 'model_removed' | 'warning_issued' | 'no_action' | 'user_banned';
 }
@@ -284,28 +273,6 @@ export default function App() {
   ]);
   const [selectedModelToReport, setSelectedModelToReport] = useState<UserModel | null>(null);
 
-  // Mock user data (in real app, this would come from API/database)
-  const mockUserProfile: UserProfile = {
-    id: 'user-1',
-    name: '홍길동',
-    email: 'hong@example.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    bio: 'AI 기반 제품 이미지 생성에 관심이 많은 마케터입니다.',
-    company: '스타트업 코리아',
-    location: '서울, 대한민국',
-    website: 'https://example.com',
-    joinedAt: new Date('2024-01-15'),
-    planType: 'pro',
-    generatedCount: 47,
-    downloadCount: 152,
-    points: 2500,
-    totalEarned: 4200,
-    totalSpent: 1700,
-    modelsCreated: 3,
-    modelsEarnings: 1850,
-    isAdmin: true
-  };
-
   // Check authentication status on app load
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -370,7 +337,7 @@ export default function App() {
     if (model.creator && model.price && userProfile) {
       if (userProfile.points >= model.price) {
         // 포인트 차감
-        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price!, totalSpent: prev.totalSpent + model.price! } : prev);
+        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
         
         // 거래 내역 추가
         const transaction: PointTransaction = {
@@ -420,10 +387,8 @@ export default function App() {
       }
     } catch (error) {
       console.error('Login success handler error:', error);
-      // Use mock profile as fallback
-      setIsLoggedIn(true);
-      setUserProfile(mockUserProfile);
-      setCurrentStage('onboarding');
+      // API 요청 실패 시 로그인 페이지로 이동
+      setCurrentStage('login');
     }
   };
 
@@ -506,14 +471,12 @@ export default function App() {
   const handleModelCreation = (newModel: UserModel) => {
     setUserModels(prev => [newModel, ...prev]);
     
-    // 모델 생성 보너스 포인트 지급
+    // 모델 생성 보너스 포인트 지급 (백엔드에서 처리)
     const bonusPoints = 100;
     if (userProfile) {
       setUserProfile(prev => prev ? { 
         ...prev, 
-        points: prev.points + bonusPoints,
-        totalEarned: prev.totalEarned + bonusPoints,
-        modelsCreated: prev.modelsCreated + 1
+        points: prev.points + bonusPoints
       } : prev);
       
       // 거래 내역 추가
@@ -608,7 +571,7 @@ export default function App() {
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
           isLoggedIn={isLoggedIn}
-          isAdmin={userProfile?.isAdmin}
+          isAdmin={userProfile?.role === 'ADMIN'}
         />
       )}
 
