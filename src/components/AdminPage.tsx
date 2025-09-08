@@ -49,7 +49,11 @@ import {
 import {ModelReport, UserProfile} from '../App';
 import type {AdminReportItem, ReportStatus} from '../services/reportApi';
 import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} from '../services/reportApi';
-
+import {
+  type DashboardMetrics, fetchStatisticsSummary,
+  fetchStatisticsMonthly, type MonthlyStat,
+  fetchDailyActivity, type DailyActivity,
+  fetchRatingDistribution, type RatingItem } from '../services/statisticsApi';
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
@@ -107,6 +111,8 @@ const resolutionLabels = {
 const mockStatsData = {
   // 월별 프로젝트 생성량 (최근 6개월)
   projectsByMonth: [
+    { month: '6월', projects: 1240, revenue: 12400 },
+    { month: '7월', projects: 1240, revenue: 12400 },
     { month: '8월', projects: 1240, revenue: 12400 },
     { month: '9월', projects: 1580, revenue: 15800 },
     { month: '10월', projects: 1890, revenue: 18900 },
@@ -233,6 +239,26 @@ export function AdminPage({
   const [reloadTick, setReloadTick] = useState(0);
   const [openReportId, setOpenReportId] = useState<string | null>(null);
 
+  // 통계 요약
+  const [dash, setDash] = useState<DashboardMetrics | null>(null);
+  const [dashLoading, setDashLoading] = useState(false);
+  const [dashError, setDashError] = useState<string | null>(null);
+
+  // 월별 통계
+  const [monthly, setMonthly] = useState<MonthlyStat[] | null>(null);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
+  const [monthlyError, setMonthlyError] = useState<string | null>(null);
+
+  // 일별 통계
+  const [daily, setDaily] = useState<DailyActivity[] | null>(null);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [dailyError, setDailyError] = useState<string | null>(null);
+
+  // 평점 조회
+  const [ratingDist, setRatingDist] = useState<RatingItem[] | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
+
   const uiToServerStatusForProcess: Record<ModelReport['status'], ReportStatus> = {
     pending: 'PENDING',
     reviewed: 'UNDER_REVIEW',
@@ -295,6 +321,7 @@ export function AdminPage({
 
   const adminStats = summary ?? computedStats; // ← 카드에 이 값을 그대로 사용
 
+  // 신고 목록
   useEffect(() => {
     let abort = false;
     (async () => {
@@ -319,6 +346,7 @@ export function AdminPage({
     return () => { abort = true; };
   }, [listPage, listSize, statusFilter, reloadTick]);
 
+  // 신고 처리
   const handleStatusUpdate = async (status: ModelReport['status']) => {
     if (!selectedReport) return;
 
@@ -359,8 +387,115 @@ export function AdminPage({
     }
   };
 
+  // 통계 요약
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setDashLoading(true);
+        setDashError(null);
+        const data = await fetchStatisticsSummary();
+        if (!abort) setDash(data);
+      } catch (e: any) {
+        if (!abort) setDashError(e?.message ?? '대시보드 조회 실패');
+      } finally {
+        if (!abort) setDashLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
 
+  // 일별 통계
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setDailyLoading(true);
+        setDailyError(null);
+        const data = await fetchDailyActivity();
+        if (abort) return;
+        setDaily(data);
+      } catch (e: any) {
+        if (!abort) setDailyError(e?.message ?? '일별 통계 조회 실패');
+      } finally {
+        if (!abort) setDailyLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
 
+  const DAY_ORDER = ['월','화','수','목','금','토','일'];
+
+  const dailyChartData = useMemo(() => {
+    if (!daily || daily.length === 0) return mockStatsData.dailyActivity; // fallback
+    // 응답이 토, 일, 월 … 처럼 섞여와도 월→일 순으로 정렬
+    return [...daily].sort((a, b) => DAY_ORDER.indexOf(a.day) - DAY_ORDER.indexOf(b.day));
+  }, [daily]);
+
+  const totals = useMemo(() => ({
+    totalUsers:          dash?.totalUsers          ?? mockStatsData.totalStats.totalUsers,
+    newUsersThisMonth:   dash?.newUsersThisMonth   ?? mockStatsData.totalStats.newUsersThisMonth,
+    totalProjects:       dash?.totalProjects       ?? mockStatsData.totalStats.totalProjects,
+    newProjectsThisMonth:dash?.newProjectsThisMonth?? mockStatsData.totalStats.projectsThisMonth, // 이름 다름 주의
+    totalSales:          dash?.totalSales          ?? mockStatsData.totalStats.totalRevenue,      // 이름 다름 주의
+    salesThisMonth:      dash?.salesThisMonth      ?? mockStatsData.totalStats.revenueThisMonth,  // 이름 다름 주의
+    averageRating:       dash?.averageRating       ?? mockStatsData.totalStats.averageRating,
+    totalDownloads:      dash?.totalDownloads      ?? mockStatsData.totalStats.totalDownloads,
+  }), [dash]);
+
+  // 월별 통계
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setMonthlyLoading(true);
+        setMonthlyError(null);
+        const data = await fetchStatisticsMonthly();
+        if (!abort) setMonthly(data);
+      } catch (e: any) {
+        if (!abort) setMonthlyError(e?.message ?? '월별 통계 조회 실패');
+      } finally {
+        if (!abort) setMonthlyLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const monthlyChartData = useMemo(() => {
+    if (!monthly) return mockStatsData.projectsByMonth; // fallback
+    // API 필드명이 이미 {month, projects, revenue}라 그대로 사용 가능
+    return monthly;
+  }, [monthly]);
+
+  // 평점 조회
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setRatingLoading(true);
+        setRatingError(null);
+        const data = await fetchRatingDistribution();
+        if (!abort) setRatingDist(data);
+      } catch (e: any) {
+        if (!abort) setRatingError(e?.message ?? '평점 분포 조회 실패');
+      } finally {
+        if (!abort) setRatingLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, []);
+
+  const ratingChartData = useMemo(() => {
+    if (!ratingDist || ratingDist.length === 0) return mockStatsData.ratingDistribution;
+    // UI는 'x점' 라벨을 기대하므로 변환
+    return ratingDist
+        .sort((a, b) => a.rating - b.rating)
+        .map((r) => ({
+          rating: `${r.rating}점`,
+          count: r.count,
+          percentage: r.percentage,
+        }));
+  }, [ratingDist]);
 
   if (!userProfile?.isAdmin) {
     return (
@@ -450,6 +585,14 @@ export function AdminPage({
           <TabsContent value="statistics" className="space-y-6">
             {/* Overview Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {dashLoading && (
+                  <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>대시보드 불러오는 중…</p>
+              )}
+              {dashError && (
+                  <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>대시보드 에러: {dashError}</p>
+              )}
+
+
               <Card className="p-6" style={{
                 backgroundColor: 'var(--color-background-primary)',
                 borderColor: 'var(--color-border-primary)',
@@ -465,10 +608,10 @@ export function AdminPage({
                       fontWeight: 'var(--font-weight-semibold)',
                       color: 'var(--color-text-primary)'
                     }}>
-                      {mockStatsData.totalStats.totalUsers.toLocaleString()}
+                      {totals.totalUsers.toLocaleString()}
                     </p>
                     <p style={{ color: 'var(--color-semantic-green)', fontSize: 'var(--font-size-small)' }}>
-                      +{mockStatsData.totalStats.newUsersThisMonth.toLocaleString()} 이번 달
+                      +{totals.newUsersThisMonth.toLocaleString()} 이번 달
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -493,10 +636,10 @@ export function AdminPage({
                       fontWeight: 'var(--font-weight-semibold)',
                       color: 'var(--color-text-primary)'
                     }}>
-                      {mockStatsData.totalStats.totalProjects.toLocaleString()}
+                      {totals.totalProjects.toLocaleString()}
                     </p>
                     <p style={{ color: 'var(--color-semantic-green)', fontSize: 'var(--font-size-small)' }}>
-                      +{mockStatsData.totalStats.projectsThisMonth.toLocaleString()} 이번 달
+                      +{totals.newProjectsThisMonth.toLocaleString()} 이번 달
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -521,10 +664,10 @@ export function AdminPage({
                       fontWeight: 'var(--font-weight-semibold)',
                       color: 'var(--color-text-primary)'
                     }}>
-                      {mockStatsData.totalStats.totalRevenue.toLocaleString()}P
+                      {totals.totalSales.toLocaleString()}P
                     </p>
                     <p style={{ color: 'var(--color-semantic-green)', fontSize: 'var(--font-size-small)' }}>
-                      +{mockStatsData.totalStats.revenueThisMonth.toLocaleString()}P 이번 달
+                      +{totals.salesThisMonth.toLocaleString()}P 이번 달
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -549,10 +692,10 @@ export function AdminPage({
                       fontWeight: 'var(--font-weight-semibold)',
                       color: 'var(--color-text-primary)'
                     }}>
-                      {mockStatsData.totalStats.averageRating}
+                      {totals.averageRating}
                     </p>
                     <p style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-small)' }}>
-                      {mockStatsData.totalStats.totalDownloads.toLocaleString()} 다운로드
+                      {totals.totalDownloads.toLocaleString()} 다운로드
                     </p>
                   </div>
                   <div className="w-12 h-12 rounded-full flex items-center justify-center"
@@ -579,8 +722,16 @@ export function AdminPage({
                 }}>
                   월별 프로젝트 생성 & 매출
                 </h3>
+
+                {monthlyLoading && (
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>월별 통계 불러오는 중…</p>
+                )}
+                {monthlyError && (
+                    <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {monthlyError}</p>
+                )}
+
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={mockStatsData.projectsByMonth}>
+                  <AreaChart data={monthlyChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-primary)" />
                     <XAxis dataKey="month" stroke="var(--color-text-tertiary)" />
                     <YAxis stroke="var(--color-text-tertiary)" />
@@ -613,38 +764,38 @@ export function AdminPage({
               </Card>
 
               {/* Model Category Usage */}
-              <Card className="p-6" style={{
-                backgroundColor: 'var(--color-background-primary)',
-                borderColor: 'var(--color-border-primary)',
-                borderRadius: 'var(--radius-16)'
-              }}>
-                <h3 style={{
-                  fontSize: 'var(--font-size-large)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)',
-                  marginBottom: '24px'
-                }}>
-                  카테고리별 모델 사용량
-                </h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={mockStatsData.modelUsageByCategory}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="usage"
-                      label={({ category, percentage }) => `${category} ${percentage}%`}
-                    >
-                      {mockStatsData.modelUsageByCategory.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
+              {/*<Card className="p-6" style={{*/}
+              {/*  backgroundColor: 'var(--color-background-primary)',*/}
+              {/*  borderColor: 'var(--color-border-primary)',*/}
+              {/*  borderRadius: 'var(--radius-16)'*/}
+              {/*}}>*/}
+              {/*  <h3 style={{*/}
+              {/*    fontSize: 'var(--font-size-large)',*/}
+              {/*    fontWeight: 'var(--font-weight-semibold)',*/}
+              {/*    color: 'var(--color-text-primary)',*/}
+              {/*    marginBottom: '24px'*/}
+              {/*  }}>*/}
+              {/*    카테고리별 모델 사용량*/}
+              {/*  </h3>*/}
+              {/*  <ResponsiveContainer width="100%" height={300}>*/}
+              {/*    <PieChart>*/}
+              {/*      <Pie*/}
+              {/*        data={mockStatsData.modelUsageByCategory}*/}
+              {/*        cx="50%"*/}
+              {/*        cy="50%"*/}
+              {/*        outerRadius={100}*/}
+              {/*        fill="#8884d8"*/}
+              {/*        dataKey="usage"*/}
+              {/*        label={({ category, percentage }) => `${category} ${percentage}%`}*/}
+              {/*      >*/}
+              {/*        {mockStatsData.modelUsageByCategory.map((entry, index) => (*/}
+              {/*          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />*/}
+              {/*        ))}*/}
+              {/*      </Pie>*/}
+              {/*      <Tooltip />*/}
+              {/*    </PieChart>*/}
+              {/*  </ResponsiveContainer>*/}
+              {/*</Card>*/}
 
               {/* Daily Activity */}
               <Card className="p-6" style={{
@@ -660,8 +811,16 @@ export function AdminPage({
                 }}>
                   일별 사용자 활동 (최근 7일)
                 </h3>
+
+                {dailyLoading && (
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>일별 통계 불러오는 중…</p>
+                )}
+                {dailyError && (
+                    <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {dailyError}</p>
+                )}
+
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockStatsData.dailyActivity}>
+                  <BarChart data={dailyChartData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-primary)" />
                     <XAxis dataKey="day" stroke="var(--color-text-tertiary)" />
                     <YAxis stroke="var(--color-text-tertiary)" />
@@ -693,8 +852,16 @@ export function AdminPage({
                 }}>
                   평점 분포
                 </h3>
+
+                {ratingLoading && (
+                    <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>평점 분포 불러오는 중…</p>
+                )}
+                {ratingError && (
+                    <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {ratingError}</p>
+                )}
+
                 <div className="space-y-4">
-                  {mockStatsData.ratingDistribution.map((item, index) => (
+                  {ratingChartData.map((item, index) => (
                     <div key={item.rating} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <span style={{ 
