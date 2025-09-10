@@ -7,6 +7,7 @@ import { AlertTriangle, Loader2, Flag } from 'lucide-react';
 import { reportModel } from '../services/modelApi';
 import { AIModelDocument } from '../types/model';
 import { toast } from 'sonner';
+import { ErrorModal } from './common/ErrorModal';
 
 interface ModelReportModalProps {
   model: AIModelDocument | null;
@@ -27,6 +28,8 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
 }) => {
   const [reasonDetail, setReasonDetail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async () => {
     const targetModelId = model?.modelId || modelId;
@@ -57,14 +60,18 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
       
       handleClose();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '신고 처리 중 오류가 발생했습니다.';
-      toast.error(errorMessage);
+      const message = error instanceof Error ? error.message : '신고 처리 중 오류가 발생했습니다.';
       
-      // 중복 신고인 경우 모달을 닫음
-      if (errorMessage.includes('이미 신고한 모델입니다') || errorMessage.includes('Report already exists')) {
+      // 중복 신고인 경우 에러 모달을 보여주고 신고 모달을 닫음
+      if (message.includes('이미 신고한 모델입니다') || message.includes('Report already exists')) {
+        setErrorMessage('이미 신고한 모델입니다.\n중복 신고는 불가능합니다.');
+        setErrorModalOpen(true);
         handleClose();
         return;
       }
+      
+      // 기타 에러는 토스트로 표시
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -85,6 +92,7 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
   const displayThumbnail = model?.thumbnailUrl || '/api/placeholder/60/60';
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
         className="!max-w-[500px] !w-[500px] !max-h-[80vh] flex flex-col !p-6"
@@ -215,5 +223,15 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* 에러 모달 */}
+    <ErrorModal
+      isOpen={errorModalOpen}
+      onClose={() => setErrorModalOpen(false)}
+      title="신고 불가"
+      message={errorMessage}
+      type="warning"
+    />
+    </>
   );
 };
