@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 
 interface ModelReportModalProps {
   model: AIModelDocument | null;
+  modelId?: number | null;
+  modelName?: string;
   isOpen: boolean;
   onClose: () => void;
   onReportSuccess?: (reportId: number) => void;
@@ -17,6 +19,8 @@ interface ModelReportModalProps {
 
 export const ModelReportModal: React.FC<ModelReportModalProps> = ({
   model,
+  modelId,
+  modelName,
   isOpen,
   onClose,
   onReportSuccess
@@ -25,7 +29,8 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!model) return;
+    const targetModelId = model?.modelId || modelId;
+    if (!targetModelId) return;
     
     if (!reasonDetail.trim()) {
       toast.error('신고 사유를 입력해주세요.');
@@ -40,7 +45,7 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const response = await reportModel(model.modelId, {
+      const response = await reportModel(targetModelId, {
         reasonDetail: reasonDetail.trim()
       });
 
@@ -65,7 +70,13 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
     onClose();
   };
 
-  if (!model) return null;
+  if (!model && !modelId) return null;
+
+  const displayName = model?.modelName || modelName || '알 수 없는 모델';
+  const displayDeveloper = model?.developer || '알 수 없음';
+  const displayCategory = model?.categoryType || '기타';
+  const displayDescription = model?.shortDescription || '';
+  const displayThumbnail = model?.thumbnailUrl || '/api/placeholder/60/60';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -84,25 +95,25 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
         <div className="border rounded-lg p-4 bg-gray-50">
           <div className="flex items-start gap-3">
             <img
-              src={model.thumbnailUrl || '/api/placeholder/60/60'}
-              alt={model.modelName}
+              src={displayThumbnail}
+              alt={displayName}
               className="w-16 h-16 object-cover rounded-lg"
             />
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <h4 className="font-medium text-lg">{model.modelName}</h4>
+                  <h4 className="font-medium text-lg">{displayName}</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    by {model.developer}
+                    by {displayDeveloper}
                   </p>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  {model.categoryType}
+                  {displayCategory}
                 </Badge>
               </div>
-              {model.shortDescription && (
+              {displayDescription && (
                 <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                  {model.shortDescription}
+                  {displayDescription}
                 </p>
               )}
             </div>
