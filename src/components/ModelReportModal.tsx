@@ -80,7 +80,7 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="max-w-[400px] w-[400px]">
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-red-500" />

@@ -190,7 +190,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="!max-w-[70vw] !w-[70vw] max-h-[90vh] overflow-y-auto"
+        style={{ maxWidth: '70vw', width: '70vw' }}
+      >
         <DialogHeader>
           <DialogTitle className="sr-only">
             모델 상세 정보
