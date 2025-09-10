@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
@@ -15,6 +15,7 @@ import {
   Crown, Clock, CheckCircle, XCircle, Star, ShoppingCart, Users, Coins, Shield
 } from 'lucide-react';
 import { GeneratedProject, UserProfile } from '../App';
+import { getMyProjectCount, getMyAverageRating, getMyAdResults, convertAdResultToProject } from '../services/adResultApi';
 
 
 
@@ -180,10 +181,57 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'downloads' | 'rating'>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [projectCount, setProjectCount] = useState<number>(0);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [apiProjects, setApiProjects] = useState<GeneratedProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [useApiData, setUseApiData] = useState(false);
+
+  // Fetch API data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userProfile) return;
+      
+      try {
+        setLoading(true);
+        const [countResponse, ratingResponse, projectsResponse] = await Promise.all([
+          getMyProjectCount(),
+          getMyAverageRating(),
+          getMyAdResults(0, 100) // Get up to 100 projects
+        ]);
+        
+        if (countResponse.success) {
+          setProjectCount(countResponse.response.totalProjects);
+        }
+        
+        if (ratingResponse.success) {
+          setAverageRating(ratingResponse.response.averageRating);
+        }
+        
+        if (projectsResponse.success && projectsResponse.response.content) {
+          const convertedProjects = projectsResponse.response.content.map(convertAdResultToProject);
+          setApiProjects(convertedProjects);
+          setUseApiData(true);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        // Fallback to project count from props and mock data
+        setProjectCount(projects.length);
+        setUseApiData(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userProfile, projects.length]);
+
+  // Use API data if available, fallback to props
+  const currentProjects = useApiData ? apiProjects : projects;
 
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
-    let filtered = projects.filter(project => {
+    let filtered = currentProjects.filter(project => {
       if (selectedCategory !== 'all' && project.category !== selectedCategory) return false;
       if (selectedStatus !== 'all' && project.status !== selectedStatus) return false;
       if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -206,7 +254,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
           return 0;
       }
     });
-  }, [projects, searchQuery, selectedCategory, selectedStatus, sortBy]);
+  }, [currentProjects, searchQuery, selectedCategory, selectedStatus, sortBy]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ko-KR', {
@@ -231,18 +279,14 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
 
   // Calculate user stats including ratings
   const userStats = useMemo(() => {
-    const ratedProjects = projects.filter(p => p.rating);
-    const totalRating = ratedProjects.reduce((sum, p) => sum + (p.rating?.overallRating || 0), 0);
-    const avgRating = ratedProjects.length > 0 ? totalRating / ratedProjects.length : 0;
+    const ratedProjects = currentProjects.filter(p => p.rating);
     
     return {
-      totalProjects: projects.length,
-      completedProjects: projects.filter(p => p.status === 'completed').length,
-      totalDownloads: projects.reduce((sum, p) => sum + p.downloadCount, 0),
-      averageRating: avgRating,
+      totalDownloads: currentProjects.reduce((sum, p) => sum + p.downloadCount, 0),
+      averageRating: averageRating,
       ratedProjects: ratedProjects.length
     };
-  }, [projects]);
+  }, [currentProjects, averageRating]);
 
   if (!userProfile) {
     return <div>Loading...</div>;
@@ -340,45 +384,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {userStats.totalProjects}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-4"
-              style={{
-                backgroundColor: 'var(--color-background-primary)',
-                borderColor: 'var(--color-border-primary)',
-                borderRadius: 'var(--radius-12)'
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: 'var(--color-semantic-green)' + '20' }}
-                >
-                  <CheckCircle 
-                    className="w-5 h-5"
-                    style={{ color: 'var(--color-semantic-green)' }}
-                  />
-                </div>
-                <div>
-                  <p 
-                    className="text-sm"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  >
-                    완료된 작업
-                  </p>
-                  <p 
-                    style={{
-                      fontSize: 'var(--font-size-title3)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                  >
-                    {userStats.completedProjects}
+                    {loading ? '-' : projectCount}
                   </p>
                 </div>
               </div>
