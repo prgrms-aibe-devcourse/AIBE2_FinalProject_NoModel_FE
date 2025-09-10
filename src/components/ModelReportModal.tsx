@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
-import { AlertTriangle, Loader2, Flag, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Flag } from 'lucide-react';
 import { reportModel } from '../services/modelApi';
 import { AIModelDocument } from '../types/model';
 import { toast } from 'sonner';
@@ -59,6 +59,12 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '신고 처리 중 오류가 발생했습니다.';
       toast.error(errorMessage);
+      
+      // 중복 신고인 경우 모달을 닫음
+      if (errorMessage.includes('이미 신고한 모델입니다') || errorMessage.includes('Report already exists')) {
+        handleClose();
+        return;
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +86,14 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[400px] w-[400px]">
+      <DialogContent 
+        className="!max-w-[500px] !w-[500px] !max-h-[80vh] flex flex-col !p-6"
+        style={{ 
+          width: '500px', 
+          maxWidth: '500px',
+          maxHeight: '80vh'
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-red-500" />
@@ -91,8 +104,9 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto">
         {/* 신고할 모델 정보 */}
-        <div className="border rounded-lg p-4 bg-gray-50">
+        <div className="border rounded-lg p-4 bg-gray-50 mb-4">
           <div className="flex items-start gap-3">
             <img
               src={displayThumbnail}
@@ -121,7 +135,7 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
         </div>
 
         {/* 신고 사유 입력 */}
-        <div className="space-y-3">
+        <div className="space-y-3 mb-4">
           <div className="flex items-center gap-2">
             <label htmlFor="reasonDetail" className="text-sm font-medium">
               신고 사유 <span className="text-red-500">*</span>
@@ -130,7 +144,9 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
           
           <Textarea
             id="reasonDetail"
-            placeholder="신고하시는 이유를 구체적으로 설명해주세요.&#10;예: 부적절한 콘텐츠, 저작권 침해, 정책 위반 등"
+            placeholder={`신고하시는 이유를 구체적으로 설명해주세요.
+
+예: 부적절한 콘텐츠, 저작권 침해, 정책 위반 등`}
             value={reasonDetail}
             onChange={(e) => setReasonDetail(e.target.value)}
             maxLength={1000}
@@ -163,20 +179,19 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
             </div>
           </div>
         </div>
-
+        </div>
+        
         {/* 액션 버튼 */}
-        <div className="flex justify-end gap-3 pt-4">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            취소
-          </Button>
+        <div className="flex justify-end gap-3 mt-3">
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !reasonDetail.trim()}
-            className="bg-red-500 hover:bg-red-600 text-white"
+            className="!bg-red-500 hover:!bg-red-600 !text-white disabled:!bg-red-300 disabled:!text-red-100 disabled:cursor-not-allowed !border-red-500 disabled:!border-red-300"
+            style={{
+              backgroundColor: !reasonDetail.trim() || isSubmitting ? '#fca5a5' : '#ef4444',
+              color: 'white',
+              borderColor: !reasonDetail.trim() || isSubmitting ? '#fca5a5' : '#ef4444'
+            }}
           >
             {isSubmitting ? (
               <>
@@ -189,6 +204,13 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
                 신고하기
               </>
             )}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
+            취소
           </Button>
         </div>
       </DialogContent>

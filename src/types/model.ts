@@ -159,9 +159,11 @@ export interface MyReportsResponse {
 
 export interface ErrorResponse {
   success: false;
+  response: null;
   error: {
-    errorCode: string;
     status: number;
+    errorCode: string;
     message: string;
+    timestamp: string;
   };
 }

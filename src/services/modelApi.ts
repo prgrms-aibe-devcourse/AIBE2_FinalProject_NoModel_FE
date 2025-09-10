@@ -217,14 +217,19 @@ export const reportModel = async (
     if (error instanceof AxiosError) {
       const errorData = error.response?.data as ErrorResponse;
       
-      if (errorData?.error?.errorCode === 'DUPLICATE_REPORT') {
+      if (errorData?.error?.errorCode === 'RP002') {
         throw new Error('이미 신고한 모델입니다');
       }
-      if (errorData?.error?.errorCode === 'MODEL_NOT_FOUND') {
+      if (errorData?.error?.errorCode === 'MNF001') {
         throw new Error('모델을 찾을 수 없습니다');
       }
       if (errorData?.error?.errorCode === 'AUTHENTICATION_FAILED') {
         throw new Error('로그인이 필요합니다');
+      }
+      
+      // 기본적으로 백엔드에서 온 에러 메시지를 사용
+      if (errorData?.error?.message) {
+        throw new Error(errorData.error.message);
       }
     }
     
