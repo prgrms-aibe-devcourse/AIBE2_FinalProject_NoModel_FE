@@ -736,6 +736,7 @@ export default function App() {
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
         />
       )}
 

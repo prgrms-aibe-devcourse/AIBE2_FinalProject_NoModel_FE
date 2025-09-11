@@ -289,7 +289,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         onMyPage={() => {}} // Already on MyPage
         onHome={onNewProject}
         onAdmin={onAdmin}
-        isAdmin={!!userProfile?.isAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
         currentPage="mypage"

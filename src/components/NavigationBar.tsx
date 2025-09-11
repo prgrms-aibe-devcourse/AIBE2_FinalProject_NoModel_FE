@@ -85,7 +85,7 @@ export function NavigationBar({
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             {!isLoggedIn ? (
                 <>
                   {isLandingPage ? (
@@ -135,7 +135,7 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onAdGeneration}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md"
                   >
                     <Camera className="w-4 h-4" />
                     광고 생성
@@ -143,17 +143,17 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onModelCreation}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md"
                   >
                     <Palette className="w-4 h-4" />
                     모델 제작
                   </button>
                   <button
                       onClick={onMarketplace}
-                      className={`text-sm font-medium transition-colors duration-200 flex items-center gap-2 ${
+                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md ${
                         currentPage === 'marketplace'
-                          ? 'text-foreground bg-accent px-3 py-1 rounded-md'
-                          : 'text-muted-foreground hover:text-foreground'
+                          ? 'text-foreground bg-accent'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                       }`}
                   >
                     <ShoppingBag className="w-4 h-4" />
@@ -162,10 +162,10 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onMyPage}
-                      className={`text-sm font-medium transition-colors duration-200 flex items-center gap-2 ${
+                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md ${
                         currentPage === 'mypage'
-                          ? 'text-foreground bg-accent px-3 py-1 rounded-md'
-                          : 'text-muted-foreground hover:text-foreground'
+                          ? 'text-foreground bg-accent'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                       }`}
                   >
                     <User className="w-4 h-4" />
@@ -177,10 +177,10 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => {onAdmin(); console.log("hello"); }}
-                          className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
+                          className={`text-sm font-medium transition-all duration-200 flex items-center gap-2 px-3 py-2 rounded-md ${
                             currentPage === 'admin'
-                              ? 'text-foreground bg-accent px-3 py-1 rounded-md'
-                              : 'text-primary hover:text-primary/80'
+                              ? 'text-foreground bg-accent'
+                              : 'text-primary hover:text-primary/80 hover:bg-primary/10'
                           }`}
                           title="관리자 페이지"
                       >
@@ -289,7 +289,7 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onAdGeneration(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2"
                       >
                         <Camera className="w-4 h-4" />
                         광고 생성
@@ -297,7 +297,7 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onModelCreation(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2"
                       >
                         <Palette className="w-4 h-4" />
                         모델 제작
@@ -305,7 +305,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onMarketplace(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                            currentPage === 'marketplace'
+                              ? 'text-foreground bg-accent'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          }`}
                       >
                         <ShoppingBag className="w-4 h-4" />
                         마켓플레이스
@@ -314,10 +318,10 @@ export function NavigationBar({
                             <button
                                 type="button"
                                 onClick={() => { console.log('[NAV] admin click'); onAdmin(); setMobileMenuOpen(false); }}
-                                className={`text-sm font-semibold transition-colors duration-200 py-2 flex items-center gap-2 ${
+                                className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
                                   currentPage === 'admin'
-                                    ? 'text-foreground bg-accent px-3 py-1 rounded-md'
-                                    : 'text-primary hover:text-primary/80'
+                                    ? 'text-foreground bg-accent'
+                                    : 'text-primary hover:text-primary/80 hover:bg-primary/10'
                                 }`}
                                 title="관리자 페이지"
                             >
@@ -328,7 +332,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onMyPage(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                            currentPage === 'mypage'
+                              ? 'text-foreground bg-accent'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          }`}
                       >
                         <User className="w-4 h-4" />
                         마이 페이지

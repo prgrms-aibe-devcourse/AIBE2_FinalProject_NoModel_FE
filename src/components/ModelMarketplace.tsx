@@ -73,7 +73,7 @@ export function ModelMarketplace({
         onMarketplace={() => {}}
         onMyPage={onMyPage}
         onAdmin={onAdmin}
-        isAdmin={userProfile?.isAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
         onHome={onBack}
         onBack={onBack}
         showBackButton={true}
