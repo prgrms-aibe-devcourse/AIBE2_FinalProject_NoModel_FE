@@ -1,9 +1,8 @@
 // @ts-ignore
-import React, { useEffect, useState } from "react";
-import { Button } from "./ui/button";
-import { NavigationBar } from "./NavigationBar";
-import { UserProfile } from "../App";
-import { loadPaymentWidget } from "@portone/browser-sdk"; // ✅ PortOne SDK 추가
+import React, {useEffect, useState} from "react";
+import {Button} from "./ui/button";
+import {NavigationBar} from "./NavigationBar";
+import {UserProfile} from "../App";
 
 interface SubscriptionPlan {
     id: number;
@@ -11,6 +10,14 @@ interface SubscriptionPlan {
     description: string;
     price: number;
     period: number;
+}
+
+interface CurrentSubscription {
+    id: number;
+    memberId: number;
+    subscriptionId: number;
+    status: string;
+    expiresAt: string;
 }
 
 interface PointsSubscriptionPageProps {
@@ -38,68 +45,113 @@ export default function PointsSubscriptionPage({
                                                }: PointsSubscriptionPageProps) {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
+    const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null);
     const [activeTab, setActiveTab] = useState<"charge" | "subscription" | "history">("subscription");
 
-    useEffect(() => {
+    // subscriptionId → planType 매핑
+    const planTypeMap: Record<number, string> = {
+        1: "FREE",
+        2: "PRO",
+        3: "ENTERPRISE",
+    };
+
+    // ✅ 구독 현황 + 구독 플랜 목록 불러오기 함수
+    const loadSubscriptions = () => {
+        // 구독 현황 조회
+        fetch("http://localhost:8080/api/subscriptions", {
+            method: "GET",
+            credentials: "include",
+        })
+            .then((res) => res.json())
+            .then((data) => setCurrentSubscription(data.response || null))
+            .catch(() => setCurrentSubscription(null));
+
+        // 구독 플랜 목록 조회
         fetch("http://localhost:8080/api/subscriptions/plans", {
             method: "GET",
-            credentials: "include", // ✅ 쿠키 포함
+            credentials: "include",
         })
-            .then((res) => {
-                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-                return res.json();
-            })
+            .then((res) => res.json())
             .then((data) => setPlans(data.response || []))
-            .catch((err) => console.error("구독 플랜 불러오기 실패:", err));
+            .catch(() => setPlans([]));
+    };
+
+    useEffect(() => {
+        loadSubscriptions();
     }, []);
 
-    // ✅ PortOne 기반 결제 처리
+
+    // ✅ PortOne SDK 타입 선언
     declare global {
         interface Window {
             IMP: any;
         }
     }
 
+    // ✅ 구독 신청
     const handleSubscribe = async () => {
         if (!selectedPlan) return;
 
-        // 1) PortOne SDK 초기화
-        const IMP = window.IMP;
-        IMP.init("imp57477065"); // ✅ 본인 PortOne 가맹점 식별코드
+        // ✅ 0원 플랜은 PG 거치지 않고 바로 백엔드에 등록
+        if (selectedPlan.price === 0) {
+            const response = await fetch("http://localhost:8080/api/subscriptions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    subscriptionId: selectedPlan.id,
+                    paidAmount: 0,
+                    paymentMethodId: null, // 무료니까 결제수단 없음
+                    customerUid: null,
+                }),
+            });
 
-        // 2) 결제 요청
+            const result = await response.json();
+            if (result.success) {
+                alert("✅ FREE 플랜 등록 완료!");
+                loadSubscriptions(); // 새로고침 대신 현황 갱신
+            } else {
+                alert("❌ FREE 플랜 등록 실패: " + result.error?.message);
+            }
+            return;
+        }
+
+        const IMP = window.IMP;
+        IMP.init("imp57477065"); // 본인 가맹점 식별코드
+
         IMP.request_pay(
             {
-                pg: "kakaopay.TC0ONETIME", // ✅ 테스트용 카카오페이 PG
+                pg: "kakaopay.TC0ONETIME",
                 pay_method: "card",
                 merchant_uid: `order_${Date.now()}`,
                 name: `${selectedPlan.planType} 구독`,
                 amount: selectedPlan.price,
-                customer_uid: `user_${Date.now()}`, // ✅ 정기결제를 위해 고유 UID
+                customer_uid: `user_${Date.now()}`, // 정기결제용 UID
                 buyer_email: userProfile?.email || "guest@example.com",
                 buyer_name: userProfile?.name || "테스트유저",
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    // 3) 결제 성공 → 백엔드로 전달
                     const response = await fetch("http://localhost:8080/api/subscriptions", {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {"Content-Type": "application/json"},
                         credentials: "include",
                         body: JSON.stringify({
                             subscriptionId: selectedPlan.id,
                             paidAmount: selectedPlan.price,
                             paymentMethodId: 1,
-                            customerUid: rsp.customer_uid, // billingKey 개념
+                            customerUid: rsp.customer_uid,
                         }),
                     });
 
                     const result = await response.json();
                     if (result.success) {
                         alert(`✅ ${selectedPlan.planType} 구독 결제 성공 및 등록 완료!`);
+                        loadSubscriptions(); // 🔥 새로고침 대신 현황 갱신
                     } else {
                         alert("❌ 백엔드 등록 실패: " + result.error?.message);
                     }
+
                 } else {
                     alert("❌ 결제 실패: " + rsp.error_msg);
                 }
@@ -107,29 +159,24 @@ export default function PointsSubscriptionPage({
         );
     };
 
-    // ✅ 구독 취소 처리
+    // ✅ 구독 취소
     const handleCancelSubscription = async () => {
-        if (!userProfile) return;
-
         const response = await fetch("http://localhost:8080/api/subscriptions?reason=USER_REQUESTED", {
             method: "DELETE",
-            credentials: "include", // 쿠키 인증
+            credentials: "include",
         });
-
 
         const result = await response.json();
         if (result.success) {
             alert("✅ 구독이 취소되었습니다.");
-            window.location.reload();
+            loadSubscriptions(); // 🔥 새로고침 대신 현황 갱신
         } else {
             alert("❌ 구독 취소 실패: " + result.error?.message);
         }
     };
 
-
-
     return (
-        <div className="min-h-screen" style={{ backgroundColor: "var(--color-background-primary)" }}>
+        <div className="min-h-screen" style={{backgroundColor: "var(--color-background-primary)"}}>
             <NavigationBar
                 onLogin={onLogin}
                 onLogout={onLogout}
@@ -157,18 +204,32 @@ export default function PointsSubscriptionPage({
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">현재 구독</p>
-                            <p className="text-xl font-bold text-green-600">{userProfile.planType.toUpperCase()}</p>
-
-                            {userProfile.planType !== "FREE" && (
-                                <div className="mt-4 text-right">
-                                    <Button onClick={handleCancelSubscription} variant="destructive" className="px-6 py-2">
-                                        구독 취소하기
-                                    </Button>
-                                </div>
+                            {currentSubscription ? (
+                                <>
+                                    <p className="text-xl font-bold text-green-600">
+                                        {planTypeMap[currentSubscription.subscriptionId] || "알 수 없음"}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        만료일: {new Date(currentSubscription.expiresAt).toLocaleDateString()}
+                                    </p>
+                                    {currentSubscription.status === "ACTIVE" && (
+                                        <div className="mt-4 text-right">
+                                            <Button
+                                                onClick={handleCancelSubscription}
+                                                variant="destructive"
+                                                className="px-6 py-2"
+                                            >
+                                                구독 취소하기
+                                            </Button>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <p className="text-xl font-bold text-gray-400">미구독</p>
                             )}
                         </div>
                     </div>
-                    )}
+                )}
 
                 {/* 탭 UI */}
                 <div className="flex gap-4 border-b mb-6">
