@@ -18,20 +18,25 @@ const avatarColors = [
 ];
 
 /**
- * 사용자 이름을 기반으로 일관된 색상 클래스 반환
+ * 사용자 이름을 기반으로 일관된 색상 클래스 반환 (한글 지원)
  */
 export function getAvatarColorClass(name: string): string {
   if (!name) return avatarColors[0];
   
-  // 이름을 기반으로 일관된 색상 인덱스 생성
-  const charCode = name.charCodeAt(0) + (name.charCodeAt(1) || 0);
-  const colorIndex = charCode % avatarColors.length;
+  // 한글 이름의 경우 더 안정적인 해시 생성
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    const char = name.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // 32비트 정수로 변환
+  }
   
+  const colorIndex = Math.abs(hash) % avatarColors.length;
   return avatarColors[colorIndex];
 }
 
 /**
- * 사용자 이름에서 이니셜 추출 (최대 2글자)
+ * 사용자 이름에서 이니셜 추출 (최대 2글자, 한글 지원)
  */
 export function getInitials(name: string): string {
   if (!name) return 'U';
@@ -42,11 +47,21 @@ export function getInitials(name: string): string {
   if (parts.length === 0) return 'U';
   
   if (parts.length === 1) {
-    // 한 단어인 경우: 첫 2글자 사용
+    // 한 단어인 경우
     const word = parts[0];
-    return word.length >= 2 
-      ? word.substring(0, 2).toUpperCase()
-      : word.charAt(0).toUpperCase();
+    
+    // 한글인지 확인 (한글 유니코드 범위: AC00-D7AF)
+    const isKorean = /[가-힣]/.test(word.charAt(0));
+    
+    if (isKorean) {
+      // 한글인 경우: 첫 글자만 사용 (한글은 한 글자가 충분히 식별 가능)
+      return word.charAt(0);
+    } else {
+      // 영문인 경우: 첫 2글자 사용
+      return word.length >= 2 
+        ? word.substring(0, 2).toUpperCase()
+        : word.charAt(0).toUpperCase();
+    }
   }
   
   // 여러 단어인 경우: 각 단어의 첫 글자 사용 (최대 2개)

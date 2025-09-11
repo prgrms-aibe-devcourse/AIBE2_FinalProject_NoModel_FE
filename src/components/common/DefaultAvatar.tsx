@@ -1,6 +1,6 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { getDefaultAvatarProps, getProfileImageUrl } from '@/utils/avatar';
+import { getDefaultAvatarProps, getProfileImageUrl } from '../../utils/avatar';
 import { cn } from '../ui/utils';
 
 interface DefaultAvatarProps {

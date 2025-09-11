@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { NavigationBar } from './NavigationBar';
 import { DynamicFontSize } from './common/DynamicFontSize';
 import { 
-  Sparkles, Plus, Search, Filter, Grid3X3, List, Calendar, Download, 
-  Eye, User, Settings, LogOut, TrendingUp, Image as ImageIcon,
-  Crown, Star, ShoppingCart, Users, Coins, Shield
+  Plus, Search, Filter, Grid3X3, List, Download, 
+  Eye, Image as ImageIcon,
+  Crown, Star, ShoppingCart, Users, Coins
 } from 'lucide-react';
 import { GeneratedProject, UserProfile } from '../App';
 import { getMyProjectCount, getMyAverageRating, getMyAdResults, convertAdResultToProject } from '../services/adResultApi';
@@ -153,18 +153,12 @@ const categoryNames: Record<string, string> = {
   lifestyle: '라이프스타일'
 };
 
-const statusNames: Record<string, { label: string; color: string }> = {
-  completed: { label: '완료', color: 'var(--color-semantic-green)' },
-  processing: { label: '처리중', color: 'var(--color-semantic-orange)' },
-  failed: { label: '실패', color: 'var(--color-semantic-red)' }
-};
 
 interface MyPageProps {
   userProfile: UserProfile | null;
   projects: GeneratedProject[];
   onProjectSelect: (project: GeneratedProject) => void;
   onNewProject: () => void;
-  onProfileSettings: () => void;
   onMyModels: () => void;
   onCreateModel: () => void;
   onMarketplace: () => void;
@@ -173,7 +167,7 @@ interface MyPageProps {
   onLogin: () => void;
 }
 
-export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onProfileSettings, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin }: MyPageProps) {
+export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin }: MyPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -300,13 +294,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
       <main className="page-container">
         {/* User Stats */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div 
-              className="h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold"
-              style={{ fontSize: 'var(--font-size-title3)' }}
-            >
-              {userProfile.name.charAt(0).toUpperCase()}
-            </div>
+          <div className="mb-6">
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 
@@ -334,7 +322,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                 </Badge>
               </div>
               <p style={{ color: 'var(--color-text-secondary)' }}>
-                {userProfile.bio}
+                {userProfile.email}
               </p>
             </div>
           </div>
