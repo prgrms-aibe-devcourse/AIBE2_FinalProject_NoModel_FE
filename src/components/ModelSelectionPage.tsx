@@ -6,11 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DefaultAvatar } from './common/DefaultAvatar';
 import { NavigationBar } from './NavigationBar';
 import { 
-  Sparkles, Search, ShoppingCart, Plus, 
-  Crown, Wand2, Star, Eye, Coins, Filter, History, Clock
+  Search, ShoppingCart, Plus, 
+  Crown, Wand2, Star, Coins, History
 } from 'lucide-react';
 import { SelectedModel, UserProfile } from '../App';
 import axiosInstance from '../services/AxiosInstance';
+import { AIModelDocument, PageResponse } from '../types/model';
 
 interface ModelSelectionPageProps {
   selectedCategory: string;
@@ -71,36 +72,31 @@ const fetchModelUsageHistory = async (page = 0, size = 20): Promise<ModelUsageHi
   }
 };
 
-// Mock marketplace models preview
-const mockMarketplacePreview = [
-  {
-    id: 'marketplace-preview-1',
-    name: '엘레간트 아시아 여성',
-    imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
-    price: 80,
-    rating: 4.8,
-    creator: ' 김미영',
-    usageCount: 247
-  },
-  {
-    id: 'marketplace-preview-2',
-    name: '프로페셔널 남성',
-    imageUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&h=300&fit=crop&crop=face',
-    price: 120,
-    rating: 4.6,
-    creator: 'Alex Johnson',
-    usageCount: 189
-  },
-  {
-    id: 'marketplace-preview-3',
-    name: '럭셔리 패션 모델',
-    imageUrl: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=300&h=300&fit=crop&crop=face',
-    price: 150,
-    rating: 4.7,
-    creator: '박지수',
-    usageCount: 156
+// 관리자 추천 모델을 가져오는 API 함수
+const fetchRecommendedModels = async (page = 0, size = 10): Promise<PageResponse<AIModelDocument>> => {
+  try {
+    const response = await axiosInstance.get(`/models/search/recommended?page=${page}&size=${size}`);
+    
+    if (response.data.success) {
+      return response.data.response;
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch recommended models');
+    }
+  } catch (error) {
+    console.error('Error fetching recommended models:', error);
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      first: true,
+      last: true,
+      number: 0,
+      size: size,
+      numberOfElements: 0
+    };
   }
-];
+};
+
 
 
 export function ModelSelectionPage({ 
@@ -122,8 +118,11 @@ export function ModelSelectionPage({
   const [usedModels, setUsedModels] = useState<ModelUsageHistoryResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
   const [hasNext, setHasNext] = useState(false);
+  
+  // 추천 모델 상태
+  const [recommendedModels, setRecommendedModels] = useState<AIModelDocument[]>([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(false);
 
   // API에서 사용한 모델 내역 가져오기
   useEffect(() => {
@@ -132,17 +131,35 @@ export function ModelSelectionPage({
     }
   }, [activeTab, userProfile, currentPage]);
 
+  // 마켓플레이스 탭에서 추천 모델 로드
+  useEffect(() => {
+    if (activeTab === 'marketplace') {
+      loadRecommendedModels();
+    }
+  }, [activeTab]);
+
   const loadUsedModels = async () => {
     setLoading(true);
     try {
       const response = await fetchModelUsageHistory(currentPage, 20);
       setUsedModels(response.content);
-      setTotalPages(response.totalPages);
       setHasNext(response.hasNext);
     } catch (error) {
       console.error('Failed to load used models:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRecommendedModels = async () => {
+    setRecommendedLoading(true);
+    try {
+      const response = await fetchRecommendedModels(0, 3); // 3개만 한 줄로 표시
+      setRecommendedModels(response.content);
+    } catch (error) {
+      console.error('Failed to load recommended models:', error);
+    } finally {
+      setRecommendedLoading(false);
     }
   };
 
@@ -174,25 +191,25 @@ export function ModelSelectionPage({
     onModelSelect(selectedModel);
   };
 
-  const handleMarketplaceModelSelect = (model: any) => {
+  const handleMarketplaceModelSelect = (model: AIModelDocument) => {
     const selectedModel: SelectedModel = {
       id: model.id,
-      name: model.name,
-      prompt: '',
+      name: model.modelName,
+      prompt: model.prompt || '',
       seedValue: '',
-      imageUrl: model.imageUrl,
+      imageUrl: model.thumbnailUrl || '',
       category: selectedCategory,
       isCustom: false,
       metadata: {
         age: '알 수 없음',
         gender: '알 수 없음',
-        style: '알 수 없음',
+        style: model.categoryType || '알 수 없음',
         ethnicity: '알 수 없음'
       },
       creator: {
-        id: 'creator-' + model.id,
-        name: model.creator,
-        avatar: model.creatorAvatar
+        id: model.ownerId.toString(),
+        name: model.ownerName,
+        avatar: undefined
       },
       price: model.price
     };
@@ -487,8 +504,36 @@ export function ModelSelectionPage({
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockMarketplacePreview.map((model) => (
+            {recommendedLoading ? (
+              <div className="text-center py-12">
+                <div className="w-8 h-8 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  추천 모델을 불러오는 중...
+                </p>
+              </div>
+            ) : recommendedModels.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingCart 
+                  className="w-12 h-12 mx-auto mb-4"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                />
+                <h3 
+                  className="mb-2"
+                  style={{
+                    fontSize: 'var(--font-size-title3)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    color: 'var(--color-text-primary)'
+                  }}
+                >
+                  추천 모델이 없습니다
+                </h3>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  현재 추천 가능한 모델이 없습니다
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recommendedModels.map((model) => (
                 <Card 
                   key={model.id}
                   className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg"
@@ -509,91 +554,101 @@ export function ModelSelectionPage({
                     e.currentTarget.style.boxShadow = 'var(--shadow-tiny)';
                   }}
                 >
-                  {/* Model Image */}
-                  <div className="relative aspect-square overflow-hidden">
-                    <img 
-                      src={model.imageUrl} 
-                      alt={model.name}
-                      className="w-full h-full object-cover"
-                    />
-                    
-                    {/* Price Badge */}
-                    <div 
-                      className="absolute top-3 left-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                      style={{
-                        backgroundColor: 'var(--color-semantic-orange)',
-                        color: 'var(--color-utility-white)',
-                        fontWeight: 'var(--font-weight-medium)'
-                      }}
-                    >
-                      <Coins className="w-3 h-3" />
-                      {model.price}P
-                    </div>
+                    {/* Model Image */}
+                    <div className="relative aspect-square overflow-hidden">
+                      {model.thumbnailUrl ? (
+                        <img 
+                          src={model.thumbnailUrl} 
+                          alt={model.modelName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div 
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: 'var(--color-background-secondary)' }}
+                        >
+                          <div className="text-center">
+                            <Wand2 
+                              className="w-8 h-8 mx-auto mb-2"
+                              style={{ color: 'var(--color-text-tertiary)' }}
+                            />
+                            <span 
+                              className="text-xs"
+                              style={{ color: 'var(--color-text-tertiary)' }}
+                            >
+                              이미지 없음
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Rating */}
+                      {model.rating > 0 && (
+                        <div 
+                          className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
+                          style={{
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            color: 'var(--color-utility-white)'
+                          }}
+                        >
+                          <Star className="w-3 h-3" />
+                          {model.rating.toFixed(1)}
+                        </div>
+                      )}
 
-                    {/* Rating */}
-                    <div 
-                      className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                      style={{
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        color: 'var(--color-utility-white)'
-                      }}
-                    >
-                      <Star className="w-3 h-3" />
-                      {model.rating}
-                    </div>
-
-                    {/* Hover Overlay */}
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        style={{
-                          backgroundColor: 'var(--color-utility-white)',
-                          color: 'var(--color-text-primary)',
-                          borderRadius: 'var(--radius-8)'
-                        }}
-                      >
-                        {userProfile && userProfile.points >= model.price ? '구매하기' : '포인트 부족'}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Model Info */}
-                  <div className="p-4">
-                    <h3 
-                      className="mb-2 line-clamp-1"
-                      style={{
-                        fontSize: 'var(--font-size-regular)',
-                        fontWeight: 'var(--font-weight-semibold)',
-                        color: 'var(--color-text-primary)'
-                      }}
-                    >
-                      {model.name}
-                    </h3>
-                    
-                    <div className="flex items-center gap-2 mb-2">
-                      <DefaultAvatar 
-                        name={model.creator}
-                        className="h-5 w-5"
-                        fallbackClassName="text-xs"
-                      />
-                      <span 
-                        className="text-sm"
-                        style={{ color: 'var(--color-text-tertiary)' }}
-                      >
-                        {model.creator}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                      <span>{model.usageCount}회 사용됨</span>
-                      <div className="flex items-center gap-1">
-                        <Coins className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
-                        {model.price}P
+                      {/* Hover Overlay */}
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          style={{
+                            backgroundColor: 'var(--color-utility-white)',
+                            color: 'var(--color-text-primary)',
+                            borderRadius: 'var(--radius-8)'
+                          }}
+                        >
+                          {userProfile && userProfile.points >= model.price ? '선택하기' : '포인트 부족'}
+                        </Button>
                       </div>
                     </div>
-                  </div>
+
+                    {/* Model Info */}
+                    <div className="p-4">
+                      <h3 
+                        className="mb-2 line-clamp-1"
+                        style={{
+                          fontSize: 'var(--font-size-regular)',
+                          fontWeight: 'var(--font-weight-semibold)',
+                          color: 'var(--color-text-primary)'
+                        }}
+                      >
+                        {model.modelName}
+                      </h3>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <DefaultAvatar 
+                          name={model.ownerName}
+                          className="h-5 w-5"
+                          fallbackClassName="text-xs"
+                        />
+                        <span 
+                          className="text-sm"
+                          style={{ color: 'var(--color-text-tertiary)' }}
+                        >
+                          {model.ownerName}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <span>{model.usageCount}회 사용됨</span>
+                        <div className="flex items-center gap-1">
+                          <Coins className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
+                          {model.price}P
+                        </div>
+                      </div>
+                    </div>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* CTA Section */}
             <Card 
