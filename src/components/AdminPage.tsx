@@ -66,6 +66,7 @@ interface AdminPageProps {
   onModelCreation: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onPointsSubscription: () => void;
 }
 
 const reportTypeLabels = {
@@ -202,7 +203,8 @@ export function AdminPage({
   onAdGeneration,
   onModelCreation,
   onMarketplace,
-  onMyPage
+  onMyPage,
+  onPointsSubscription
 }: AdminPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -527,6 +529,7 @@ export function AdminPage({
         onHome={onBack}
         isLoggedIn={true}
         isLandingPage={false}
+        onPointsSubscription={onPointsSubscription}
       />
 
       {/* Admin Header */}

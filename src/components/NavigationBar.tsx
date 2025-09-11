@@ -15,6 +15,7 @@ interface NavigationBarProps {
   /** ⬇️ 추가 */
   onAdmin?: () => void;
   isAdmin?: boolean;
+  onPointsSubscription?: () => void;
 
   isLoggedIn: boolean;
   isLandingPage?: boolean;
@@ -35,6 +36,7 @@ export function NavigationBar({
                                 /** ⬇️ 추가 */
                                 onAdmin,
                                 isAdmin = false,
+                                onPointsSubscription,
 
                                 isLoggedIn,
                                 isLandingPage = false,
@@ -153,6 +155,14 @@ export function NavigationBar({
                     <ShoppingBag className="w-4 h-4" />
                     마켓플레이스
                   </button>
+                  <button
+                            type="button"
+                            onClick={onPointsSubscription}
+                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                        >
+                            <Coins className="w-4 h-4" />
+                            포인트&구독
+                        </button>
                   <button
                       type="button"
                       onClick={onMyPage}

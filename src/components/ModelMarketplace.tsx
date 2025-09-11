@@ -20,6 +20,7 @@ interface ModelMarketplaceProps {
   onAdGeneration: () => void;
   onMyPage: () => void;
   onAdmin?: () => void;
+  onPointsSubscription?: () => void;
 }
 
 
@@ -33,7 +34,8 @@ export function ModelMarketplace({
   onLogout,
   onAdGeneration,
   onMyPage,
-  onAdmin
+  onAdmin,
+  onPointsSubscription
 }: ModelMarketplaceProps) {
   const [reportingModel, setReportingModel] = useState<AIModelDocument | null>(null);
 
@@ -78,6 +80,7 @@ export function ModelMarketplace({
         onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        onPointsSubscription={onPointsSubscription}
       />
 
       {/* Sub Header */}

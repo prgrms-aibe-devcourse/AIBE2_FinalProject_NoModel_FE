@@ -25,6 +25,7 @@ interface ModelSelectionPageProps {
   onMarketplace: () => void;
   onMyPage: () => void;
   onAdmin?: () => void;
+  onPointsSubscription?: () => void;
 }
 
 // Mock data for pre-made models
@@ -155,7 +156,8 @@ export function ModelSelectionPage({
   onAdGeneration,
   onMarketplace,
   onMyPage,
-  onAdmin
+  onAdmin,
+  onPointsSubscription
 }: ModelSelectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('premade');
@@ -207,6 +209,7 @@ export function ModelSelectionPage({
         onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        onPointsSubscription={onPointsSubscription}
       />
 
       {/* Sub Header */}

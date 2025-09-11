@@ -126,7 +126,7 @@ const defaultMockProjects: GeneratedProject[] = [
       isCustom: true,
       metadata: { age: '30대', gender: '남성', style: '비즈니스', ethnicity: '서양' }
     },
-    originalPrompt: '스마트워치를 착용한 비즈니스���',
+    originalPrompt: '스마트워치를 착용한 비즈니스맨',
     finalPrompt: 'professional businessman wearing smartwatch, technology photography, modern office background',
     generatedImages: [
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&h=800&fit=crop'
@@ -171,9 +171,10 @@ interface MyPageProps {
   onLogout: () => void;
   onAdmin: () => void;
   onLogin: () => void;
+  onPointsSubscription: () => void;
 }
 
-export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onProfileSettings, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin }: MyPageProps) {
+export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onProfileSettings, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin, onPointsSubscription }: MyPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -261,6 +262,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         isAdmin={!!userProfile?.isAdmin}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        onPointsSubscription={onPointsSubscription}
       />
 
       {/* Main Content */}
