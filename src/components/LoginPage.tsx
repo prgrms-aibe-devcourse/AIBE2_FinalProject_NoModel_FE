@@ -9,6 +9,7 @@ import { NavigationBar } from './NavigationBar';
 import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome, Github, AlertCircle } from 'lucide-react';
 import { authService } from '../services/auth';
 import type { LoginRequest } from '../types/auth';
+import { TermsModal } from './common/TermsModal';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -27,6 +28,8 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,7 +225,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
           </Card>
 
           {/* Sign up link */}
-          <div className="text-center mt-8">
+          <div className="text-center mt-12">
             <p className="text-sm text-muted-foreground">
               아직 계정이 없으신가요?{' '}
               <Button 
@@ -240,17 +243,39 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
             <p className="text-xs text-muted-foreground mb-4">
               로그인하면 다음에 동의하는 것으로 간주됩니다
             </p>
-            <div className="flex justify-center space-x-6 text-xs text-muted-foreground">
-              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
+            <div className="flex justify-center space-x-8 text-xs text-muted-foreground">
+              <Button 
+                variant="link" 
+                className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
+                onClick={() => setShowTerms(true)}
+              >
                 이용약관
               </Button>
-              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="link" 
+                className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPrivacy(true)}
+              >
                 개인정보처리방침
               </Button>
             </div>
           </div>
         </div>
       </main>
+      
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        type="terms"
+      />
+      
+      {/* Privacy Modal */}
+      <TermsModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        type="privacy"
+      />
     </div>
   );
 }

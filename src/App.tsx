@@ -416,9 +416,15 @@ export default function App() {
   }, []);
 
 
-  const handleSignupSuccess = () => {
-    // After signup, redirect to login
-    setCurrentStage('login');
+  const handleSignupSuccess = (isAutoLogin: boolean = false) => {
+    if (isAutoLogin) {
+      // 소셜 로그인의 경우 자동 로그인 처리
+      setIsLoggedIn(true);
+      setCurrentStage('mypage');
+    } else {
+      // 일반 회원가입의 경우 로그인 페이지로 이동
+      setCurrentStage('login');
+    }
   };
 
   const handleLogout = async () => {
@@ -564,7 +570,15 @@ export default function App() {
     >
       {currentStage === 'landing' && (
         <LandingPage 
-          onGetStarted={() => handleStageChange('signup')}
+          onGetStarted={() => {
+            // 무료로 시작하기: 로그인 상태에 따라 다르게 동작
+            if (isLoggedIn) {
+              handleStageChange('mypage');  // 로그인되어 있으면 마이페이지로
+            } else {
+              handleStageChange('login');   // 로그인 안되어 있으면 로그인 페이지로
+            }
+          }}
+          onSignup={() => handleStageChange('signup')}  // 회원가입 버튼
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
           onAdGeneration={() => handleStageChange('onboarding')}
