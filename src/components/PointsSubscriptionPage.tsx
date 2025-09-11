@@ -107,6 +107,26 @@ export default function PointsSubscriptionPage({
         );
     };
 
+    // ✅ 구독 취소 처리
+    const handleCancelSubscription = async () => {
+        if (!userProfile) return;
+
+        const response = await fetch("http://localhost:8080/api/subscriptions?reason=USER_REQUESTED", {
+            method: "DELETE",
+            credentials: "include", // 쿠키 인증
+        });
+
+
+        const result = await response.json();
+        if (result.success) {
+            alert("✅ 구독이 취소되었습니다.");
+            window.location.reload();
+        } else {
+            alert("❌ 구독 취소 실패: " + result.error?.message);
+        }
+    };
+
+
 
     return (
         <div className="min-h-screen" style={{ backgroundColor: "var(--color-background-primary)" }}>
@@ -138,9 +158,17 @@ export default function PointsSubscriptionPage({
                         <div>
                             <p className="text-sm text-gray-500">현재 구독</p>
                             <p className="text-xl font-bold text-green-600">{userProfile.planType.toUpperCase()}</p>
+
+                            {userProfile.planType !== "FREE" && (
+                                <div className="mt-4 text-right">
+                                    <Button onClick={handleCancelSubscription} variant="destructive" className="px-6 py-2">
+                                        구독 취소하기
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
-                )}
+                    )}
 
                 {/* 탭 UI */}
                 <div className="flex gap-4 border-b mb-6">
