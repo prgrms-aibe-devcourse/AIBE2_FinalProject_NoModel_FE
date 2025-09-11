@@ -680,6 +680,14 @@ export default function App() {
           userProfile={userProfile}
           onBack={() => handleStageChange('modelSelection')}
           onModelCreated={handleModelCreation}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onHome={() => handleStageChange('landing')}
+          onAdmin={() => handleStageChange('admin')}
         />
       )}
 

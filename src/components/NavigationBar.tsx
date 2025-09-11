@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, Coins, ArrowLeft, Shield } from 'lucide-react';
+import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, ArrowLeft, Shield } from 'lucide-react';
 
 interface NavigationBarProps {
   onLogin: () => void;
@@ -20,7 +20,6 @@ interface NavigationBarProps {
   isLandingPage?: boolean;
   showBackButton?: boolean;
   userPoints?: number;
-  pageTitle?: string;
   currentPage?: 'marketplace' | 'mypage' | 'home' | 'admin' | 'other';
 }
 
@@ -41,7 +40,6 @@ export function NavigationBar({
                                 isLandingPage = false,
                                 showBackButton = false,
                                 userPoints,
-                                pageTitle,
                                 currentPage = 'other'
                               }: NavigationBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -49,18 +47,21 @@ export function NavigationBar({
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {showBackButton && onBack && (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onBack}
-                    className="flex items-center gap-2 hover:bg-muted/50 px-3 py-2 h-9"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">뒤로</span>
-                </Button>
-            )}
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            {/* 뒤로 가기 버튼 고정 영역 - 일관된 레이아웃을 위해 */}
+            <div className="w-16 flex-shrink-0">
+              {showBackButton && onBack && (
+                  <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onBack}
+                      className="flex items-center gap-2 hover:bg-muted/50 px-3 py-2 h-9"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">뒤로</span>
+                  </Button>
+              )}
+            </div>
             
             <button
                 onClick={isLoggedIn ? onMyPage : onHome}
@@ -74,14 +75,6 @@ export function NavigationBar({
               </h1>
             </button>
 
-            {pageTitle && (
-                <>
-                  <div className="w-px h-6 bg-border mx-1" />
-                  <h2 className="text-lg font-medium text-foreground hidden sm:block">
-                    {pageTitle}
-                  </h2>
-                </>
-            )}
           </div>
 
           {/* Desktop Navigation */}
@@ -189,24 +182,6 @@ export function NavigationBar({
                       </button>
                   )}
 
-                  {/* Points - 마켓플레이스가 아닐 때만 표시 */}
-                  {typeof userPoints === 'number' && currentPage !== 'marketplace' && (
-                      <Badge
-                          variant="secondary"
-                          className="flex items-center gap-2 px-3 py-1 transition-colors cursor-pointer"
-                          style={{
-                            backgroundColor: '#FFF7ED',
-                            borderColor: '#FED7AA', 
-                            color: '#C2410C'
-                          }}
-                          onClick={onMyPage}
-                      >
-                        <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
-                        <span className="font-semibold" style={{ color: '#C2410C' }}>
-                          {userPoints.toLocaleString()}P
-                        </span>
-                      </Badge>
-                  )}
 
                   <Button
                       type="button"
@@ -342,22 +317,6 @@ export function NavigationBar({
                         마이 페이지
                       </button>
 
-                      {typeof userPoints === 'number' && (
-                          <div
-                              onClick={() => { onMyPage(); setMobileMenuOpen(false); }}
-                              className="cursor-pointer"
-                          >
-                            <Badge
-                                variant="secondary"
-                                className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 transition-colors w-fit"
-                            >
-                              <Coins className="w-4 h-4 text-primary" />
-                              <span className="font-semibold text-primary">
-                        {userPoints.toLocaleString()} 포인트
-                      </span>
-                            </Badge>
-                          </div>
-                      )}
 
                       <Button
                           variant="outline"

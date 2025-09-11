@@ -292,11 +292,13 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         isAdmin={userProfile?.role === 'ADMIN'}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        showBackButton={false}
         currentPage="mypage"
       />
 
       {/* Main Content */}
       <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+        <div className="ml-20">{/* 로고 위치와 정렬하기 위한 오프셋 (w-16 + gap-4) */}
         {/* User Stats */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
@@ -995,6 +997,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
             </div>
           )}
         </div>
+        </div>{/* ml-24 div 닫기 */}
       </main>
     </div>
   );

@@ -51,6 +51,7 @@ export function LandingPage({
         }}
         isLoggedIn={isLoggedIn}
         isLandingPage={true}
+        showBackButton={false}
         currentPage="home"
       />
 
