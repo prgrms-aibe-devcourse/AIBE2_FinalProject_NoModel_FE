@@ -348,7 +348,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                   <Download className="h-6 w-6 text-green-500 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-500 whitespace-nowrap">사용횟수</p>
-                    <p className="font-semibold text-lg">{modelDetail.downloadCount.toLocaleString()}</p>
+                    <p className="font-semibold text-lg">{modelDetail.usageCount.toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>

@@ -21,6 +21,7 @@ interface NavigationBarProps {
   showBackButton?: boolean;
   userPoints?: number;
   pageTitle?: string;
+  currentPage?: 'marketplace' | 'mypage' | 'home' | 'admin' | 'other';
 }
 
 export function NavigationBar({
@@ -40,7 +41,8 @@ export function NavigationBar({
                                 isLandingPage = false,
                                 showBackButton = false,
                                 userPoints,
-                                pageTitle
+                                pageTitle,
+                                currentPage = 'other'
                               }: NavigationBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
@@ -148,7 +150,11 @@ export function NavigationBar({
                   </button>
                   <button
                       onClick={onMarketplace}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className={`text-sm font-medium transition-colors duration-200 flex items-center gap-2 ${
+                        currentPage === 'marketplace'
+                          ? 'text-foreground bg-accent px-3 py-1 rounded-md'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                   >
                     <ShoppingBag className="w-4 h-4" />
                     마켓플레이스
@@ -156,7 +162,11 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onMyPage}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className={`text-sm font-medium transition-colors duration-200 flex items-center gap-2 ${
+                        currentPage === 'mypage'
+                          ? 'text-foreground bg-accent px-3 py-1 rounded-md'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
                   >
                     <User className="w-4 h-4" />
                     마이 페이지
@@ -167,7 +177,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => {onAdmin(); console.log("hello"); }}
-                          className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors duration-200 flex items-center gap-2"
+                          className={`text-sm font-semibold transition-colors duration-200 flex items-center gap-2 ${
+                            currentPage === 'admin'
+                              ? 'text-foreground bg-accent px-3 py-1 rounded-md'
+                              : 'text-primary hover:text-primary/80'
+                          }`}
                           title="관리자 페이지"
                       >
                         <Shield className="w-4 h-4" />
@@ -175,17 +189,22 @@ export function NavigationBar({
                       </button>
                   )}
 
-                  {/* Points */}
-                  {typeof userPoints === 'number' && (
+                  {/* Points - 마켓플레이스가 아닐 때만 표시 */}
+                  {typeof userPoints === 'number' && currentPage !== 'marketplace' && (
                       <Badge
                           variant="secondary"
-                          className="flex items-center gap-2 px-3 py-1 bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
+                          className="flex items-center gap-2 px-3 py-1 transition-colors cursor-pointer"
+                          style={{
+                            backgroundColor: '#FFF7ED',
+                            borderColor: '#FED7AA', 
+                            color: '#C2410C'
+                          }}
                           onClick={onMyPage}
                       >
-                        <Coins className="w-4 h-4 text-primary" />
-                        <span className="font-semibold text-primary">
-                    {userPoints.toLocaleString()}P
-                  </span>
+                        <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
+                        <span className="font-semibold" style={{ color: '#C2410C' }}>
+                          {userPoints.toLocaleString()}P
+                        </span>
                       </Badge>
                   )}
 
@@ -295,7 +314,11 @@ export function NavigationBar({
                             <button
                                 type="button"
                                 onClick={() => { console.log('[NAV] admin click'); onAdmin(); setMobileMenuOpen(false); }}
-                                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors duration-200 py-2 flex items-center gap-2"
+                                className={`text-sm font-semibold transition-colors duration-200 py-2 flex items-center gap-2 ${
+                                  currentPage === 'admin'
+                                    ? 'text-foreground bg-accent px-3 py-1 rounded-md'
+                                    : 'text-primary hover:text-primary/80'
+                                }`}
                                 title="관리자 페이지"
                             >
                                 <Shield className="w-4 h-4" />

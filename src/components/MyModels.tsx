@@ -248,6 +248,7 @@ export function MyModels({
         onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        currentPage="other"
       />
 
       {/* Sub Header */}

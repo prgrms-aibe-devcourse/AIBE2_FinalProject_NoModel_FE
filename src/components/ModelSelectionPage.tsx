@@ -233,6 +233,7 @@ export function ModelSelectionPage({
         showBackButton={true}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        currentPage="other"
       />
 
       {/* Main Content */}

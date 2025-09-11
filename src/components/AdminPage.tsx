@@ -527,6 +527,7 @@ export function AdminPage({
         onHome={onBack}
         isLoggedIn={true}
         isLandingPage={false}
+        currentPage="admin"
       />
 
       {/* Admin Header */}

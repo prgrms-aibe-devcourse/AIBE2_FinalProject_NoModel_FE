@@ -121,7 +121,7 @@ export interface AIModelDetailResponse {
   price: number;
   avgRating: number;
   reviewCount: number;
-  downloadCount: number;
+  usageCount: number;
   viewCount: number;
   files: FileInfo[];
   reviews: ReviewResponse[];

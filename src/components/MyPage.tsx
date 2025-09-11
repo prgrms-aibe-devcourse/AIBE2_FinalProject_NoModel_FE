@@ -292,6 +292,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         isAdmin={!!userProfile?.isAdmin}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        currentPage="mypage"
       />
 
       {/* Main Content */}

@@ -117,6 +117,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
         onHome={onBack}
         isLoggedIn={false}
         isLandingPage={false}
+        currentPage="other"
       />
 
       {/* Main Content */}
