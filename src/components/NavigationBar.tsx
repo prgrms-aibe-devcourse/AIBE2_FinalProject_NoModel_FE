@@ -48,7 +48,7 @@ export function NavigationBar({
     <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
         <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            {showBackButton && onBack ? (
+            {showBackButton && onBack && (
                 <Button
                     variant="ghost"
                     size="sm"
@@ -58,19 +58,19 @@ export function NavigationBar({
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">뒤로</span>
                 </Button>
-            ) : (
-                <button
-                    onClick={onHome}
-                    className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200"
-                >
-                  <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
-                    <Sparkles className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <h1 className="text-xl font-semibold text-foreground">
-                    NoModel
-                  </h1>
-                </button>
             )}
+            
+            <button
+                onClick={isLoggedIn ? onMyPage : onHome}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200"
+            >
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-semibold text-foreground">
+                NoModel
+              </h1>
+            </button>
 
             {pageTitle && (
                 <>

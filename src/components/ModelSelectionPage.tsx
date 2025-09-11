@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DefaultAvatar } from './common/DefaultAvatar';
 import { NavigationBar } from './NavigationBar';
 import { 
-  ArrowLeft, Sparkles, Search, Users, ShoppingCart, Plus, 
+  Sparkles, Search, Users, ShoppingCart, Plus, 
   Crown, Wand2, Star, Eye, Coins, Filter
 } from 'lucide-react';
 import { SelectedModel, UserProfile } from '../App';
@@ -134,14 +133,6 @@ const mockMarketplacePreview = [
   }
 ];
 
-const categoryNames: Record<string, string> = {
-  fashion: '패션',
-  electronics: '전자제품',
-  beauty: '뷰티',
-  home: '홈&리빙',
-  food: '식품',
-  lifestyle: '라이프스타일'
-};
 
 export function ModelSelectionPage({ 
   selectedCategory, 
@@ -205,52 +196,11 @@ export function ModelSelectionPage({
         onAdmin={onAdmin}
         isAdmin={userProfile?.isAdmin}
         onHome={onBack}
+        onBack={onBack}
+        showBackButton={true}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
       />
-
-      {/* Sub Header */}
-      <div className="linear-header border-b" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-        <div className="linear-container h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="flex items-center gap-2"
-              style={{
-                color: 'var(--color-text-secondary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              뒤로 가기
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {userProfile && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-                <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-                <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                  {userProfile.points.toLocaleString()}P
-                </span>
-              </div>
-            )}
-            <Badge 
-              style={{
-                backgroundColor: 'var(--color-brand-accent-tint)',
-                color: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-rounded)',
-                fontSize: 'var(--font-size-small)',
-                fontWeight: 'var(--font-weight-medium)',
-                padding: '8px 16px'
-              }}
-            >
-              {categoryNames[selectedCategory] || '모든 카테고리'}
-            </Badge>
-          </div>
-        </div>
-      </div>
 
       {/* Main Content */}
       <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
