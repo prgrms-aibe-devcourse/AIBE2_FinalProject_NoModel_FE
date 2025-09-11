@@ -184,7 +184,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
       />
 
       {/* Main Content */}
-      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <main className="page-container">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-6">

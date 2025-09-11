@@ -237,7 +237,7 @@ export function ModelSelectionPage({
       />
 
       {/* Main Content */}
-      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <main className="page-container">
         {/* Page Header */}
         <div className="mb-8">
           <h1 
