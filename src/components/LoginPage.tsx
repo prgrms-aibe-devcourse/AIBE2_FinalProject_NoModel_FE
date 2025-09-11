@@ -239,24 +239,25 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-12 text-center">
-            <p className="text-xs text-muted-foreground mb-4">
+          <div className="mt-6 text-center">
+            <p className="text-xs text-muted-foreground mb-3">
               로그인하면 다음에 동의하는 것으로 간주됩니다
             </p>
-            <div className="flex justify-center space-x-8 text-xs text-muted-foreground">
+            <div className="flex justify-center items-center space-x-4 text-xs text-muted-foreground">
               <Button 
                 variant="link" 
                 className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
                 onClick={() => setShowTerms(true)}
               >
-                이용약관
+                이용 약관
               </Button>
+              <span className="text-muted-foreground px-2">|</span>
               <Button 
                 variant="link" 
                 className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
                 onClick={() => setShowPrivacy(true)}
               >
-                개인정보처리방침
+                개인정보 처리방침
               </Button>
             </div>
           </div>
