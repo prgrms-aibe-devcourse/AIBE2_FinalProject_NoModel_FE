@@ -5,14 +5,12 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
 import { DynamicFontSize } from './common/DynamicFontSize';
 import { 
   Sparkles, Plus, Search, Filter, Grid3X3, List, Calendar, Download, 
-  Eye, MoreHorizontal, User, Settings, LogOut, TrendingUp, Image as ImageIcon,
-  Crown, Clock, CheckCircle, XCircle, Star, ShoppingCart, Users, Coins, Shield
+  Eye, User, Settings, LogOut, TrendingUp, Image as ImageIcon,
+  Crown, Star, ShoppingCart, Users, Coins, Shield
 } from 'lucide-react';
 import { GeneratedProject, UserProfile } from '../App';
 import { getMyProjectCount, getMyAverageRating, getMyAdResults, convertAdResultToProject } from '../services/adResultApi';
@@ -264,18 +262,6 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
     }).format(date);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'processing':
-        return <Clock className="w-4 h-4" />;
-      case 'failed':
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
 
   // Calculate user stats including ratings
   const userStats = useMemo(() => {
@@ -880,18 +866,6 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                         className="w-full h-full object-cover"
                       />
                       
-                      {/* Status Indicator */}
-                      <div 
-                        className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          color: statusNames[project.status].color,
-                          fontWeight: 'var(--font-weight-medium)'
-                        }}
-                      >
-                        {getStatusIcon(project.status)}
-                        {statusNames[project.status].label}
-                      </div>
 
                       {/* Model Type Badge */}
                       {project.model.isCustom && (
@@ -940,21 +914,20 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     <div className={`${viewMode === 'list' ? 'flex-1' : ''}`}>
                       <div className={`${viewMode === 'list' ? 'flex items-center justify-between' : ''}`}>
                         <div className="flex-1">
-                          <h3 
-                            className="mb-1 line-clamp-1"
-                            style={{
-                              fontSize: 'var(--font-size-regular)',
-                              fontWeight: 'var(--font-weight-semibold)',
-                              color: 'var(--color-text-primary)'
-                            }}
-                          >
-                            {project.title}
-                          </h3>
-                          
-                          <div className={`flex gap-2 mb-2 ${viewMode === 'list' ? 'mb-0' : ''}`}>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 
+                              className="line-clamp-1 flex-1"
+                              style={{
+                                fontSize: 'var(--font-size-regular)',
+                                fontWeight: 'var(--font-weight-semibold)',
+                                color: 'var(--color-text-primary)'
+                              }}
+                            >
+                              {project.title}
+                            </h3>
                             <Badge 
                               variant="secondary" 
-                              className="text-xs"
+                              className="text-xs flex-shrink-0"
                               style={{
                                 backgroundColor: 'var(--color-background-tertiary)',
                                 color: 'var(--color-text-secondary)',
@@ -996,67 +969,23 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                           )}
                         </div>
 
-                        <div className={`${viewMode === 'list' ? 'flex items-center gap-4' : 'flex items-center justify-between mt-2'}`}>
-                          {viewMode === 'list' && (
-                            <div className="text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                              <p>{formatDate(project.createdAt)}</p>
-                              <div className="flex items-center gap-2 justify-end mt-1">
-                                <span>{project.downloadCount} 다운로드</span>
-                                {project.rating && (
-                                  <>
-                                    <span>•</span>
-                                    <div className="flex items-center gap-1">
-                                      <Star className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
-                                      <span>{project.rating.overallRating.toFixed(1)}</span>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {project.rating && viewMode === 'grid' && (
-                            <StarRating rating={project.rating.overallRating} readonly size="sm" />
-                          )}
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="w-8 h-8 p-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                onProjectSelect(project);
-                              }}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                상세 보기
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle download
-                              }}>
-                                <Download className="w-4 h-4 mr-2" />
-                                다운로드
-                              </DropdownMenuItem>
-                              {!project.rating && project.status === 'completed' && (
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  onProjectSelect(project);
-                                }}>
-                                  <Star className="w-4 h-4 mr-2" />
-                                  평가하기
-                                </DropdownMenuItem>
+                        {viewMode === 'list' && (
+                          <div className="text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                            <p>{formatDate(project.createdAt)}</p>
+                            <div className="flex items-center gap-2 justify-end mt-1">
+                              <span>{project.downloadCount} 다운로드</span>
+                              {project.rating && (
+                                <>
+                                  <span>•</span>
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
+                                    <span>{project.rating.overallRating.toFixed(1)}</span>
+                                  </div>
+                                </>
                               )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
