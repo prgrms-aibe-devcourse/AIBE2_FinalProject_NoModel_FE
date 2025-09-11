@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
 import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, ArrowLeft, Shield } from 'lucide-react';
 
 interface NavigationBarProps {
@@ -46,39 +45,41 @@ export function NavigationBar({
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4 min-w-0 flex-1">
-            {/* 뒤로 가기 버튼 고정 영역 - 일관된 레이아웃을 위해 */}
-            <div className="w-16 flex-shrink-0">
-              {showBackButton && onBack && (
-                  <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={onBack}
-                      className="flex items-center gap-2 hover:bg-muted/50 px-3 py-2 h-9"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">뒤로</span>
-                  </Button>
-              )}
-            </div>
+        <div className="w-full h-16 flex items-center page-padding">
+          {/* 왼쪽 영역: 뒤로가기 + 로고 (절대 위치 고정) */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            {/* 뒤로 가기 버튼 */}
+            {showBackButton && onBack && (
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onBack}
+                    className="flex items-center gap-2 hover:bg-muted/50 px-3 py-2 h-9"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">뒤로</span>
+                </Button>
+            )}
             
+            {/* 로고 - 왼쪽에 고정 */}
             <button
                 onClick={isLoggedIn ? onMyPage : onHome}
-                className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200"
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 flex-shrink-0"
             >
               <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
-              <h1 className="text-xl font-semibold text-foreground">
+              <h1 className="text-xl font-semibold text-foreground whitespace-nowrap">
                 NoModel
               </h1>
             </button>
-
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-2 lg:gap-4 xl:gap-6">
+          {/* 가운데 빈 공간 */}
+          <div className="flex-1"></div>
+
+          {/* 오른쪽 영역: 메뉴 버튼들 (절대 위치 고정) */}
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6 xl:gap-8 flex-shrink-0">
             {!isLoggedIn ? (
                 <>
                   {isLandingPage ? (
@@ -198,19 +199,21 @@ export function NavigationBar({
           </nav>
 
           {/* Mobile Menu Button */}
-          <button
-              type="button"
-              className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex-shrink-0">
+            <button
+                type="button"
+                className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
             <div className="md:hidden border-t bg-background backdrop-blur-lg">
-              <nav className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-4">
+              <nav className="w-full py-4 flex flex-col gap-4 page-padding">
                 {!isLoggedIn ? (
                     <>
                       {isLandingPage ? (

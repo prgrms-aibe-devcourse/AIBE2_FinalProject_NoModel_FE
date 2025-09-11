@@ -5422,3 +5422,23 @@ html {
     padding-right: 4rem; /* 더 넓게 */
   }
 }
+
+/* NavigationBar용 좌우 패딩 (page-container와 동일) */
+.page-padding {
+  padding-left: 3.5rem; /* 더 넓게 */
+  padding-right: 2rem; /* 더 넓게 */
+}
+
+@media (min-width: 640px) {
+  .page-padding {
+    padding-left: 4.5rem; /* 더 넓게 */
+    padding-right: 2.5rem; /* 더 넓게 */
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-padding {
+    padding-left: 6rem; /* 더 넓게 */
+    padding-right: 4rem; /* 더 넓게 */
+  }
+}
