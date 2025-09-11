@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -6,10 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DefaultAvatar } from './common/DefaultAvatar';
 import { NavigationBar } from './NavigationBar';
 import { 
-  Sparkles, Search, Users, ShoppingCart, Plus, 
-  Crown, Wand2, Star, Eye, Coins, Filter
+  Sparkles, Search, ShoppingCart, Plus, 
+  Crown, Wand2, Star, Eye, Coins, Filter, History, Clock
 } from 'lucide-react';
 import { SelectedModel, UserProfile } from '../App';
+import axiosInstance from '../services/AxiosInstance';
 
 interface ModelSelectionPageProps {
   selectedCategory: string;
@@ -26,81 +27,49 @@ interface ModelSelectionPageProps {
   onAdmin?: () => void;
 }
 
-// Mock data for pre-made models
-const mockPreMadeModels = [
-  {
-    id: 'premade-1',
-    name: '지민 - 젊은 아시아 여성',
-    imageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=300&h=300&fit=crop&crop=face',
-    category: 'fashion',
-    description: '20대 초반의 젊고 활기찬 아시아 여성 모델입니다.',
-    metadata: {
-      age: '20대 초반',
-      gender: '여성',
-      style: '프로페셔널',
-      ethnicity: '아시아'
-    },
-    prompt: 'young asian woman, professional headshot, natural lighting, clean background',
-    seedValue: '12345',
-    isCustom: false,
-    rating: 4.8,
-    usageCount: 1247
-  },
-  {
-    id: 'premade-2',
-    name: '알렉스 - 비즈니스맨',
-    imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
-    category: 'electronics',
-    description: '신뢰감을 주는 30대 서양 남성 비즈니스 모델입니다.',
-    metadata: {
-      age: '30대 초반',
-      gender: '남성',
-      style: '프로페셔널',
-      ethnicity: '서양'
-    },
-    prompt: 'professional businessman, confident pose, business suit, studio lighting',
-    seedValue: '23456',
-    isCustom: false,
-    rating: 4.6,
-    usageCount: 892
-  },
-  {
-    id: 'premade-3',
-    name: '소피아 - 럭셔리 모델',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop&crop=face',
-    category: 'beauty',
-    description: '고급스럽고 우아한 30대 서양 여성 모델입니다.',
-    metadata: {
-      age: '30대 중반',
-      gender: '여성',
-      style: '럭셔리',
-      ethnicity: '서양'
-    },
-    prompt: 'elegant woman, luxury portrait, soft lighting, sophisticated background',
-    seedValue: '34567',
-    isCustom: false,
-    rating: 4.9,
-    usageCount: 634
-  },
-  {
-    id: 'premade-4',
-    name: '케이 - 캐주얼 모델',
-    imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&h=300&fit=crop&crop=face',
-    category: 'lifestyle',
-    description: '자연스럽고 친근한 20대 후반 서양 여성 모델입니다.',
-    metadata: {
-      age: '20대 후반',
-      gender: '여성',
-      style: '캐주얼',
-      ethnicity: '서양'
-    },
-    prompt: 'casual young woman, natural smile, lifestyle photography, bright lighting',
-    seedValue: '45678',
-    isCustom: false,
-    rating: 4.7,
-    usageCount: 1089
+// API 타입 정의
+interface ModelUsageHistoryResponse {
+  adResultId: number;
+  modelId: number;
+  modelName: string;
+  prompt: string;
+  modelImageUrl: string;
+  createdAt: string;
+}
+
+interface ModelUsageHistoryPageResponse {
+  content: ModelUsageHistoryResponse[];
+  pageNumber: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
+
+// 사용한 모델 내역을 가져오는 API 함수
+const fetchModelUsageHistory = async (page = 0, size = 20): Promise<ModelUsageHistoryPageResponse> => {
+  try {
+    const response = await axiosInstance.get(`/members/me/models/usage?page=${page}&size=${size}`);
+    
+    if (response.data.success) {
+      return response.data.response;
+    } else {
+      throw new Error(response.data.error || 'Failed to fetch model usage history');
+    }
+  } catch (error) {
+    console.error('Error fetching model usage history:', error);
+    return {
+      content: [],
+      pageNumber: 0,
+      pageSize: 20,
+      totalElements: 0,
+      totalPages: 0,
+      hasNext: false,
+      hasPrevious: false
+    };
   }
-];
+};
 
 // Mock marketplace models preview
 const mockMarketplacePreview = [
@@ -149,36 +118,83 @@ export function ModelSelectionPage({
   onAdmin
 }: ModelSelectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('premade');
+  const [activeTab, setActiveTab] = useState('used-models');
+  const [usedModels, setUsedModels] = useState<ModelUsageHistoryResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
 
-  // Filter models based on category and search
-  const filteredPreMadeModels = mockPreMadeModels.filter(model => {
-    const matchesCategory = selectedCategory === 'all' || model.category === selectedCategory;
-    const matchesSearch = !searchQuery || model.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  // API에서 사용한 모델 내역 가져오기
+  useEffect(() => {
+    if (activeTab === 'used-models' && userProfile) {
+      loadUsedModels();
+    }
+  }, [activeTab, userProfile, currentPage]);
+
+  const loadUsedModels = async () => {
+    setLoading(true);
+    try {
+      const response = await fetchModelUsageHistory(currentPage, 20);
+      setUsedModels(response.content);
+      setTotalPages(response.totalPages);
+      setHasNext(response.hasNext);
+    } catch (error) {
+      console.error('Failed to load used models:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 사용한 모델 필터링
+  const filteredUsedModels = usedModels.filter(model => {
+    const matchesSearch = !searchQuery || 
+      model.modelName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.prompt.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const handleModelSelect = (model: any, isPaid = false) => {
+  const handleUsedModelSelect = (model: ModelUsageHistoryResponse) => {
+    const selectedModel: SelectedModel = {
+      id: model.modelId.toString(),
+      name: model.modelName,
+      prompt: model.prompt,
+      seedValue: '',
+      imageUrl: model.modelImageUrl,
+      category: selectedCategory,
+      isCustom: false,
+      metadata: {
+        age: '알 수 없음',
+        gender: '알 수 없음',
+        style: '이전 사용',
+        ethnicity: '알 수 없음'
+      }
+    };
+    
+    onModelSelect(selectedModel);
+  };
+
+  const handleMarketplaceModelSelect = (model: any) => {
     const selectedModel: SelectedModel = {
       id: model.id,
       name: model.name,
-      prompt: model.prompt || '',
-      seedValue: model.seedValue || '',
+      prompt: '',
+      seedValue: '',
       imageUrl: model.imageUrl,
-      category: model.category || selectedCategory,
+      category: selectedCategory,
       isCustom: false,
-      metadata: model.metadata || {
+      metadata: {
         age: '알 수 없음',
         gender: '알 수 없음',
         style: '알 수 없음',
         ethnicity: '알 수 없음'
       },
-      creator: isPaid ? {
+      creator: {
         id: 'creator-' + model.id,
         name: model.creator,
         avatar: model.creatorAvatar
-      } : undefined,
-      price: isPaid ? model.price : undefined
+      },
+      price: model.price
     };
     
     onModelSelect(selectedModel);
@@ -221,26 +237,29 @@ export function ModelSelectionPage({
           </p>
         </div>
 
-        {/* Search */}
+        {/* Search and Filters */}
         <div className="mb-8">
-          <div className="relative max-w-md">
-            <Search 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-              style={{ color: 'var(--color-text-tertiary)' }}
-            />
-            <Input
-              placeholder="모델 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              style={{
-                borderRadius: 'var(--radius-8)',
-                borderColor: 'var(--color-border-primary)',
-                backgroundColor: 'var(--color-input-background)',
-                fontSize: 'var(--font-size-regular)',
-                height: '48px'
-              }}
-            />
+          <div className="flex flex-col gap-4">
+            {/* Search Input */}
+            <div className="relative max-w-md">
+              <Search 
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                style={{ color: 'var(--color-text-tertiary)' }}
+              />
+              <Input
+                placeholder="모델명 또는 프롬프트 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 text-base"
+                style={{
+                  borderRadius: 'var(--radius-8)',
+                  borderColor: 'var(--color-border-primary)',
+                  backgroundColor: 'var(--color-input-background)',
+                  fontSize: 'var(--font-size-regular)'
+                }}
+              />
+            </div>
+            
           </div>
         </div>
 
@@ -255,7 +274,7 @@ export function ModelSelectionPage({
             }}
           >
             <TabsTrigger 
-              value="premade"
+              value="used-models"
               className="flex items-center gap-2"
               style={{
                 borderRadius: 'var(--radius-8)',
@@ -263,8 +282,8 @@ export function ModelSelectionPage({
                 padding: '12px 16px'
               }}
             >
-              <Users className="w-4 h-4" />
-              무료 모델
+              <History className="w-4 h-4" />
+              사용한 모델
             </TabsTrigger>
             <TabsTrigger 
               value="marketplace"
@@ -292,8 +311,8 @@ export function ModelSelectionPage({
             </TabsTrigger>
           </TabsList>
 
-          {/* Pre-made Models Tab */}
-          <TabsContent value="premade" className="space-y-6">
+          {/* Used Models Tab */}
+          <TabsContent value="used-models" className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 
                 style={{
@@ -302,13 +321,33 @@ export function ModelSelectionPage({
                   color: 'var(--color-text-primary)'
                 }}
               >
-                무료 모델 ({filteredPreMadeModels.length})
+                사용한 모델 ({filteredUsedModels.length})
               </h2>
+              {hasNext && (
+                <Button 
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  variant="outline"
+                  disabled={loading}
+                  style={{
+                    borderRadius: 'var(--radius-8)',
+                    borderColor: 'var(--color-border-primary)'
+                  }}
+                >
+                  더 보기
+                </Button>
+              )}
             </div>
 
-            {filteredPreMadeModels.length === 0 ? (
+            {loading ? (
               <div className="text-center py-12">
-                <Users 
+                <div className="w-8 h-8 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  사용한 모델을 불러오는 중...
+                </p>
+              </div>
+            ) : filteredUsedModels.length === 0 ? (
+              <div className="text-center py-12">
+                <History 
                   className="w-12 h-12 mx-auto mb-4"
                   style={{ color: 'var(--color-text-tertiary)' }}
                 />
@@ -320,18 +359,18 @@ export function ModelSelectionPage({
                     color: 'var(--color-text-primary)'
                   }}
                 >
-                  검색 결과가 없습니다
+                  사용한 모델이 없습니다
                 </h3>
                 <p style={{ color: 'var(--color-text-secondary)' }}>
-                  다른 검색어를 시도하거나 마켓플레이스를 확인해보세요
+                  마켓플레이스에서 모델을 선택하거나 새로운 모델을 생성해보세요
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredPreMadeModels.map((model) => (
+                {filteredUsedModels.map((model) => (
                   <Card 
-                    key={model.id}
-                    className="group cursor-pointer overflow-hidden transition-all hover:shadow-lg"
+                    key={model.adResultId}
+                    className="group cursor-pointer transition-all hover:shadow-lg p-4"
                     style={{
                       backgroundColor: 'var(--color-background-primary)',
                       borderColor: 'var(--color-border-primary)',
@@ -339,9 +378,9 @@ export function ModelSelectionPage({
                       boxShadow: 'var(--shadow-tiny)',
                       transition: 'all var(--animation-quick-transition) ease'
                     }}
-                    onClick={() => handleModelSelect(model)}
+                    onClick={() => handleUsedModelSelect(model)}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
                       e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
                     }}
                     onMouseLeave={(e) => {
@@ -349,77 +388,73 @@ export function ModelSelectionPage({
                       e.currentTarget.style.boxShadow = 'var(--shadow-tiny)';
                     }}
                   >
-                    {/* Model Image */}
-                    <div className="relative aspect-square overflow-hidden">
-                      <img 
-                        src={model.imageUrl} 
-                        alt={model.name}
-                        className="w-full h-full object-cover"
-                      />
-                      
-                      {/* Free Badge */}
-                      <div 
-                        className="absolute top-3 left-3 px-2 py-1 rounded-full text-xs"
-                        style={{
-                          backgroundColor: 'var(--color-semantic-green)',
-                          color: 'var(--color-utility-white)',
-                          fontWeight: 'var(--font-weight-medium)'
-                        }}
-                      >
-                        FREE
-                      </div>
-
-                      {/* Stats */}
-                      <div 
-                        className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                        style={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                          color: 'var(--color-utility-white)'
-                        }}
-                      >
-                        <Star className="w-3 h-3" />
-                        {model.rating}
-                      </div>
-
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          style={{
-                            backgroundColor: 'var(--color-utility-white)',
-                            color: 'var(--color-text-primary)',
-                            borderRadius: 'var(--radius-8)'
-                          }}
+                    {/* Model Thumbnail */}
+                    <div 
+                      className="relative w-full aspect-square mb-4 overflow-hidden"
+                      style={{ borderRadius: 'var(--radius-12)' }}
+                    >
+                      {model.modelImageUrl ? (
+                        <img 
+                          src={model.modelImageUrl} 
+                          alt={model.modelName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div 
+                          className="w-full h-full flex items-center justify-center"
+                          style={{ backgroundColor: 'var(--color-background-secondary)' }}
                         >
-                          선택하기
-                        </Button>
+                          <div className="text-center">
+                            <Wand2 
+                              className="w-8 h-8 mx-auto mb-2"
+                              style={{ color: 'var(--color-text-tertiary)' }}
+                            />
+                            <span 
+                              className="text-xs"
+                              style={{ color: 'var(--color-text-tertiary)' }}
+                            >
+                              이미지 없음
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Used Badge */}
+                      <div 
+                        className="absolute top-2 right-2 text-xs"
+                        style={{
+                          backgroundColor: 'var(--color-semantic-blue)',
+                          color: 'var(--color-utility-white)',
+                          borderRadius: 'var(--radius-4)',
+                          fontSize: 'var(--font-size-micro)',
+                          padding: '2px 6px'
+                        }}
+                      >
+                        사용함
                       </div>
                     </div>
 
                     {/* Model Info */}
-                    <div className="p-4">
+                    <div>
                       <h3 
-                        className="mb-2 line-clamp-1"
+                        className="mb-1 line-clamp-1"
                         style={{
                           fontSize: 'var(--font-size-regular)',
                           fontWeight: 'var(--font-weight-semibold)',
                           color: 'var(--color-text-primary)'
                         }}
                       >
-                        {model.name}
+                        {model.modelName}
                       </h3>
                       <p 
-                        className="text-sm mb-3 line-clamp-2"
+                        className="text-sm mb-2 line-clamp-2"
                         style={{ color: 'var(--color-text-secondary)' }}
                       >
-                        {model.description}
+                        {model.prompt}
                       </p>
                       
-                      <div className="flex items-center justify-between text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                        <span>{model.usageCount.toLocaleString()}회 사용됨</span>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
-                          {model.rating}
-                        </div>
+                      <div className="flex items-center justify-end text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                        <span>{new Date(model.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </Card>
@@ -464,7 +499,7 @@ export function ModelSelectionPage({
                     boxShadow: 'var(--shadow-tiny)',
                     transition: 'all var(--animation-quick-transition) ease'
                   }}
-                  onClick={() => handleModelSelect(model, true)}
+                  onClick={() => handleMarketplaceModelSelect(model)}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
