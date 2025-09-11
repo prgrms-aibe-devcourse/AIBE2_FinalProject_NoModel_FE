@@ -147,9 +147,12 @@ export const TermsModal: React.FC<TermsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md w-full h-[500px] flex flex-col">
+      <DialogContent 
+        className="max-w-sm w-full h-[450px] flex flex-col p-4 data-[state=open]:max-w-sm data-[state=open]:h-[450px] [&>button]:hidden"
+        style={{ maxWidth: '384px', height: '450px' }}
+      >
         <DialogHeader className="flex flex-row items-center justify-between pb-2 border-b">
-          <DialogTitle className="text-base font-semibold">{getTitle()}</DialogTitle>
+          <DialogTitle className="text-sm font-semibold">{getTitle()}</DialogTitle>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -160,12 +163,14 @@ export const TermsModal: React.FC<TermsModalProps> = ({
           </Button>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 py-4 pr-4">
-          {getContent()}
+        <ScrollArea className="flex-1 py-3 pr-3" style={{ maxHeight: '300px' }}>
+          <div className="text-sm leading-relaxed space-y-4">
+            {getContent()}
+          </div>
         </ScrollArea>
         
-        <div className="flex justify-end pt-3 border-t">
-          <Button onClick={onClose} size="sm" className="px-6">
+        <div className="flex justify-end pt-4 pb-4 border-t mt-3 px-1">
+          <Button onClick={onClose} size="sm" className="px-4 py-2 text-sm h-8 bg-primary text-primary-foreground hover:bg-primary/90">
             확인
           </Button>
         </div>
