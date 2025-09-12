@@ -17,13 +17,12 @@ import { ModelReport } from './components/ModelReport';
 import { AdminPage } from './components/AdminPage';
 import { ComponentDemo } from './components/ComponentDemo';
 import LoginTest from './components/LoginTest';
-import PointsSubscriptionPage from './components/PointsSubscriptionPage';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest';
 
 export interface UserModel {
   id: string;
@@ -589,7 +588,6 @@ export default function App() {
           onAdmin={() => handleStageChange('admin')}
           isLoggedIn={isLoggedIn}
           isAdmin={userProfile?.role === 'ADMIN'}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -630,7 +628,6 @@ export default function App() {
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
       
@@ -656,7 +653,6 @@ export default function App() {
           onLogout={handleLogout}
           onAdmin={() => handleStageChange('admin')}
           onLogin={() => handleStageChange('login')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -707,7 +703,6 @@ export default function App() {
           onAdGeneration={() => handleStageChange('onboarding')}
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -725,7 +720,6 @@ export default function App() {
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -751,7 +745,6 @@ export default function App() {
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -760,20 +753,6 @@ export default function App() {
       )}
       {currentStage === 'loginTest' && (
         <LoginTest />
-      )}
-
-      {currentStage === 'pointsSubscription' && (
-        <PointsSubscriptionPage 
-          userProfile={userProfile}
-          onLogin={() => handleStageChange('login')}
-          onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
-          onModelCreation={() => handleStageChange('modelCreation')}
-          onMarketplace={() => handleStageChange('modelMarketplace')}
-          onMyPage={() => handleStageChange('mypage')}
-          onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
-        />
       )}
     </div>
   );
