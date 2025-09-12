@@ -7,30 +7,33 @@ import {
 } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardContent } from './ui/card';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { Skeleton } from './ui/skeleton';
 import {
   Star, Users, Download, Eye, Calendar, Crown,
-  Image as ImageIcon, FileText, ExternalLink, Loader2
+  Image as ImageIcon, FileText, ExternalLink, Loader2, Flag
 } from 'lucide-react';
 import { getModelFullDetail } from '../services/modelApi';
 import { AIModelDetailResponse, FileInfo, ReviewResponse } from '../types/model';
 import { toast } from 'sonner';
 import { ImageViewer } from './ImageViewer';
+import { ModelReportModal } from './ModelReportModal';
 
 interface ModelDetailDialogProps {
   modelId: number | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onModelSelect?: (modelId: number) => void;
+  onReport?: (modelId: number, modelName: string) => void;
 }
 
 export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   modelId,
   open,
   onOpenChange,
-  onModelSelect
+  onModelSelect,
+  onReport
 }) => {
   const [modelDetail, setModelDetail] = useState<AIModelDetailResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,6 +43,9 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageFiles, setImageFiles] = useState<FileInfo[]>([]);
+  
+  // 신고 모달 상태
+  const [reportModalOpen, setReportModalOpen] = useState(false);
 
   useEffect(() => {
     if (open && modelId) {
@@ -90,6 +96,16 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
     if (modelDetail && onModelSelect) {
       onModelSelect(modelDetail.modelId);
       onOpenChange(false);
+    }
+  };
+
+  const handleReport = () => {
+    if (modelDetail) {
+      if (onReport) {
+        onReport(modelDetail.modelId, modelDetail.modelName);
+      } else {
+        setReportModalOpen(true);
+      }
     }
   };
 
@@ -151,11 +167,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
 
     return (
       <div className="flex gap-3 p-4 border rounded-lg">
-        <Avatar>
-          <AvatarFallback>
-            {reviewerName.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <DefaultAvatar 
+          name={reviewerName}
+          className="h-10 w-10"
+        />
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <span className="font-medium">{reviewerName}</span>
@@ -175,7 +190,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent 
+        className="!max-w-[60vw] !w-[60vw] max-h-[90vh] overflow-y-auto"
+        style={{ maxWidth: '60vw', width: '60vw' }}
+      >
         <DialogHeader>
           <DialogTitle className="sr-only">
             모델 상세 정보
@@ -213,11 +231,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
           <div className="space-y-6">
             {/* 기본 정보 */}
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback>
-                  {modelDetail.modelName.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <DefaultAvatar 
+                name={modelDetail.ownerName}
+                className="h-16 w-16"
+              />
               <div className="flex-1 pr-4">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="text-xl font-bold">{modelDetail.modelName}</h3>
@@ -230,11 +247,21 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                 </div>
                 <p className="text-gray-600 mb-2">by {modelDetail.ownerName}</p>
                 <p className="text-sm text-gray-600">{modelDetail.description}</p>
-                {onModelSelect && (
-                  <Button onClick={handleModelSelect} className="mt-4">
-                    모델 선택
+                <div className="flex gap-3 mt-4">
+                  {onModelSelect && (
+                    <Button onClick={handleModelSelect}>
+                      모델 선택
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={handleReport}
+                    className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+                  >
+                    <Flag className="h-4 w-4 mr-2" />
+                    신고하기
                   </Button>
-                )}
+                </div>
               </div>
             </div>
 
@@ -321,7 +348,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                   <Download className="h-6 w-6 text-green-500 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-500 whitespace-nowrap">사용횟수</p>
-                    <p className="font-semibold text-lg">{modelDetail.downloadCount.toLocaleString()}</p>
+                    <p className="font-semibold text-lg">{modelDetail.usageCount.toLocaleString()}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -392,6 +419,18 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
           open={imageViewerOpen}
           onOpenChange={setImageViewerOpen}
           onImageChange={setCurrentImageIndex}
+        />
+
+        {/* 신고 모달 */}
+        <ModelReportModal
+          model={null}
+          modelId={modelDetail?.modelId || null}
+          modelName={modelDetail?.modelName || ''}
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          onReportSuccess={(reportId) => {
+            console.log('Report submitted with ID:', reportId);
+          }}
         />
       </DialogContent>
     </Dialog>

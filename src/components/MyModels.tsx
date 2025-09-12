@@ -5,10 +5,11 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
+import { DynamicFontSize } from './common/DynamicFontSize';
 import { 
   ArrowLeft, Sparkles, Search, Plus, MoreHorizontal, Eye, Edit, 
   TrendingUp, Users, Coins, Calendar, Award, BarChart3,
@@ -54,7 +55,7 @@ const defaultUserModels: UserModel[] = [
     },
     creatorId: 'user-1',
     creatorName: '홍길동',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    creatorAvatar: undefined,
     price: 75,
     usageCount: 89,
     rating: 4.6,
@@ -85,7 +86,7 @@ const defaultUserModels: UserModel[] = [
     },
     creatorId: 'user-1',
     creatorName: '홍길동',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    creatorAvatar: undefined,
     price: 60,
     usageCount: 42,
     rating: 4.3,
@@ -116,7 +117,7 @@ const defaultUserModels: UserModel[] = [
     },
     creatorId: 'user-1',
     creatorName: '홍길동',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    creatorAvatar: undefined,
     price: 100,
     usageCount: 15,
     rating: 4.8,
@@ -245,11 +246,12 @@ export function MyModels({
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
         onAdmin={onAdmin}
-        isAdmin={userProfile?.isAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
         onHome={onBack}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
         onPointsSubscription={onPointsSubscription}
+        currentPage="other"
       />
 
       {/* Sub Header */}
@@ -274,9 +276,16 @@ export function MyModels({
             {userProfile && (
               <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
                 <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-                <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                  {userProfile.points.toLocaleString()}P
-                </span>
+                <DynamicFontSize
+                  text={`${userProfile.points.toLocaleString()}P`}
+                  baseSize="var(--font-size-small)"
+                  maxWidth="80px"
+                  minSize="10px"
+                  style={{
+                    color: 'var(--color-text-primary)',
+                    fontWeight: 'var(--font-weight-medium)'
+                  }}
+                />
               </div>
             )}
             <Button 
@@ -299,10 +308,10 @@ export function MyModels({
       <main className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Users 
-              className="w-8 h-8"
-              style={{ color: 'var(--color-brand-primary)' }}
+          <div className="flex items-center gap-4 mb-6">
+            <DefaultAvatar 
+              name={userProfile.name}
+              className="w-12 h-12"
             />
             <div>
               <h1 
@@ -312,7 +321,7 @@ export function MyModels({
                   color: 'var(--color-text-primary)'
                 }}
               >
-                내 AI 모델
+                {userProfile.name}의 AI 모델
               </h1>
               <p style={{ color: 'var(--color-text-secondary)' }}>
                 생성한 모델을 관리하고 수익을 확인하세요
@@ -594,7 +603,7 @@ export function MyModels({
                     </Select>
 
                     {/* Sort */}
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                    <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as typeof sortBy)}>
                       <SelectTrigger className="w-28 h-9">
                         <SelectValue placeholder="정렬" />
                       </SelectTrigger>

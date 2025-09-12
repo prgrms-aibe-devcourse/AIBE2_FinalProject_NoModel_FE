@@ -27,12 +27,23 @@ export function StarRating({
   showText = false,
   className = ''
 }: StarRatingProps) {
-  const [hoverRating, setHoverRating] = useState(0);
 
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
     lg: 'w-6 h-6'
+  };
+
+  const buttonSizeClasses = {
+    sm: 'p-0',
+    md: 'p-1',
+    lg: 'p-1'
+  };
+
+  const gapClasses = {
+    sm: 'gap-0',
+    md: 'gap-1',
+    lg: 'gap-1'
   };
 
   const handleStarClick = (starRating: number) => {
@@ -41,43 +52,46 @@ export function StarRating({
     }
   };
 
-  const handleStarHover = (starRating: number) => {
-    if (!readonly) {
-      setHoverRating(starRating);
-    }
+  const handleStarMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
   };
 
-  const handleMouseLeave = () => {
-    if (!readonly) {
-      setHoverRating(0);
-    }
-  };
-
-  const displayRating = hoverRating || rating;
+  const displayRating = rating;
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex items-center gap-1 ${className}`} style={{ maxWidth: '100%' }}>
       <div 
-        className="flex items-center gap-1"
-        onMouseLeave={handleMouseLeave}
+        className="flex items-center justify-between"
+        style={{ 
+          width: '100%',
+          maxWidth: '100%'
+        }}
       >
         {[1, 2, 3, 4, 5].map((star) => (
           <Button
             key={star}
             variant="ghost"
             size="sm"
-            className="p-0 h-auto"
+            className={`${buttonSizeClasses[size]} flex-1 hover:bg-transparent focus:bg-transparent active:bg-transparent`}
             onClick={() => handleStarClick(star)}
-            onMouseEnter={() => handleStarHover(star)}
+            onMouseDown={handleStarMouseDown}
             disabled={readonly}
             style={{
               cursor: readonly ? 'default' : 'pointer',
-              backgroundColor: 'transparent'
+              backgroundColor: 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: size === 'sm' ? '20px' : 'auto',
+              padding: size === 'sm' ? '2px' : '4px',
+              margin: '0px'
             }}
           >
             <Star
-              className={`${sizeClasses[size]} transition-colors`}
+              className="transition-colors"
               style={{
+                width: size === 'sm' ? '14px' : size === 'md' ? '20px' : '24px',
+                height: size === 'sm' ? '14px' : size === 'md' ? '20px' : '24px',
                 color: star <= displayRating ? 'var(--color-semantic-orange)' : 'var(--color-text-quaternary)',
                 fill: star <= displayRating ? 'var(--color-semantic-orange)' : 'transparent'
               }}
@@ -92,18 +106,6 @@ export function StarRating({
           style={{ color: 'var(--color-text-secondary)' }}
         >
           {ratingTexts[displayRating]}
-        </span>
-      )}
-      
-      {!showText && displayRating > 0 && (
-        <span 
-          className="text-sm ml-2"
-          style={{ 
-            color: 'var(--color-text-tertiary)',
-            fontSize: 'var(--font-size-small)'
-          }}
-        >
-          {displayRating.toFixed(1)}
         </span>
       )}
     </div>

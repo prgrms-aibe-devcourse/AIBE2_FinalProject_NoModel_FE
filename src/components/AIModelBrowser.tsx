@@ -3,12 +3,11 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Skeleton } from './ui/skeleton';
 import { 
   Search, Star, Download, MoreHorizontal, Flag, 
-  AlertCircle, Loader2, Crown, Sparkles, TrendingUp, Eye
+  AlertCircle, Loader2, Crown, Sparkles, TrendingUp, Eye, Coins
 } from 'lucide-react';
 import { 
   searchModels, 
@@ -468,26 +467,53 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         )}
       </div>
 
-      {/* 검색 입력 - 검색 탭에서만 표시 */}
+      {/* 검색 입력 및 포인트 표시 */}
+      <div className="flex items-center gap-4 mb-4">
+        {/* 검색 입력 - 검색 탭에서만 표시 */}
+        {activeTab === 'search' && (
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                ref={inputRef}
+                placeholder="AI 모델 검색... (Enter로 검색)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleKeyPress}
+                onFocus={() => {
+                  if (suggestions.length > 0) {
+                    setShowSuggestions(true);
+                  }
+                }}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="pl-10 h-12"
+              />
+            </div>
+          </div>
+        )}
+        
+        {/* 포인트 표시 */}
+        {userProfile && typeof userProfile.points === 'number' && (
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-2 px-3 py-1.5 h-12 shrink-0"
+            style={{
+              backgroundColor: '#FFF7ED',
+              borderColor: '#FED7AA', 
+              color: '#C2410C'
+            }}
+          >
+            <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
+            <span className="text-sm font-semibold" style={{ color: '#F97316' }}>
+              {userProfile.points.toLocaleString()}P
+            </span>
+          </Badge>
+        )}
+      </div>
+      
+      {/* 자동완성 영역을 별도 div로 분리 */}
       {activeTab === 'search' && (
         <div className="space-y-0">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              ref={inputRef}
-              placeholder="AI 모델 검색... (Enter로 검색)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={handleKeyPress}
-              onFocus={() => {
-                if (suggestions.length > 0) {
-                  setShowSuggestions(true);
-                }
-              }}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              className="pl-10 h-12"
-            />
-          </div>
           
           {/* 자동완성 전용 공간 - 고정 높이로 공간 확보 */}
           <div 

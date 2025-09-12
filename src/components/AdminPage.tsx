@@ -67,6 +67,7 @@ interface AdminPageProps {
   onMarketplace: () => void;
   onMyPage: () => void;
   onPointsSubscription: () => void;
+  onAdmin?: () => void;
 }
 
 const reportTypeLabels = {
@@ -205,6 +206,7 @@ export function AdminPage({
   onMarketplace,
   onMyPage,
   onPointsSubscription
+  onAdmin
 }: AdminPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -499,7 +501,7 @@ export function AdminPage({
         }));
   }, [ratingDist]);
 
-  if (!userProfile?.isAdmin) {
+  if (userProfile?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-background-primary)' }}>
         <Alert style={{
@@ -526,10 +528,16 @@ export function AdminPage({
         onModelCreation={onModelCreation}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onAdmin={onAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
         onHome={onBack}
+        onBack={onBack}
+        showBackButton={true}
         isLoggedIn={true}
         isLandingPage={false}
         onPointsSubscription={onPointsSubscription}
+        userPoints={userProfile?.points}
+        currentPage="admin"
       />
 
       {/* Admin Header */}

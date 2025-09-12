@@ -4,7 +4,7 @@ import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { StarRating } from './StarRating';
 import { ProjectRatingForm } from './ProjectRatingForm';
 import { 
@@ -25,7 +25,6 @@ interface ProjectDetailProps {
 
 export function ProjectDetail({ project, onBack, onEditProject, onRatingSubmit, onProjectUpdate }: ProjectDetailProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showOriginalPrompt, setShowOriginalPrompt] = useState(false);
   const [showRatingForm, setShowRatingForm] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
 
@@ -104,7 +103,7 @@ export function ProjectDetail({ project, onBack, onEditProject, onRatingSubmit, 
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
       {/* Header */}
       <header className="linear-header sticky top-0 z-50">
-        <div className="linear-container h-full flex items-center justify-between">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -398,12 +397,11 @@ export function ProjectDetail({ project, onBack, onEditProject, onRatingSubmit, 
                   </h3>
                   
                   <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={project.model.imageUrl} alt={project.model.name} />
-                      <AvatarFallback>
-                        <User className="w-6 h-6" />
-                      </AvatarFallback>
-                    </Avatar>
+                    <DefaultAvatar 
+                      name={project.model.name}
+                      imageUrl={project.model.imageUrl}
+                      className="h-12 w-12"
+                    />
                     <div className="flex-1">
                       <h4 
                         className="mb-1"
@@ -551,59 +549,28 @@ export function ProjectDetail({ project, onBack, onEditProject, onRatingSubmit, 
                     사용된 프롬프트
                   </h3>
 
-                  <Tabs value={showOriginalPrompt ? 'original' : 'final'} onValueChange={(value) => setShowOriginalPrompt(value === 'original')}>
-                    <TabsList className="grid w-full grid-cols-2 mb-4">
-                      <TabsTrigger value="final">최종 프롬프트</TabsTrigger>
-                      <TabsTrigger value="original">원본 프롬프트</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="final" className="space-y-3">
-                      <div 
-                        className="p-4 rounded-lg text-sm"
-                        style={{
-                          backgroundColor: 'var(--color-background-secondary)',
-                          border: `1px solid var(--color-border-primary)`,
-                          color: 'var(--color-text-secondary)',
-                          fontFamily: 'var(--font-family-monospace)',
-                          lineHeight: '1.5'
-                        }}
-                      >
-                        {project.finalPrompt}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => copyPrompt(project.finalPrompt)}
-                        className="w-full"
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        프롬프트 복사
-                      </Button>
-                    </TabsContent>
-
-                    <TabsContent value="original" className="space-y-3">
-                      <div 
-                        className="p-4 rounded-lg text-sm"
-                        style={{
-                          backgroundColor: 'var(--color-background-secondary)',
-                          border: `1px solid var(--color-border-primary)`,
-                          color: 'var(--color-text-secondary)',
-                          lineHeight: '1.5'
-                        }}
-                      >
-                        {project.originalPrompt}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => copyPrompt(project.originalPrompt)}
-                        className="w-full"
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        프롬프트 복사
-                      </Button>
-                    </TabsContent>
-                  </Tabs>
+                  <div className="space-y-3">
+                    <div 
+                      className="p-4 rounded-lg text-sm"
+                      style={{
+                        backgroundColor: 'var(--color-background-secondary)',
+                        border: `1px solid var(--color-border-primary)`,
+                        color: 'var(--color-text-secondary)',
+                        lineHeight: '1.5'
+                      }}
+                    >
+                      {project.originalPrompt}
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => copyPrompt(project.originalPrompt)}
+                      className="w-full"
+                    >
+                      <Copy className="w-4 h-4 mr-2" />
+                      프롬프트 복사
+                    </Button>
+                  </div>
                 </Card>
 
                 {/* Technical Info */}

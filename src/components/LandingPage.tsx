@@ -9,6 +9,7 @@ import { Sparkles, Zap, Target, TrendingUp, Camera, Users, CheckCircle, Star, Us
 
 interface LandingPageProps {
   onGetStarted: () => void;
+  onSignup: () => void;
   onLogin: () => void;
   onLogout: () => void;
   onAdGeneration: () => void;
@@ -23,6 +24,7 @@ interface LandingPageProps {
 
 export function LandingPage({ 
   onGetStarted, 
+  onSignup,
   onLogin, 
   onLogout, 
   onAdGeneration, 
@@ -52,6 +54,8 @@ export function LandingPage({
         isLoggedIn={isLoggedIn}
         isLandingPage={true}
         onPointsSubscription={onPointsSubscription}
+        showBackButton={false}
+        currentPage="home"
       />
 
       {/* Hero Section */}
@@ -91,7 +95,7 @@ export function LandingPage({
               <Button 
                 variant="outline" 
                 size="lg"
-                onClick={onLogin}
+                onClick={onSignup}
                 className="w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 <UserCheck className="w-5 h-5 mr-2" />

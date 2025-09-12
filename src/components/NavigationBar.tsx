@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, Coins, ArrowLeft, Shield } from 'lucide-react';
+import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, ArrowLeft, Shield } from 'lucide-react';
 
 interface NavigationBarProps {
   onLogin: () => void;
@@ -21,7 +20,7 @@ interface NavigationBarProps {
   isLandingPage?: boolean;
   showBackButton?: boolean;
   userPoints?: number;
-  pageTitle?: string;
+  currentPage?: 'marketplace' | 'mypage' | 'home' | 'admin' | 'other';
 }
 
 export function NavigationBar({
@@ -42,15 +41,17 @@ export function NavigationBar({
                                 isLandingPage = false,
                                 showBackButton = false,
                                 userPoints,
-                                pageTitle
+                                currentPage = 'other'
                               }: NavigationBarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   return (
     <header className="sticky top-0 z-50 backdrop-blur-lg border-b bg-background">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {showBackButton && onBack ? (
+        <div className="w-full h-16 flex items-center page-padding">
+          {/* 왼쪽 영역: 뒤로가기 + 로고 (절대 위치 고정) */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            {/* 뒤로 가기 버튼 */}
+            {showBackButton && onBack && (
                 <Button
                     variant="ghost"
                     size="sm"
@@ -60,32 +61,27 @@ export function NavigationBar({
                   <ArrowLeft className="w-4 h-4" />
                   <span className="hidden sm:inline">뒤로</span>
                 </Button>
-            ) : (
-                <button
-                    onClick={onHome}
-                    className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200"
-                >
-                  <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
-                    <Sparkles className="w-5 h-5 text-primary-foreground" />
-                  </div>
-                  <h1 className="text-xl font-semibold text-foreground">
-                    NoModel
-                  </h1>
-                </button>
             )}
-
-            {pageTitle && (
-                <>
-                  <div className="w-px h-6 bg-border mx-1" />
-                  <h2 className="text-lg font-medium text-foreground hidden sm:block">
-                    {pageTitle}
-                  </h2>
-                </>
-            )}
+            
+            {/* 로고 - 왼쪽에 고정 */}
+            <button
+                onClick={isLoggedIn ? onMyPage : onHome}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 flex-shrink-0"
+            >
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-primary shadow-sm">
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-semibold text-foreground whitespace-nowrap">
+                NoModel
+              </h1>
+            </button>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          {/* 가운데 빈 공간 */}
+          <div className="flex-1"></div>
+
+          {/* 오른쪽 영역: 메뉴 버튼들 (절대 위치 고정) */}
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6 xl:gap-8 flex-shrink-0">
             {!isLoggedIn ? (
                 <>
                   {isLandingPage ? (
@@ -135,7 +131,7 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onAdGeneration}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md"
                   >
                     <Camera className="w-4 h-4" />
                     광고 생성
@@ -143,14 +139,18 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onModelCreation}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md"
                   >
                     <Palette className="w-4 h-4" />
                     모델 제작
                   </button>
                   <button
                       onClick={onMarketplace}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
+                        currentPage === 'marketplace'
+                          ? 'text-foreground bg-accent'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                      }`}
                   >
                     <ShoppingBag className="w-4 h-4" />
                     마켓플레이스
@@ -166,7 +166,11 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onMyPage}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
+                        currentPage === 'mypage'
+                          ? 'text-foreground bg-accent'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                      }`}
                   >
                     <User className="w-4 h-4" />
                     마이 페이지
@@ -177,7 +181,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => {onAdmin(); console.log("hello"); }}
-                          className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors duration-200 flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
+                            currentPage === 'admin'
+                              ? 'text-foreground bg-accent'
+                              : 'text-primary hover:text-primary/80 hover:bg-primary/10'
+                          }`}
                           title="관리자 페이지"
                       >
                         <Shield className="w-4 h-4" />
@@ -185,19 +193,6 @@ export function NavigationBar({
                       </button>
                   )}
 
-                  {/* Points */}
-                  {typeof userPoints === 'number' && (
-                      <Badge
-                          variant="secondary"
-                          className="flex items-center gap-2 px-3 py-1 bg-primary/10 hover:bg-primary/20 transition-colors cursor-pointer"
-                          onClick={onMyPage}
-                      >
-                        <Coins className="w-4 h-4 text-primary" />
-                        <span className="font-semibold text-primary">
-                    {userPoints.toLocaleString()}P
-                  </span>
-                      </Badge>
-                  )}
 
                   <Button
                       type="button"
@@ -214,19 +209,21 @@ export function NavigationBar({
           </nav>
 
           {/* Mobile Menu Button */}
-          <button
-              type="button"
-              className="md:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex-shrink-0">
+            <button
+                type="button"
+                className="p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
             <div className="md:hidden border-t bg-background backdrop-blur-lg">
-              <nav className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-4 flex flex-col gap-4">
+              <nav className="w-full py-4 flex flex-col gap-4 page-padding">
                 {!isLoggedIn ? (
                     <>
                       {isLandingPage ? (
@@ -280,7 +277,7 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onAdGeneration(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2"
                       >
                         <Camera className="w-4 h-4" />
                         광고 생성
@@ -288,7 +285,7 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onModelCreation(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2"
                       >
                         <Palette className="w-4 h-4" />
                         모델 제작
@@ -296,7 +293,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onMarketplace(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                            currentPage === 'marketplace'
+                              ? 'text-foreground bg-accent'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          }`}
                       >
                         <ShoppingBag className="w-4 h-4" />
                         마켓플레이스
@@ -305,7 +306,11 @@ export function NavigationBar({
                             <button
                                 type="button"
                                 onClick={() => { console.log('[NAV] admin click'); onAdmin(); setMobileMenuOpen(false); }}
-                                className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors duration-200 py-2 flex items-center gap-2"
+                                className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                                  currentPage === 'admin'
+                                    ? 'text-foreground bg-accent'
+                                    : 'text-primary hover:text-primary/80 hover:bg-primary/10'
+                                }`}
                                 title="관리자 페이지"
                             >
                                 <Shield className="w-4 h-4" />
@@ -315,28 +320,16 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onMyPage(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 py-2 flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                            currentPage === 'mypage'
+                              ? 'text-foreground bg-accent'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          }`}
                       >
                         <User className="w-4 h-4" />
                         마이 페이지
                       </button>
 
-                      {typeof userPoints === 'number' && (
-                          <div
-                              onClick={() => { onMyPage(); setMobileMenuOpen(false); }}
-                              className="cursor-pointer"
-                          >
-                            <Badge
-                                variant="secondary"
-                                className="flex items-center gap-2 px-3 py-2 bg-primary/10 hover:bg-primary/20 transition-colors w-fit"
-                            >
-                              <Coins className="w-4 h-4 text-primary" />
-                              <span className="font-semibold text-primary">
-                        {userPoints.toLocaleString()} 포인트
-                      </span>
-                            </Badge>
-                          </div>
-                      )}
 
                       <Button
                           variant="outline"

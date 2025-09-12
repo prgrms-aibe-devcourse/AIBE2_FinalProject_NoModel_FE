@@ -1,6 +1,8 @@
 // Enhanced Common Components
 export { Carousel, type CarouselItem } from './Carousel';
 export { EnhancedCard, type EnhancedCardProps } from './EnhancedCard';
+export { DefaultAvatar } from './DefaultAvatar';
+export { DynamicFontSize } from './DynamicFontSize';
 export { 
   Navbar, 
   type NavItem, 
