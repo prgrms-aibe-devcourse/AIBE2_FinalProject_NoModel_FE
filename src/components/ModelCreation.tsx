@@ -9,16 +9,24 @@ import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { 
-  ArrowLeft, Sparkles, Upload, Wand2, Save, Eye, 
-  Image as ImageIcon, Tags, Coins, Users, Globe,
-  AlertTriangle, Info, CheckCircle
+  ArrowLeft, Wand2, Save,
+  Image as ImageIcon, Info, CheckCircle
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
+import { NavigationBar } from './NavigationBar';
 
 interface ModelCreationProps {
   userProfile: UserProfile | null;
   onBack: () => void;
   onModelCreated: (model: UserModel) => void;
+  onLogin: () => void;
+  onLogout: () => void;
+  onAdGeneration: () => void;
+  onModelCreation: () => void;
+  onMarketplace: () => void;
+  onMyPage: () => void;
+  onHome: () => void;
+  onAdmin?: () => void;
 }
 
 const ageOptions = ['10대', '20대 초반', '20대 후반', '30대 초반', '30대 후반', '40대', '50대+'];
@@ -34,7 +42,7 @@ const categoryOptions = [
   { value: 'lifestyle', label: '라이프스타일' }
 ];
 
-export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCreationProps) {
+export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, onLogout, onAdGeneration, onModelCreation, onMarketplace, onMyPage, onHome, onAdmin }: ModelCreationProps) {
   const [step, setStep] = useState<'basic' | 'details' | 'preview'>('basic');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,9 +137,9 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
           style: formData.style,
           ethnicity: formData.ethnicity
         },
-        creatorId: userProfile.id,
+        creatorId: userProfile.id.toString(),
         creatorName: userProfile.name,
-        creatorAvatar: userProfile.name?.charAt(0)?.toUpperCase() || 'U',
+        creatorAvatar: undefined, // 기본 아바타는 DefaultAvatar 컴포넌트에서 처리
         price: formData.price,
         usageCount: 0,
         rating: 0,
@@ -158,69 +166,25 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-      {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
-        <div className="linear-container h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="flex items-center gap-2"
-              style={{
-                color: 'var(--color-text-secondary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              뒤로 가기
-            </Button>
-            
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-8 h-8 flex items-center justify-center"
-                style={{
-                  backgroundColor: 'var(--color-brand-primary)',
-                  borderRadius: 'var(--radius-8)'
-                }}
-              >
-                <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
-              </div>
-              <h1 
-                style={{ 
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                NoModel
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-              <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-              <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                {userProfile.points.toLocaleString()}P
-              </span>
-            </div>
-            <Badge 
-              style={{
-                backgroundColor: 'var(--color-brand-accent-tint)',
-                color: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-rounded)',
-                fontSize: 'var(--font-size-small)',
-                fontWeight: 'var(--font-weight-medium)',
-                padding: '8px 16px'
-              }}
-            >
-              AI 모델 생성
-            </Badge>
-          </div>
-        </div>
-      </header>
+      <NavigationBar
+        onLogin={onLogin}
+        onLogout={onLogout}
+        onAdGeneration={onAdGeneration}
+        onModelCreation={onModelCreation}
+        onMarketplace={onMarketplace}
+        onMyPage={onMyPage}
+        onHome={onHome}
+        onBack={onBack}
+        onAdmin={onAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
+        isLoggedIn={!!userProfile}
+        showBackButton={true}
+        userPoints={userProfile?.points}
+        currentPage="other"
+      />
 
       {/* Main Content */}
-      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <main className="page-container">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-6">

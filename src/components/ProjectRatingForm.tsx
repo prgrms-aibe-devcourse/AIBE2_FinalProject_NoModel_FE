@@ -156,9 +156,9 @@ export function ProjectRatingForm({ existingRating, onSubmit, onCancel }: Projec
                     border: `1px solid var(--color-border-primary)`
                   }}
                 >
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-3">
                     <div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center"
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                       style={{ backgroundColor: 'var(--color-brand-accent-tint)' }}
                     >
                       <IconComponent 
@@ -166,9 +166,9 @@ export function ProjectRatingForm({ existingRating, onSubmit, onCancel }: Projec
                         style={{ color: 'var(--color-brand-primary)' }}
                       />
                     </div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <h4 
-                        className="text-sm"
+                        className="text-sm truncate"
                         style={{
                           fontWeight: 'var(--font-weight-semibold)',
                           color: 'var(--color-text-primary)'
@@ -177,18 +177,20 @@ export function ProjectRatingForm({ existingRating, onSubmit, onCancel }: Projec
                         {info.label}
                       </h4>
                       <p 
-                        className="text-xs"
+                        className="text-xs line-clamp-2"
                         style={{ color: 'var(--color-text-tertiary)' }}
                       >
                         {info.description}
                       </p>
                     </div>
                   </div>
-                  <StarRating
-                    rating={categoryRatings[key as keyof typeof categoryRatings]}
-                    onRatingChange={(rating) => handleCategoryRatingChange(key as keyof typeof categoryRatings, rating)}
-                    size="sm"
-                  />
+                  <div className="w-full">
+                    <StarRating
+                      rating={categoryRatings[key as keyof typeof categoryRatings]}
+                      onRatingChange={(rating) => handleCategoryRatingChange(key as keyof typeof categoryRatings, rating)}
+                      size="sm"
+                    />
+                  </div>
                 </div>
               );
             })}

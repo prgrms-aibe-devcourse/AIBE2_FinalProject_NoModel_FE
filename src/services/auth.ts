@@ -80,7 +80,7 @@ class AuthService {
     try {
       // 쿠키 기반 인증이므로 토큰 확인 불필요
       // withCredentials: true로 쿠키가 자동 전송됨
-      const response = await GetAxiosInstance('/auth/profile');
+      const response = await GetAxiosInstance('/members/me');
       const data = response.data;
       
       // Store user info locally

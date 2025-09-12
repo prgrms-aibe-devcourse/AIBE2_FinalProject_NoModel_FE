@@ -5399,3 +5399,46 @@ html {
     opacity: 0;
   }
 }
+
+/* 전체 페이지에 뒤로가기 버튼 영역만큼 마진 적용 */
+.page-container {
+  @apply max-w-6xl mx-auto;
+  padding-top: 2rem; /* py-8 */
+  padding-bottom: 2rem; /* py-8 */
+  padding-left: 3.5rem; /* 더 넓게 */
+  padding-right: 2rem; /* 더 넓게 */
+}
+
+@media (min-width: 640px) {
+  .page-container {
+    padding-left: 4.5rem; /* 더 넓게 */
+    padding-right: 2.5rem; /* 더 넓게 */
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-container {
+    padding-left: 6rem; /* 더 넓게 */
+    padding-right: 4rem; /* 더 넓게 */
+  }
+}
+
+/* NavigationBar용 좌우 패딩 (page-container와 동일) */
+.page-padding {
+  padding-left: 3.5rem; /* 더 넓게 */
+  padding-right: 2rem; /* 더 넓게 */
+}
+
+@media (min-width: 640px) {
+  .page-padding {
+    padding-left: 4.5rem; /* 더 넓게 */
+    padding-right: 2.5rem; /* 더 넓게 */
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-padding {
+    padding-left: 6rem; /* 더 넓게 */
+    padding-right: 4rem; /* 더 넓게 */
+  }
+}

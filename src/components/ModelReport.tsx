@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Label } from './ui/label';
 import { Alert, AlertDescription } from './ui/alert';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { 
   ArrowLeft, AlertTriangle, Upload, X, CheckCircle,
   Flag, Copyright, Ban, Eye, MoreHorizontal
@@ -241,12 +241,12 @@ export function ModelReport({ model, userProfile, onBack, onReportSubmit }: Mode
                   {model.description}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={model.creatorAvatar} />
-                    <AvatarFallback style={{ fontSize: 'var(--font-size-micro)' }}>
-                      {model.creatorName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <DefaultAvatar 
+                    name={model.creatorName}
+                    imageUrl={model.creatorAvatar}
+                    className="h-6 w-6"
+                    fallbackClassName="text-xs"
+                  />
                   <span style={{ 
                     color: 'var(--color-text-tertiary)',
                     fontSize: 'var(--font-size-small)'

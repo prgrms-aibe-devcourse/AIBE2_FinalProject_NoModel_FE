@@ -3,14 +3,16 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { AlertTriangle, Loader2, Flag, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Flag } from 'lucide-react';
 import { reportModel } from '../services/modelApi';
 import { AIModelDocument } from '../types/model';
 import { toast } from 'sonner';
+import { ErrorModal } from './common/ErrorModal';
 
 interface ModelReportModalProps {
   model: AIModelDocument | null;
+  modelId?: number | null;
+  modelName?: string;
   isOpen: boolean;
   onClose: () => void;
   onReportSuccess?: (reportId: number) => void;
@@ -18,15 +20,20 @@ interface ModelReportModalProps {
 
 export const ModelReportModal: React.FC<ModelReportModalProps> = ({
   model,
+  modelId,
+  modelName,
   isOpen,
   onClose,
   onReportSuccess
 }) => {
   const [reasonDetail, setReasonDetail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = async () => {
-    if (!model) return;
+    const targetModelId = model?.modelId || modelId;
+    if (!targetModelId) return;
     
     if (!reasonDetail.trim()) {
       toast.error('신고 사유를 입력해주세요.');
@@ -41,7 +48,7 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const response = await reportModel(model.modelId, {
+      const response = await reportModel(targetModelId, {
         reasonDetail: reasonDetail.trim()
       });
 
@@ -53,8 +60,18 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
       
       handleClose();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '신고 처리 중 오류가 발생했습니다.';
-      toast.error(errorMessage);
+      const message = error instanceof Error ? error.message : '신고 처리 중 오류가 발생했습니다.';
+      
+      // 중복 신고인 경우 에러 모달을 보여주고 신고 모달을 닫음
+      if (message.includes('이미 신고한 모델입니다') || message.includes('Report already exists')) {
+        setErrorMessage('이미 신고한 모델입니다.\n중복 신고는 불가능합니다.');
+        setErrorModalOpen(true);
+        handleClose();
+        return;
+      }
+      
+      // 기타 에러는 토스트로 표시
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -66,11 +83,25 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
     onClose();
   };
 
-  if (!model) return null;
+  if (!model && !modelId) return null;
+
+  const displayName = model?.modelName || modelName || '알 수 없는 모델';
+  const displayDeveloper = model?.developer || '알 수 없음';
+  const displayCategory = model?.categoryType || '기타';
+  const displayDescription = model?.shortDescription || '';
+  const displayThumbnail = model?.thumbnailUrl || '/api/placeholder/60/60';
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent 
+        className="!max-w-[500px] !w-[500px] !max-h-[80vh] flex flex-col !p-6"
+        style={{ 
+          width: '500px', 
+          maxWidth: '500px',
+          maxHeight: '80vh'
+        }}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <Flag className="h-5 w-5 text-red-500" />
@@ -81,29 +112,30 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto">
         {/* 신고할 모델 정보 */}
-        <div className="border rounded-lg p-4 bg-gray-50">
+        <div className="border rounded-lg p-4 bg-gray-50 mb-4">
           <div className="flex items-start gap-3">
             <img
-              src={model.thumbnailUrl || '/api/placeholder/60/60'}
-              alt={model.modelName}
+              src={displayThumbnail}
+              alt={displayName}
               className="w-16 h-16 object-cover rounded-lg"
             />
             <div className="flex-1">
               <div className="flex items-start justify-between">
                 <div>
-                  <h4 className="font-medium text-lg">{model.modelName}</h4>
+                  <h4 className="font-medium text-lg">{displayName}</h4>
                   <p className="text-sm text-gray-600 mt-1">
-                    by {model.developer}
+                    by {displayDeveloper}
                   </p>
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  {model.categoryType}
+                  {displayCategory}
                 </Badge>
               </div>
-              {model.shortDescription && (
+              {displayDescription && (
                 <p className="text-sm text-gray-700 mt-2 line-clamp-2">
-                  {model.shortDescription}
+                  {displayDescription}
                 </p>
               )}
             </div>
@@ -111,7 +143,7 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
         </div>
 
         {/* 신고 사유 입력 */}
-        <div className="space-y-3">
+        <div className="space-y-3 mb-4">
           <div className="flex items-center gap-2">
             <label htmlFor="reasonDetail" className="text-sm font-medium">
               신고 사유 <span className="text-red-500">*</span>
@@ -120,7 +152,9 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
           
           <Textarea
             id="reasonDetail"
-            placeholder="신고하시는 이유를 구체적으로 설명해주세요.&#10;예: 부적절한 콘텐츠, 저작권 침해, 정책 위반 등"
+            placeholder={`신고하시는 이유를 구체적으로 설명해주세요.
+
+예: 부적절한 콘텐츠, 저작권 침해, 정책 위반 등`}
             value={reasonDetail}
             onChange={(e) => setReasonDetail(e.target.value)}
             maxLength={1000}
@@ -153,20 +187,19 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
             </div>
           </div>
         </div>
-
+        </div>
+        
         {/* 액션 버튼 */}
-        <div className="flex justify-end gap-3 pt-4">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isSubmitting}
-          >
-            취소
-          </Button>
+        <div className="flex justify-end gap-3 mt-3">
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !reasonDetail.trim()}
-            className="bg-red-500 hover:bg-red-600 text-white"
+            className="!bg-red-500 hover:!bg-red-600 !text-white disabled:!bg-red-300 disabled:!text-red-100 disabled:cursor-not-allowed !border-red-500 disabled:!border-red-300"
+            style={{
+              backgroundColor: !reasonDetail.trim() || isSubmitting ? '#fca5a5' : '#ef4444',
+              color: 'white',
+              borderColor: !reasonDetail.trim() || isSubmitting ? '#fca5a5' : '#ef4444'
+            }}
           >
             {isSubmitting ? (
               <>
@@ -180,8 +213,25 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
               </>
             )}
           </Button>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
+            취소
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
+    
+    {/* 에러 모달 */}
+    <ErrorModal
+      isOpen={errorModalOpen}
+      onClose={() => setErrorModalOpen(false)}
+      title="신고 불가"
+      message={errorMessage}
+      type="warning"
+    />
+    </>
   );
 };

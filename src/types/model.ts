@@ -121,7 +121,7 @@ export interface AIModelDetailResponse {
   price: number;
   avgRating: number;
   reviewCount: number;
-  downloadCount: number;
+  usageCount: number;
   viewCount: number;
   files: FileInfo[];
   reviews: ReviewResponse[];
@@ -159,9 +159,11 @@ export interface MyReportsResponse {
 
 export interface ErrorResponse {
   success: false;
+  response: null;
   error: {
-    errorCode: string;
     status: number;
+    errorCode: string;
     message: string;
+    timestamp: string;
   };
 }
