@@ -26,7 +26,6 @@ interface ModelSelectionPageProps {
   onMarketplace: () => void;
   onMyPage: () => void;
   onAdmin?: () => void;
-  onPointsSubscription?: () => void;
 }
 
 // API 타입 정의
@@ -112,8 +111,7 @@ export function ModelSelectionPage({
   onAdGeneration,
   onMarketplace,
   onMyPage,
-  onAdmin,
-  onPointsSubscription
+  onAdmin
 }: ModelSelectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('used-models');
@@ -235,7 +233,6 @@ export function ModelSelectionPage({
         showBackButton={true}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
-        onPointsSubscription={onPointsSubscription}
         currentPage="other"
       />
 

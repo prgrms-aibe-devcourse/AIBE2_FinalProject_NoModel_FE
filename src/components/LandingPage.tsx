@@ -19,7 +19,6 @@ interface LandingPageProps {
   onAdmin?: () => void;
   isLoggedIn: boolean;
   isAdmin?: boolean;
-  onPointsSubscription: () => void;
 }
 
 export function LandingPage({ 
@@ -33,8 +32,7 @@ export function LandingPage({
   onMyPage, 
   onAdmin,
   isLoggedIn,
-  isAdmin,
-  onPointsSubscription
+  isAdmin
 }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-background" style={{ scrollBehavior: 'smooth' }}>
@@ -53,7 +51,6 @@ export function LandingPage({
         }}
         isLoggedIn={isLoggedIn}
         isLandingPage={true}
-        onPointsSubscription={onPointsSubscription}
         showBackButton={false}
         currentPage="home"
       />

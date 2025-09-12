@@ -66,7 +66,6 @@ interface AdminPageProps {
   onModelCreation: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
-  onPointsSubscription: () => void;
   onAdmin?: () => void;
 }
 
@@ -205,7 +204,6 @@ export function AdminPage({
   onModelCreation,
   onMarketplace,
   onMyPage,
-  onPointsSubscription
   onAdmin
 }: AdminPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -535,7 +533,6 @@ export function AdminPage({
         showBackButton={true}
         isLoggedIn={true}
         isLandingPage={false}
-        onPointsSubscription={onPointsSubscription}
         userPoints={userProfile?.points}
         currentPage="admin"
       />
