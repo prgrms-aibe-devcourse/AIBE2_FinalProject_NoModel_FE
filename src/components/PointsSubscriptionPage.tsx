@@ -1,8 +1,8 @@
 // @ts-ignore
-import React, {useEffect, useState} from "react";
-import {Button} from "./ui/button";
-import {NavigationBar} from "./NavigationBar";
-import {UserProfile} from "../App";
+import React, { useEffect, useState } from "react";
+import { Button } from "./ui/button";
+import { NavigationBar } from "./NavigationBar";
+import { UserProfile } from "../App";
 
 interface SubscriptionPlan {
     id: number;
@@ -44,9 +44,14 @@ export default function PointsSubscriptionPage({
                                                    onPointsSubscription,
                                                }: PointsSubscriptionPageProps) {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-    const [currentSubscription, setCurrentSubscription] = useState<CurrentSubscription | null>(null);
-    const [activeTab, setActiveTab] = useState<"charge" | "subscription" | "history">("subscription");
+    const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
+        null
+    );
+    const [currentSubscription, setCurrentSubscription] =
+        useState<CurrentSubscription | null>(null);
+    const [activeTab, setActiveTab] = useState<
+        "charge" | "subscription" | "history"
+    >("subscription");
 
     // subscriptionId → planType 매핑
     const planTypeMap: Record<number, string> = {
@@ -79,7 +84,6 @@ export default function PointsSubscriptionPage({
     useEffect(() => {
         loadSubscriptions();
     }, []);
-
 
     // ✅ PortOne SDK 타입 선언
     declare global {
@@ -117,11 +121,11 @@ export default function PointsSubscriptionPage({
         }
 
         const IMP = window.IMP;
-        IMP.init("imp57477065"); // 본인 가맹점 식별코드
+        IMP.init("imp57477065"); // 본인 PortOne 가맹점 식별코드
 
         IMP.request_pay(
             {
-                pg: "kakaopay.TC0ONETIME",
+                pg: "kakaopay.TC0ONETIME", // ✅ 카카오페이 테스트
                 pay_method: "card",
                 merchant_uid: `order_${Date.now()}`,
                 name: `${selectedPlan.planType} 구독`,
@@ -134,7 +138,7 @@ export default function PointsSubscriptionPage({
                 if (rsp.success) {
                     const response = await fetch("http://localhost:8080/api/subscriptions", {
                         method: "POST",
-                        headers: {"Content-Type": "application/json"},
+                        headers: { "Content-Type": "application/json" },
                         credentials: "include",
                         body: JSON.stringify({
                             subscriptionId: selectedPlan.id,
@@ -151,7 +155,6 @@ export default function PointsSubscriptionPage({
                     } else {
                         alert("❌ 백엔드 등록 실패: " + result.error?.message);
                     }
-
                 } else {
                     alert("❌ 결제 실패: " + rsp.error_msg);
                 }
@@ -161,10 +164,13 @@ export default function PointsSubscriptionPage({
 
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
-        const response = await fetch("http://localhost:8080/api/subscriptions?reason=USER_REQUESTED", {
-            method: "DELETE",
-            credentials: "include",
-        });
+        const response = await fetch(
+            "http://localhost:8080/api/subscriptions?reason=USER_REQUESTED",
+            {
+                method: "DELETE",
+                credentials: "include",
+            }
+        );
 
         const result = await response.json();
         if (result.success) {
@@ -176,7 +182,10 @@ export default function PointsSubscriptionPage({
     };
 
     return (
-        <div className="min-h-screen" style={{backgroundColor: "var(--color-background-primary)"}}>
+        <div
+            className="min-h-screen"
+            style={{ backgroundColor: "var(--color-background-primary)" }}
+        >
             <NavigationBar
                 onLogin={onLogin}
                 onLogout={onLogout}
@@ -192,7 +201,7 @@ export default function PointsSubscriptionPage({
                 onPointsSubscription={onPointsSubscription}
             />
 
-            <div className="max-w-4xl mx-auto px-6 py-10">
+            <div className="max-w-4xl mx-auto px-6 py-10 mt-30">
                 <h1 className="text-2xl font-bold mb-6">포인트 & 구독 관리</h1>
 
                 {/* 보유 포인트 및 구독 상태 */}
@@ -200,7 +209,9 @@ export default function PointsSubscriptionPage({
                     <div className="mb-6 p-4 border rounded-lg bg-gray-50 flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500">보유 포인트</p>
-                            <p className="text-xl font-bold text-primary">{userProfile.points.toLocaleString()} P</p>
+                            <p className="text-xl font-bold text-primary">
+                                {userProfile.points.toLocaleString()} P
+                            </p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-500">현재 구독</p>
@@ -210,7 +221,8 @@ export default function PointsSubscriptionPage({
                                         {planTypeMap[currentSubscription.subscriptionId] || "알 수 없음"}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        만료일: {new Date(currentSubscription.expiresAt).toLocaleDateString()}
+                                        만료일:{" "}
+                                        {new Date(currentSubscription.expiresAt).toLocaleDateString()}
                                     </p>
                                     {currentSubscription.status === "ACTIVE" && (
                                         <div className="mt-4 text-right">
@@ -234,19 +246,31 @@ export default function PointsSubscriptionPage({
                 {/* 탭 UI */}
                 <div className="flex gap-4 border-b mb-6">
                     <button
-                        className={`pb-2 ${activeTab === "subscription" ? "border-b-2 border-primary text-primary" : "text-gray-400"}`}
+                        className={`pb-2 ${
+                            activeTab === "subscription"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-gray-400"
+                        }`}
                         onClick={() => setActiveTab("subscription")}
                     >
                         구독 플랜
                     </button>
                     <button
-                        className={`pb-2 ${activeTab === "charge" ? "border-b-2 border-primary text-primary" : "text-gray-400"}`}
+                        className={`pb-2 ${
+                            activeTab === "charge"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-gray-400"
+                        }`}
                         onClick={() => setActiveTab("charge")}
                     >
                         포인트 충전
                     </button>
                     <button
-                        className={`pb-2 ${activeTab === "history" ? "border-b-2 border-primary text-primary" : "text-gray-400"}`}
+                        className={`pb-2 ${
+                            activeTab === "history"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-gray-400"
+                        }`}
                         onClick={() => setActiveTab("history")}
                     >
                         사용 내역
@@ -260,13 +284,17 @@ export default function PointsSubscriptionPage({
                             <div
                                 key={plan.id}
                                 className={`p-4 border rounded-lg shadow cursor-pointer ${
-                                    selectedPlan?.id === plan.id ? "border-primary" : "border-gray-200"
+                                    selectedPlan?.id === plan.id
+                                        ? "border-primary"
+                                        : "border-gray-200"
                                 }`}
                                 onClick={() => setSelectedPlan(plan)}
                             >
                                 <h2 className="font-bold text-lg">{plan.planType}</h2>
                                 <p className="text-sm text-gray-500">{plan.description}</p>
-                                <p className="mt-2 font-semibold">{plan.price}원 / {plan.period}일</p>
+                                <p className="mt-2 font-semibold">
+                                    {plan.price}원 / {plan.period}일
+                                </p>
                             </div>
                         ))}
                     </div>
