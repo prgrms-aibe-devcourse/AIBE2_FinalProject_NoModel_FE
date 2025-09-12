@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Button } from './ui/button';
-import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, ArrowLeft, Shield } from 'lucide-react';
+import { Sparkles, Menu, X, Camera, ShoppingBag, User, Palette, LogOut, ArrowLeft, Shield, Coins } from 'lucide-react';
 
 interface NavigationBarProps {
   onLogin: () => void;

@@ -205,7 +205,7 @@ export function AdminPage({
   onModelCreation,
   onMarketplace,
   onMyPage,
-  onPointsSubscription
+  onPointsSubscription,
   onAdmin
 }: AdminPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
