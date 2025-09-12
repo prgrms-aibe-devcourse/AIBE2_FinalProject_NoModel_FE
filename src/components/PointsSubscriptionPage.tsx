@@ -96,6 +96,22 @@ export default function PointsSubscriptionPage({
     const handleSubscribe = async () => {
         if (!selectedPlan) return;
 
+        // 사용자 인증 검증
+        if (!userProfile) {
+            alert("❌ 로그인이 필요합니다. 로그인 페이지로 이동합니다.");
+            onLogin();
+            return;
+        }
+
+        if (!userProfile.email) {
+            alert("❌ 사용자 이메일 정보가 없습니다. 다시 로그인해 주세요.");
+            onLogin();
+            return;
+        }
+
+        // buyer_name 설정: name이 없으면 email 앞부분 사용
+        const buyerName = userProfile.name || userProfile.email.split('@')[0];
+
         // ✅ 0원 플랜은 PG 거치지 않고 바로 백엔드에 등록
         if (selectedPlan.price === 0) {
             const response = await fetch("http://localhost:8080/api/subscriptions", {
@@ -131,8 +147,8 @@ export default function PointsSubscriptionPage({
                 name: `${selectedPlan.planType} 구독`,
                 amount: selectedPlan.price,
                 customer_uid: `user_${Date.now()}`, // 정기결제용 UID
-                buyer_email: userProfile?.email || "guest@example.com",
-                buyer_name: userProfile?.name || "테스트유저",
+                buyer_email: userProfile.email,
+                buyer_name: buyerName,
             },
             async (rsp: any) => {
                 if (rsp.success) {
