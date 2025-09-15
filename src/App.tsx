@@ -148,7 +148,7 @@ export interface UserProfile {
   role: 'USER' | 'ADMIN';
   modelCount: number;
   projectCount: number;
-  isFirstLogin?: boolean; // JWT Claims에서 가져온 최초 로그인 여부
+  isFirstLogin?: boolean; // 응답 바디에서 가져온 최초 로그인 여부
 }
 
 export interface ModelReport {
