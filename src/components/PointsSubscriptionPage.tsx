@@ -88,8 +88,10 @@ export default function PointsSubscriptionPage({
 
     // ✅ 구독 현황 + 구독 플랜 목록 불러오기 함수
     const loadSubscriptions = () => {
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+
         // 구독 현황 조회
-        fetch("http://localhost:8080/api/subscriptions", {
+        fetch(`${apiBase}/subscriptions`, {
             method: "GET",
             credentials: "include",
         })
@@ -98,7 +100,7 @@ export default function PointsSubscriptionPage({
             .catch(() => setCurrentSubscription(null));
 
         // 구독 플랜 목록 조회
-        fetch("http://localhost:8080/api/subscriptions/plans", {
+        fetch(`${apiBase}/subscriptions/plans`, {
             method: "GET",
             credentials: "include",
         })
@@ -113,7 +115,7 @@ export default function PointsSubscriptionPage({
             setPointBalance(0);
             return;
         }
-        fetch("http://localhost:8080/api/points/balance", {
+        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/points/balance`, {
             method: "GET",
             credentials: "include",
         })
@@ -155,7 +157,7 @@ export default function PointsSubscriptionPage({
 
         // ✅ 0원 플랜은 PG 거치지 않고 바로 백엔드에 등록
         if (selectedPlan.price === 0) {
-            const response = await fetch("http://localhost:8080/api/subscriptions", {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -179,11 +181,16 @@ export default function PointsSubscriptionPage({
         }
 
         const IMP = window.IMP;
-        IMP.init("imp57477065"); // 본인 PortOne 가맹점 식별코드
+        if (!IMP) {
+            alert("❌ 결제 시스템 로딩 실패. 페이지를 새로고침해주세요.");
+            return;
+        }
+
+        IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
 
         IMP.request_pay(
             {
-                pg: "kakaopay.TC0ONETIME", // ✅ 카카오페이 테스트
+                pg: import.meta.env.VITE_KAKAO_PG_CODE || "kakaopay.TC0ONETIME",
                 pay_method: "card",
                 merchant_uid: `order_${Date.now()}`,
                 name: `${selectedPlan.planType} 구독`,
@@ -194,7 +201,7 @@ export default function PointsSubscriptionPage({
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    const response = await fetch("http://localhost:8080/api/subscriptions", {
+                    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
@@ -221,7 +228,7 @@ export default function PointsSubscriptionPage({
         );
     };
 
-    // ✅ 포인트 충전
+    // ✅ 포인트 충전 (구독 결제와 동일한 패턴으로 단순화)
     const handleChargePoints = async () => {
         if (!userProfile) {
             alert("❌ 로그인이 필요합니다.");
@@ -234,62 +241,50 @@ export default function PointsSubscriptionPage({
             return;
         }
 
-        const chargeAmount = selectedPointOption.price; // 선택된 옵션의 가격 사용
-        const paymentMethod = "KAKAO"; // 카카오페이로 고정
+        const buyerName = userProfile.name || userProfile.email.split('@')[0];
 
         try {
-            // 1. 결제 준비 (백엔드)
-            const prepareResponse = await fetch("http://localhost:8080/api/points/payment/prepare", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    amount: chargeAmount,
-                    paymentMethod: paymentMethod,
-                }),
-            });
-
-            if (!prepareResponse.ok) {
-                const errorData = await prepareResponse.json().catch(() => ({}));
-                alert("❌ 결제 준비 실패: " + (errorData.message || prepareResponse.statusText));
+            const IMP = window.IMP;
+            if (!IMP) {
+                alert("❌ 결제 시스템 로딩 실패. 페이지를 새로고침해주세요.");
                 return;
             }
 
-            const { merchantUid } = await prepareResponse.json();
-
-            // 2. 포트원 결제 진행
-            const IMP = window.IMP;
-            IMP.init("imp57477065"); // 본인 PortOne 가맹점 식별코드
+            IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
 
             IMP.request_pay(
                 {
-                    pg: paymentMethod === "KAKAO" ? "kakaopay.TC0ONETIME" : "tosspay.tosstest", // 선택된 PG사
-                    pay_method: "card", // 카드 결제로 고정 (PortOne 내부적으로 카카오/토스페이와 연동)
-                    merchant_uid: merchantUid, // 백엔드에서 생성된 merchantUid 사용
-                    name: `포인트 ${chargeAmount.toLocaleString()}원 충전`,
-                    amount: chargeAmount,
+                    pg: import.meta.env.VITE_KAKAO_PG_CODE || "kakaopay.TC0ONETIME",
+                    pay_method: "card",
+                    merchant_uid: `points_${Date.now()}`, // 구독과 동일한 패턴
+                    name: `포인트 ${selectedPointOption.points}P 충전`,
+                    amount: selectedPointOption.price,
                     buyer_email: userProfile.email,
-                    buyer_name: userProfile.name || userProfile.email.split('@')[0],
-                    // m_redirect_url: "{YOUR_BACKEND_REDIRECT_URL}", // 모바일 결제 시 리디렉션될 URL (필요시 추가)
+                    buyer_name: buyerName,
                 },
                 async (rsp: any) => {
                     if (rsp.success) {
-                        // 3. 결제 검증 및 포인트 충전 (백엔드)
-                        const verifyResponse = await fetch("http://localhost:8080/api/points/payment/verify", {
+                        // 결제 성공 시 백엔드에 포인트 충전 요청
+                        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/points/charge`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             credentials: "include",
                             body: JSON.stringify({
+                                points: selectedPointOption.points,
+                                amount: selectedPointOption.price,
+                                paymentMethod: "KAKAO",
+                                impUid: rsp.imp_uid,
                                 merchantUid: rsp.merchant_uid,
                             }),
                         });
 
-                        if (verifyResponse.ok) {
+                        if (response.ok) {
                             alert(`✅ ${selectedPointOption.points}P 포인트 충전 성공!`);
-                            loadPointBalance(); // 포인트 잔액 갱신
+                            loadPointBalance();
                         } else {
-                            const errorData = await verifyResponse.json().catch(() => ({}));
-                            alert("❌ 포인트 충전 실패: " + (errorData.message || verifyResponse.statusText));
+                            const errorData = await response.json().catch(() => ({}));
+                            console.error("포인트 충전 백엔드 오류:", errorData);
+                            alert("❌ 포인트 충전 실패: " + (errorData.message || response.statusText || "서버 오류"));
                         }
                     } else {
                         alert("❌ 결제 실패: " + rsp.error_msg);
@@ -302,10 +297,11 @@ export default function PointsSubscriptionPage({
         }
     };
 
+
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
         const response = await fetch(
-            "http://localhost:8080/api/subscriptions?reason=USER_REQUESTED",
+            `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions?reason=USER_REQUESTED`,
             {
                 method: "DELETE",
                 credentials: "include",
