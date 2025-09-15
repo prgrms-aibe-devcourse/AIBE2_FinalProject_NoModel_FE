@@ -68,7 +68,7 @@ export default function PointsSubscriptionPage({
             credentials: "include",
         })
             .then((res) => res.json())
-            .then((data) => setCurrentSubscription(data.response || null))
+            .then((data) => setCurrentSubscription(data || null))
             .catch(() => setCurrentSubscription(null));
 
         // 구독 플랜 목록 조회
@@ -77,7 +77,7 @@ export default function PointsSubscriptionPage({
             credentials: "include",
         })
             .then((res) => res.json())
-            .then((data) => setPlans(data.response || []))
+            .then((data) => setPlans(data || []))
             .catch(() => setPlans([]));
     };
 
@@ -126,12 +126,13 @@ export default function PointsSubscriptionPage({
                 }),
             });
 
-            const result = await response.json();
-            if (result.success) {
+            if (response.ok) {
+                const result = await response.json();
                 alert("✅ FREE 플랜 등록 완료!");
                 loadSubscriptions(); // 새로고침 대신 현황 갱신
             } else {
-                alert("❌ FREE 플랜 등록 실패: " + result.error?.message);
+                const errorData = await response.json().catch(() => ({}));
+                alert("❌ FREE 플랜 등록 실패: " + (errorData.message || response.statusText));
             }
             return;
         }
@@ -164,12 +165,13 @@ export default function PointsSubscriptionPage({
                         }),
                     });
 
-                    const result = await response.json();
-                    if (result.success) {
+                    if (response.ok) {
+                        const result = await response.json();
                         alert(`✅ ${selectedPlan.planType} 구독 결제 성공 및 등록 완료!`);
                         loadSubscriptions(); // 🔥 새로고침 대신 현황 갱신
                     } else {
-                        alert("❌ 백엔드 등록 실패: " + result.error?.message);
+                        const errorData = await response.json().catch(() => ({}));
+                        alert("❌ 백엔드 등록 실패: " + (errorData.message || response.statusText));
                     }
                 } else {
                     alert("❌ 결제 실패: " + rsp.error_msg);
@@ -188,12 +190,13 @@ export default function PointsSubscriptionPage({
             }
         );
 
-        const result = await response.json();
-        if (result.success) {
+        if (response.ok) {
+            const result = await response.json();
             alert("✅ 구독이 취소되었습니다.");
             loadSubscriptions(); // 🔥 새로고침 대신 현황 갱신
         } else {
-            alert("❌ 구독 취소 실패: " + result.error?.message);
+            const errorData = await response.json().catch(() => ({}));
+            alert("❌ 구독 취소 실패: " + (errorData.message || response.statusText));
         }
     };
 
@@ -234,7 +237,7 @@ export default function PointsSubscriptionPage({
                             {currentSubscription ? (
                                 <>
                                     <p className="text-xl font-bold text-green-600">
-                                        {planTypeMap[currentSubscription.subscriptionId] || "알 수 없음"}
+                                        {planTypeMap[currentSubscription.subscriptionId] || "미구독"}
                                     </p>
                                     <p className="text-xs text-gray-500 mt-1">
                                         만료일:{" "}
@@ -309,7 +312,7 @@ export default function PointsSubscriptionPage({
                                 <h2 className="font-bold text-lg">{plan.planType}</h2>
                                 <p className="text-sm text-gray-500">{plan.description}</p>
                                 <p className="mt-2 font-semibold">
-                                    {plan.price}원 / {plan.period}일
+                                    {plan.price}$ / {plan.period}일
                                 </p>
                             </div>
                         ))}
