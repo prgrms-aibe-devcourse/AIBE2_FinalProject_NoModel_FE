@@ -4,6 +4,13 @@ import { Button } from "./ui/button";
 import { NavigationBar } from "./NavigationBar";
 import { UserProfile } from "../App";
 
+// ✅ PortOne SDK 타입 선언
+declare global {
+    interface Window {
+        IMP: any;
+    }
+}
+
 interface SubscriptionPlan {
     id: number;
     planType: string;
@@ -53,6 +60,25 @@ export default function PointsSubscriptionPage({
         "charge" | "subscription" | "history"
     >("subscription");
 
+    // 포인트 충전 관련 상태 추가
+    const [chargeAmount, setChargeAmount] = useState<number>(1000); // 최소 1000원
+    const [paymentMethod, setPaymentMethod] = useState<"KAKAO" | "TOSS">(
+        "KAKAO"
+    );
+    const [pointBalance, setPointBalance] = useState<number>(0);
+
+    // 포인트 충전 옵션 정의
+    const pointOptions = [
+        { points: 100, price: 3000 },
+        { points: 500, price: 15000 },
+        { points: 1000, price: 30000 },
+        { points: 5000, price: 150000 },
+    ];
+    const [selectedPointOption, setSelectedPointOption] = useState<{
+        points: number;
+        price: number;
+    } | null>(null);
+
     // subscriptionId → planType 매핑
     const planTypeMap: Record<number, string> = {
         1: "FREE",
@@ -81,16 +107,31 @@ export default function PointsSubscriptionPage({
             .catch(() => setPlans([]));
     };
 
+    // 포인트 잔액 조회 함수
+    const loadPointBalance = () => {
+        if (!userProfile) {
+            setPointBalance(0);
+            return;
+        }
+        fetch("http://localhost:8080/api/points/balance", {
+            method: "GET",
+            credentials: "include",
+        })
+            .then((res) => res.json())
+            .then((data) => setPointBalance(data.balance || 0))
+            .catch((error) => {
+                console.error("포인트 잔액 조회 실패:", error);
+                setPointBalance(0);
+            });
+    };
+
     useEffect(() => {
         loadSubscriptions();
-    }, []);
-
-    // ✅ PortOne SDK 타입 선언
-    declare global {
-        interface Window {
-            IMP: any;
+        // 로그인 상태일 때 포인트 잔액 로드
+        if (userProfile) {
+            loadPointBalance();
         }
-    }
+    }, [userProfile]);
 
     // ✅ 구독 신청
     const handleSubscribe = async () => {
@@ -180,6 +221,87 @@ export default function PointsSubscriptionPage({
         );
     };
 
+    // ✅ 포인트 충전
+    const handleChargePoints = async () => {
+        if (!userProfile) {
+            alert("❌ 로그인이 필요합니다.");
+            onLogin();
+            return;
+        }
+
+        if (!selectedPointOption) {
+            alert("❌ 충전할 포인트를 선택해주세요.");
+            return;
+        }
+
+        const chargeAmount = selectedPointOption.price; // 선택된 옵션의 가격 사용
+        const paymentMethod = "KAKAO"; // 카카오페이로 고정
+
+        try {
+            // 1. 결제 준비 (백엔드)
+            const prepareResponse = await fetch("http://localhost:8080/api/points/payment/prepare", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                    amount: chargeAmount,
+                    paymentMethod: paymentMethod,
+                }),
+            });
+
+            if (!prepareResponse.ok) {
+                const errorData = await prepareResponse.json().catch(() => ({}));
+                alert("❌ 결제 준비 실패: " + (errorData.message || prepareResponse.statusText));
+                return;
+            }
+
+            const { merchantUid } = await prepareResponse.json();
+
+            // 2. 포트원 결제 진행
+            const IMP = window.IMP;
+            IMP.init("imp57477065"); // 본인 PortOne 가맹점 식별코드
+
+            IMP.request_pay(
+                {
+                    pg: paymentMethod === "KAKAO" ? "kakaopay.TC0ONETIME" : "tosspay.tosstest", // 선택된 PG사
+                    pay_method: "card", // 카드 결제로 고정 (PortOne 내부적으로 카카오/토스페이와 연동)
+                    merchant_uid: merchantUid, // 백엔드에서 생성된 merchantUid 사용
+                    name: `포인트 ${chargeAmount.toLocaleString()}원 충전`,
+                    amount: chargeAmount,
+                    buyer_email: userProfile.email,
+                    buyer_name: userProfile.name || userProfile.email.split('@')[0],
+                    // m_redirect_url: "{YOUR_BACKEND_REDIRECT_URL}", // 모바일 결제 시 리디렉션될 URL (필요시 추가)
+                },
+                async (rsp: any) => {
+                    if (rsp.success) {
+                        // 3. 결제 검증 및 포인트 충전 (백엔드)
+                        const verifyResponse = await fetch("http://localhost:8080/api/points/payment/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify({
+                                merchantUid: rsp.merchant_uid,
+                            }),
+                        });
+
+                        if (verifyResponse.ok) {
+                            alert(`✅ ${selectedPointOption.points}P 포인트 충전 성공!`);
+                            loadPointBalance(); // 포인트 잔액 갱신
+                        } else {
+                            const errorData = await verifyResponse.json().catch(() => ({}));
+                            alert("❌ 포인트 충전 실패: " + (errorData.message || verifyResponse.statusText));
+                        }
+                    } else {
+                        alert("❌ 결제 실패: " + rsp.error_msg);
+                    }
+                }
+            );
+        } catch (error) {
+            console.error("포인트 충전 중 오류 발생:", error);
+            alert("❌ 포인트 충전 중 알 수 없는 오류가 발생했습니다.");
+        }
+    };
+
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
         const response = await fetch(
@@ -213,7 +335,7 @@ export default function PointsSubscriptionPage({
                 onMarketplace={onMarketplace}
                 onMyPage={onMyPage}
                 onAdmin={onAdmin}
-                isAdmin={userProfile?.isAdmin}
+                isAdmin={userProfile?.role === "ADMIN"} // isAdmin 속성 제거 및 role === 'ADMIN'으로 변경
                 onHome={onMyPage}
                 isLoggedIn={!!userProfile}
                 isLandingPage={false}
@@ -229,7 +351,7 @@ export default function PointsSubscriptionPage({
                         <div>
                             <p className="text-sm text-gray-500">보유 포인트</p>
                             <p className="text-xl font-bold text-primary">
-                                {userProfile.points.toLocaleString()} P
+                                {pointBalance.toLocaleString()} P
                             </p>
                         </div>
                         <div>
@@ -322,7 +444,38 @@ export default function PointsSubscriptionPage({
                 {activeTab === "charge" && (
                     <div className="p-4 border rounded-lg shadow">
                         <h2 className="font-bold text-lg mb-4">포인트 충전</h2>
-                        <p>포인트 충전 기능이 여기에 들어갑니다.</p>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            {pointOptions.map((option) => (
+                                <div
+                                    key={option.points}
+                                    className={`p-4 border rounded-lg shadow cursor-pointer text-center
+                                    ${
+                                        selectedPointOption?.points === option.points
+                                            ? "border-primary bg-primary-foreground"
+                                            : "border-gray-200 bg-white"
+                                    }`}
+                                    onClick={() => setSelectedPointOption(option)}
+                                >
+                                    <p className="text-2xl font-bold text-primary">{option.points} P</p>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {option.price.toLocaleString()} 원
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mb-4 p-4 border rounded-lg bg-gray-50">
+                            <p className="text-sm text-gray-500">선택된 결제 수단</p>
+                            <p className="text-lg font-bold">카카오페이</p>
+                        </div>
+                        <Button
+                            onClick={handleChargePoints}
+                            className="w-full px-6 py-2"
+                            disabled={!selectedPointOption}
+                        >
+                            {selectedPointOption
+                                ? `${selectedPointOption.points}P 충전하기 (${selectedPointOption.price.toLocaleString()}원)`
+                                : "포인트를 선택해주세요"}
+                        </Button>
                     </div>
                 )}
 
