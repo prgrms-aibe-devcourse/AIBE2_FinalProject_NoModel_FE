@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import {
-  Search, Filter, Crown, User, X, ChevronDown, Coins
+  Search, Crown, User, X, Coins
 } from 'lucide-react';
 import { getModelNameSuggestions } from '../services/modelApi';
 
@@ -146,6 +145,42 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* 모델 타입 필터 및 보유 코인 */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {MODEL_TYPE_OPTIONS.map((option) => (
+            <Button
+              key={option.value}
+              variant={filters.modelType === option.value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => handleModelTypeChange(option.value)}
+              className="px-4 h-9 gap-2"
+            >
+              <option.icon className="h-4 w-4" />
+              {option.label}
+            </Button>
+          ))}
+        </div>
+
+        {/* 보유 코인 표시 */}
+        {userProfile && typeof userProfile.points === 'number' && (
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-2 px-3 py-1.5 h-9 shrink-0"
+            style={{
+              backgroundColor: '#FFF7ED',
+              borderColor: '#FED7AA',
+              color: '#C2410C'
+            }}
+          >
+            <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
+            <span className="text-sm font-semibold" style={{ color: '#F97316' }}>
+              {userProfile.points.toLocaleString()}P
+            </span>
+          </Badge>
+        )}
+      </div>
+
       {/* 활성 필터 표시 */}
       {hasActiveFilters && (
         <div className="flex items-center gap-2 flex-wrap">
@@ -179,16 +214,15 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
         </div>
       )}
 
-      {/* 검색 및 필터 컨트롤 */}
+      {/* 검색 입력 */}
       <div className="flex gap-3 items-center">
-        {/* 검색 입력 */}
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <Input
             placeholder="모델명, 설명으로 검색... (Enter로 검색)"
             value={filters.keyword}
             onChange={(e) => handleKeywordChange(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             onFocus={() => {
               if (suggestions.length > 0 && filters.keyword.trim().length >= 2) {
                 setShowSuggestions(true);
@@ -233,57 +267,11 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
           </div>
         </div>
 
-        {/* 모델 타입 드롭다운 */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="h-12 px-4 gap-2 min-w-[140px]">
-              {selectedTypeOption && (
-                <selectedTypeOption.icon className="h-4 w-4" />
-              )}
-              <span>{selectedTypeOption?.label || '모델 타입'}</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {MODEL_TYPE_OPTIONS.map((option) => (
-              <DropdownMenuItem
-                key={option.value}
-                onClick={() => handleModelTypeChange(option.value)}
-                className="flex items-center gap-2"
-              >
-                <option.icon className="h-4 w-4" />
-                <span>{option.label}</span>
-                {filters.modelType === option.value && (
-                  <Badge variant="secondary" className="ml-auto text-xs">선택됨</Badge>
-                )}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
         {/* 검색 버튼 */}
         <Button onClick={onSearch} className="h-12 px-6">
           <Search className="h-4 w-4 mr-2" />
           검색
         </Button>
-
-        {/* 보유 코인 표시 */}
-        {userProfile && typeof userProfile.points === 'number' && (
-          <Badge
-            variant="secondary"
-            className="flex items-center gap-2 px-3 py-1.5 h-12 shrink-0"
-            style={{
-              backgroundColor: '#FFF7ED',
-              borderColor: '#FED7AA',
-              color: '#C2410C'
-            }}
-          >
-            <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
-            <span className="text-sm font-semibold" style={{ color: '#F97316' }}>
-              {userProfile.points.toLocaleString()}P
-            </span>
-          </Badge>
-        )}
       </div>
 
       {/* 자동완성으로 인한 레이아웃 시프트 방지 */}
