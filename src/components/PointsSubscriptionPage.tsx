@@ -405,10 +405,11 @@ export default function PointsSubscriptionPage({
                                     <p className="text-xl font-bold text-green-600">
                                         {planTypeMap[currentSubscription.subscriptionId] || "미구독"}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        만료일:{" "}
-                                        {new Date(currentSubscription.expiresAt).toLocaleDateString()}
-                                    </p>
+                                    {currentSubscription.expiresAt && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            만료일: {new Date(currentSubscription.expiresAt).toLocaleDateString()}
+                                        </p>
+                                    )}
                                     {currentSubscription.status === "ACTIVE" && (
                                         <div className="mt-4 text-right">
                                             <Button
@@ -424,6 +425,7 @@ export default function PointsSubscriptionPage({
                             ) : (
                                 <p className="text-xl font-bold text-gray-400">미구독</p>
                             )}
+
                         </div>
                     </div>
                 )}
