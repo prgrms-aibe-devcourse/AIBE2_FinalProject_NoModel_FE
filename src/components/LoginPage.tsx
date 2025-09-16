@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { NavigationBar } from './NavigationBar';
-import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome, Github } from 'lucide-react';
+import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome as ChromeIcon, Github as GithubIcon } from 'lucide-react';
 import { authService } from '../services/auth';
 import type { LoginRequest } from '../types/auth';
 import { TermsModal } from './common/TermsModal';
@@ -44,7 +44,8 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
       };
 
       const result = await authService.login(loginData);
-      
+      console.log('Login result:', result); // 디버깅용 로그
+
       if (result.success) {
         // Get user profile after successful login
         try {
@@ -57,7 +58,9 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
         }
       } else {
         // Show error in modal
-        setErrorModalMessage(result.error || '로그인에 실패했습니다.');
+        // error는 객체 형태: { status, errorCode, message, timestamp }
+        const errorMessage = result.error?.message || '로그인에 실패했습니다.';
+        setErrorModalMessage(errorMessage);
         setShowErrorModal(true);
       }
     } catch (error) {
@@ -110,7 +113,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialLogin('google')}
               >
-                <Chrome className="w-5 h-5 mr-3" />
+                <ChromeIcon className="w-5 h-5 mr-3" />
                 Google로 계속하기
               </Button>
               
@@ -119,7 +122,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialLogin('github')}
               >
-                <Github className="w-5 h-5 mr-3" />
+                <GithubIcon className="w-5 h-5 mr-3" />
                 GitHub로 계속하기
               </Button>
             </div>
@@ -275,14 +278,14 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
         type="privacy"
       />
 
-      {/* Error Modal for Too Many Login Attempts */}
+      {/* Error Modal for Login Failures */}
       <ErrorModal
         isOpen={showErrorModal}
         onClose={() => setShowErrorModal(false)}
-        title="로그인 제한"
+        title="로그인 실패"
         message={errorModalMessage}
         buttonText="확인"
-        type="warning"
+        type="error"
       />
     </div>
   );

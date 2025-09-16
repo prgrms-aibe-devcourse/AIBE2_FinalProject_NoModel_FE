@@ -20,34 +20,43 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
   buttonText = '확인',
   type = 'error'
 }) => {
-  const getIconAndColor = () => {
+  const getIcon = () => {
     switch (type) {
       case 'warning':
-        return {
-          icon: <AlertTriangle className="h-6 w-6 text-orange-500" />,
-          bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
-          textColor: 'text-orange-800'
-        };
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case 'info':
-        return {
-          icon: <AlertTriangle className="h-6 w-6 text-blue-500" />,
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
-          textColor: 'text-blue-800'
-        };
+        return <AlertTriangle className="h-5 w-5 text-blue-500" />;
       case 'error':
       default:
-        return {
-          icon: <AlertTriangle className="h-6 w-6 text-red-500" />,
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-800'
-        };
+        return <AlertTriangle className="h-5 w-5 text-destructive" />;
     }
   };
 
-  const { icon, bgColor, borderColor, textColor } = getIconAndColor();
+  const icon = getIcon();
+
+  const getBgColor = () => {
+    switch (type) {
+      case 'warning':
+        return 'bg-yellow-50 dark:bg-yellow-950/20';
+      case 'info':
+        return 'bg-blue-50 dark:bg-blue-950/20';
+      case 'error':
+      default:
+        return 'bg-destructive/10';
+    }
+  };
+
+  const getBorderColor = () => {
+    switch (type) {
+      case 'warning':
+        return 'border-yellow-200 dark:border-yellow-800';
+      case 'info':
+        return 'border-blue-200 dark:border-blue-800';
+      case 'error':
+      default:
+        return 'border-destructive/20';
+    }
+  };
 
   const getDefaultTitle = () => {
     switch (type) {
@@ -63,25 +72,30 @@ export const ErrorModal: React.FC<ErrorModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="!max-w-[400px] !w-[400px] !p-6">
-        <DialogHeader>
+      <DialogContent className="max-w-md w-full p-0 gap-0">
+        <DialogHeader className="p-6 pb-0">
           <div className="flex items-center gap-3 mb-4">
-            {icon}
+            <div className="flex-shrink-0">
+              {icon}
+            </div>
             <DialogTitle className="text-lg font-semibold">
               {title || getDefaultTitle()}
             </DialogTitle>
           </div>
         </DialogHeader>
 
-        <div className={`${bgColor} ${borderColor} border rounded-lg p-4 mb-6`}>
-          <p className={`${textColor} text-sm leading-relaxed`}>
-            {message}
-          </p>
+        <div className="px-6 pb-4">
+          <div className={`${getBgColor()} rounded-lg p-4 border ${getBorderColor()}`}>
+            <p className="text-sm text-foreground leading-relaxed">
+              {message}
+            </p>
+          </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2 px-6 pb-6">
           <Button
             onClick={onClose}
+            variant="default"
             className="min-w-[80px]"
           >
             {buttonText}
