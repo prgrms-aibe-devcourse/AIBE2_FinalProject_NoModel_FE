@@ -3,13 +3,15 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import {
-  Search, Crown, User, X, Coins
+  Search, Crown, User, X, Coins, Globe, DollarSign, Gift, Filter, ChevronDown
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { getModelNameSuggestions } from '../services/modelApi';
 
 export interface ModelFilters {
   keyword: string;
   modelType: 'ALL' | 'ADMIN' | 'USER';
+  priceType: 'ALL' | 'FREE' | 'PAID';
   userId?: number;
 }
 
@@ -23,9 +25,15 @@ interface ModelFiltersProps {
 }
 
 const MODEL_TYPE_OPTIONS = [
-  { value: 'ALL' as const, label: '전체 모델', icon: Search },
-  { value: 'ADMIN' as const, label: '관리자 모델', icon: Crown },
+  { value: 'ALL' as const, label: '모든 모델', icon: Globe },
+  { value: 'ADMIN' as const, label: '자체 모델', icon: Crown },
   { value: 'USER' as const, label: '내 모델', icon: User },
+];
+
+const PRICE_TYPE_OPTIONS = [
+  { value: 'ALL' as const, label: '모든 가격', icon: Globe },
+  { value: 'FREE' as const, label: '무료', icon: Gift },
+  { value: 'PAID' as const, label: '유료', icon: DollarSign },
 ];
 
 export const ModelFilters: React.FC<ModelFiltersProps> = ({
@@ -116,6 +124,10 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
     onFiltersChange(newFilters);
   };
 
+  const handlePriceTypeChange = (priceType: ModelFilters['priceType']) => {
+    onFiltersChange({ ...filters, priceType });
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onSearch();
@@ -125,7 +137,8 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
   const clearFilters = () => {
     onFiltersChange({
       keyword: '',
-      modelType: 'ALL'
+      modelType: 'ALL',
+      priceType: 'ALL'
     });
     setShowSuggestions(false);
   };
@@ -140,26 +153,68 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
     }
   };
 
-  const hasActiveFilters = filters.keyword || filters.modelType !== 'ALL';
+  const hasActiveFilters = filters.keyword || filters.modelType !== 'ALL' || filters.priceType !== 'ALL';
   const selectedTypeOption = MODEL_TYPE_OPTIONS.find(opt => opt.value === filters.modelType);
+  const selectedPriceOption = PRICE_TYPE_OPTIONS.find(opt => opt.value === filters.priceType);
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* 모델 타입 필터 및 보유 코인 */}
+      {/* 필터 및 보유 코인 */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {MODEL_TYPE_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              variant={filters.modelType === option.value ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleModelTypeChange(option.value)}
-              className="px-4 h-9 gap-2"
-            >
-              <option.icon className="h-4 w-4" />
-              {option.label}
+        <div className="flex gap-3">
+          {/* 모델 타입 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="px-4 h-9 gap-2">
+                {selectedTypeOption && <selectedTypeOption.icon className="h-4 w-4" />}
+                {selectedTypeOption?.label}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-40">
+              {MODEL_TYPE_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleModelTypeChange(option.value)}
+                  className="gap-2"
+                >
+                  <option.icon className="h-4 w-4" />
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 가격 필터 드롭다운 */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="px-4 h-9 gap-2">
+                {selectedPriceOption && <selectedPriceOption.icon className="h-4 w-4" />}
+                {selectedPriceOption?.label}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-32">
+              {PRICE_TYPE_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handlePriceTypeChange(option.value)}
+                  className="gap-2"
+                >
+                  <option.icon className="h-4 w-4" />
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* 필터 초기화 버튼 */}
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-9 px-3 text-gray-500">
+              <X className="h-4 w-4 mr-1" />
+              초기화
             </Button>
-          ))}
+          )}
         </div>
 
         {/* 보유 코인 표시 */}
@@ -182,9 +237,12 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
       </div>
 
       {/* 활성 필터 표시 */}
-      {hasActiveFilters && (
+      {(filters.keyword || filters.modelType !== 'ALL' || filters.priceType !== 'ALL') && (
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-600">활성 필터:</span>
+          <span className="text-sm text-gray-600 flex items-center gap-1">
+            <Filter className="h-4 w-4" />
+            활성 필터:
+          </span>
 
           {filters.keyword && (
             <Badge variant="secondary" className="gap-1">
@@ -206,11 +264,15 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
             </Badge>
           )}
 
-          {/* 전체 초기화 버튼 */}
-          <Button variant="outline" onClick={clearFilters} className="h-7 px-3 text-xs">
-            <X className="h-3 w-3 mr-1" />
-            전체 초기화
-          </Button>
+          {filters.priceType !== 'ALL' && (
+            <Badge variant="secondary" className="gap-1">
+              {selectedPriceOption?.label}
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-red-500"
+                onClick={() => handlePriceTypeChange('ALL')}
+              />
+            </Badge>
+          )}
         </div>
       )}
 
@@ -269,7 +331,6 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
 
         {/* 검색 버튼 */}
         <Button onClick={onSearch} className="h-12 px-6">
-          <Search className="h-4 w-4 mr-2" />
           검색
         </Button>
       </div>

@@ -63,7 +63,7 @@ const ModelCard = memo(({
   };
 
   return (
-    <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer">
+    <Card className="group overflow-hidden border border-gray-200 hover:shadow-lg transition-all duration-200 cursor-pointer h-full flex flex-col">
       <div className="relative" onClick={() => onModelCardClick(model)}>
         <img
           src={displayData.thumbnailUrl}
@@ -96,7 +96,7 @@ const ModelCard = memo(({
         </div>
       </div>
 
-      <div className="p-4" onClick={() => onModelCardClick(model)}>
+      <div className="p-4 flex flex-col flex-1" onClick={() => onModelCardClick(model)}>
         <div className="flex items-center justify-between mb-2">
           <Badge variant="secondary" className="text-xs">
             {displayData.categoryType}
@@ -117,7 +117,7 @@ const ModelCard = memo(({
           {displayData.shortDescription}
         </p>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <div className="text-sm text-gray-500">
             by {displayData.developer}
           </div>
@@ -135,23 +135,26 @@ const ModelCard = memo(({
           )}
         </div>
 
-        {displayData.tags && displayData.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {displayData.tags.slice(0, 3).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-            {displayData.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{displayData.tags.length - 3}
-              </Badge>
-            )}
-          </div>
-        )}
+        {/* 태그 영역 - flex-1을 사용하여 남은 공간 차지 */}
+        <div className="flex-1">
+          {displayData.tags && displayData.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {displayData.tags.slice(0, 3).map((tag, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {displayData.tags.length > 3 && (
+                <Badge variant="outline" className="text-xs">
+                  +{displayData.tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
+        </div>
 
-        {/* 가격 및 통계 정보 */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t">
+        {/* 가격 및 통계 정보 - 항상 하단에 고정 */}
+        <div className="flex items-center justify-between pt-3 border-t mt-3">
           <div className="text-sm text-green-600 font-medium">
             {model.price && model.price > 0 ? `${model.price.toLocaleString()}원` : '무료'}
           </div>
@@ -181,7 +184,8 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   // 필터 상태
   const [filters, setFilters] = useState<ModelFiltersType>({
     keyword: '',
-    modelType: 'ALL'
+    modelType: 'ALL',
+    priceType: 'ALL'
   });
 
   const [searchState, setSearchState] = useState<SearchState>({
@@ -217,6 +221,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
       const searchParams: FilteredSearchParams = {
         modelType: searchFilters.modelType,
         keyword: searchFilters.keyword || undefined,
+        priceType: searchFilters.priceType,
         page,
         size: 20
       };
