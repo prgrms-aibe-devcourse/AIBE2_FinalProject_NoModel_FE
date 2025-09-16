@@ -238,11 +238,6 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         return;
       }
 
-      // USER 모델 타입인 경우 userId 추가
-      if (searchFilters.modelType === 'USER' && userProfile) {
-        searchParams.userId = typeof userProfile.id === 'string' ? parseInt(userProfile.id) : userProfile.id;
-      }
-
       const response = await searchModelsWithFilters(searchParams);
 
       if (response.success) {

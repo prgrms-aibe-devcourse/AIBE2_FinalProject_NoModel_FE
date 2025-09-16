@@ -112,16 +112,7 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
   };
 
   const handleModelTypeChange = (modelType: ModelFilters['modelType']) => {
-    const newFilters = { ...filters, modelType };
-
-    // USER 모델 선택 시 userId 설정
-    if (modelType === 'USER' && userProfile) {
-      newFilters.userId = typeof userProfile.id === 'string' ? parseInt(userProfile.id) : userProfile.id;
-    } else if (modelType !== 'USER') {
-      delete newFilters.userId;
-    }
-
-    onFiltersChange(newFilters);
+    onFiltersChange({ ...filters, modelType });
   };
 
   const handlePriceTypeChange = (priceType: ModelFilters['priceType']) => {
