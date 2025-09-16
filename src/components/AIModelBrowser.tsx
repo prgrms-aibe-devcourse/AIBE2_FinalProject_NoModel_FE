@@ -2,24 +2,21 @@ import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
-import { Input } from './ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Skeleton } from './ui/skeleton';
-import { 
-  Search, Star, Download, MoreHorizontal, Flag, 
-  AlertCircle, Loader2, Crown, Sparkles, TrendingUp, Eye, Coins
+import {
+  Star, Download, MoreHorizontal, Flag,
+  AlertCircle, Loader2, Crown, Eye, Coins
 } from 'lucide-react';
-import { 
-  searchModels, 
-  getAdminModels, 
-  getUserModels, 
-  getPopularModels,
-  getModelNameSuggestions
+import {
+  searchModelsWithFilters,
+  FilteredSearchParams
 } from '../services/modelApi';
-import { AIModelDocument, ModelSearchResponse } from '../types/model';
+import { AIModelDocument } from '../types/model';
 import { toast } from 'sonner';
 import { UserProfile } from '../App';
 import { ModelDetailDialog } from './ModelDetailDialog';
+import { ModelFilters, ModelFilters as ModelFiltersType } from './ModelFilters';
 
 interface AIModelBrowserProps {
   userProfile: UserProfile | null;
@@ -38,15 +35,13 @@ interface SearchState {
   totalElements: number;
 }
 
-type TabType = 'search' | 'admin' | 'mymodels';
-
 // ModelCard 컴포넌트를 바깥으로 분리하고 React.memo 적용
-const ModelCard = memo(({ 
-  model, 
-  onModelReport, 
-  onModelSelect, 
-  onModelCardClick 
-}: { 
+const ModelCard = memo(({
+  model,
+  onModelReport,
+  onModelSelect,
+  onModelCardClick
+}: {
   model: AIModelDocument;
   onModelReport: (model: AIModelDocument) => void;
   onModelSelect?: (model: AIModelDocument) => void;
@@ -100,14 +95,14 @@ const ModelCard = memo(({
           </DropdownMenu>
         </div>
       </div>
-      
+
       <div className="p-4" onClick={() => onModelCardClick(model)}>
         <div className="flex items-center justify-between mb-2">
           <Badge variant="secondary" className="text-xs">
             {displayData.categoryType}
           </Badge>
         </div>
-        
+
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
             {displayData.modelName}
@@ -117,18 +112,18 @@ const ModelCard = memo(({
             <span className="text-sm font-medium">{displayData.rating.toFixed(1)}</span>
           </div>
         </div>
-        
+
         <p className="text-sm text-gray-600 mb-3 line-clamp-2">
           {displayData.shortDescription}
         </p>
-        
+
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500">
             by {displayData.developer}
           </div>
           {onModelSelect && (
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={(e: React.MouseEvent) => {
                 e.stopPropagation();
                 onModelSelect(model);
@@ -139,7 +134,7 @@ const ModelCard = memo(({
             </Button>
           )}
         </div>
-        
+
         {displayData.tags && displayData.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-3">
             {displayData.tags.slice(0, 3).map((tag, index) => (
@@ -154,7 +149,7 @@ const ModelCard = memo(({
             )}
           </div>
         )}
-        
+
         {/* 가격 및 통계 정보 */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t">
           <div className="text-sm text-green-600 font-medium">
@@ -176,24 +171,6 @@ const ModelCard = memo(({
   );
 });
 
-const TAB_CONFIG = {
-  search: {
-    label: '모델 검색',
-    icon: Search,
-    description: '키워드로 AI 모델 검색'
-  },
-  admin: {
-    label: '관리자 모델',
-    icon: Crown,
-    description: '검증된 관리자 모델들'
-  },
-  mymodels: {
-    label: '내 모델',
-    icon: Sparkles,
-    description: '내가 생성한 모델들'
-  }
-};
-
 export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   userProfile,
   onModelSelect,
@@ -201,10 +178,12 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   onLogin,
   className = ''
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('search');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  // 필터 상태
+  const [filters, setFilters] = useState<ModelFiltersType>({
+    keyword: '',
+    modelType: 'ALL'
+  });
+
   const [searchState, setSearchState] = useState<SearchState>({
     models: [],
     hasMore: true,
@@ -218,35 +197,12 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   const [selectedModelId, setSelectedModelId] = useState<number | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const suggestionTimeoutRef = useRef<NodeJS.Timeout>();
   const observerRef = useRef<IntersectionObserver>();
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // 자동완성 검색
-  const fetchSuggestions = useCallback(async (prefix: string) => {
-    if (prefix.length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    try {
-      const response = await getModelNameSuggestions(prefix);
-      if (response.success) {
-        setSuggestions(response.response.slice(0, 5)); // 최대 5개만
-        setShowSuggestions(true);
-      }
-    } catch (error) {
-      console.error('자동완성 검색 에러:', error);
-    }
-  }, []);
 
   // 메인 검색/로드 함수
   const performSearch = useCallback(async (
-    tab: TabType,
-    keyword: string = '',
+    searchFilters: ModelFiltersType,
     page: number = 0,
     isLoadMore: boolean = false
   ) => {
@@ -257,38 +213,32 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         setSearchState(prev => ({ ...prev, isLoadingMore: true }));
       }
 
-      let response: ModelSearchResponse;
+      // 필터 파라미터 구성
+      const searchParams: FilteredSearchParams = {
+        modelType: searchFilters.modelType,
+        keyword: searchFilters.keyword || undefined,
+        page,
+        size: 20
+      };
 
-      switch (tab) {
-        case 'search':
-          if (!keyword.trim()) {
-            // 검색어가 없으면 인기 모델 표시
-            response = await getPopularModels({ page, size: 20 });
-          } else {
-            response = await searchModels({ keyword: keyword.trim(), page, size: 20 });
-          }
-          break;
-        
-        case 'admin':
-          response = await getAdminModels({ page, size: 20 });
-          break;
-        
-        case 'mymodels':
-          if (!userProfile) {
-            toast.error('로그인이 필요합니다.');
-            onLogin();
-            return;
-          }
-          response = await getUserModels({ 
-            userId: parseInt(userProfile.id), 
-            page, 
-            size: 20 
-          });
-          break;
-        
-        default:
-          throw new Error('Invalid tab type');
+      // USER 모델 타입이고 사용자가 로그인되어 있지 않은 경우
+      if (searchFilters.modelType === 'USER' && !userProfile) {
+        toast.error('로그인이 필요합니다.');
+        onLogin();
+        setSearchState(prev => ({
+          ...prev,
+          isLoading: false,
+          isLoadingMore: false
+        }));
+        return;
       }
+
+      // USER 모델 타입인 경우 userId 추가
+      if (searchFilters.modelType === 'USER' && userProfile) {
+        searchParams.userId = typeof userProfile.id === 'string' ? parseInt(userProfile.id) : userProfile.id;
+      }
+
+      const response = await searchModelsWithFilters(searchParams);
 
       if (response.success) {
         setSearchState(prev => ({
@@ -319,9 +269,9 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   const loadMoreCallback = useCallback((entries: IntersectionObserverEntry[]) => {
     const [entry] = entries;
     if (entry.isIntersecting && searchState.hasMore && !searchState.isLoadingMore) {
-      performSearch(activeTab, searchTerm, searchState.page + 1, true);
+      performSearch(filters, searchState.page + 1, true);
     }
-  }, [searchState.hasMore, searchState.isLoadingMore, searchState.page, activeTab, searchTerm, performSearch]);
+  }, [searchState.hasMore, searchState.isLoadingMore, searchState.page, filters, performSearch]);
 
   // 무한 스크롤 설정
   useEffect(() => {
@@ -341,77 +291,27 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     };
   }, [loadMoreCallback]);
 
-  // 검색어 변경 시 자동완성 (검색 탭에서만)
+
+  // 초기 로드 (빈 키워드로 인기 모델 표시)
   useEffect(() => {
-    if (activeTab !== 'search') return;
+    performSearch(filters, 0, false);
+  }, [performSearch]);
 
-    if (suggestionTimeoutRef.current) {
-      clearTimeout(suggestionTimeoutRef.current);
-    }
-
-    if (searchTerm.trim()) {
-      suggestionTimeoutRef.current = setTimeout(() => {
-        fetchSuggestions(searchTerm);
-      }, 300);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-
-    return () => {
-      if (suggestionTimeoutRef.current) {
-        clearTimeout(suggestionTimeoutRef.current);
-      }
-    };
-  }, [searchTerm, activeTab, fetchSuggestions]);
-
-  // 검색 탭에서 검색어가 없을 때만 인기 모델 로드
-  useEffect(() => {
-    if (activeTab === 'search' && !searchTerm) {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      searchTimeoutRef.current = setTimeout(() => {
-        performSearch(activeTab, '', 0, false);
-      }, 100);
-    }
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchTerm, activeTab, performSearch]);
-
-  // 탭 변경 시 초기 로드 (검색 탭 제외)
-  useEffect(() => {
-    if (activeTab !== 'search') {
-      performSearch(activeTab, '', 0, false);
-    }
-  }, [activeTab, performSearch]);
-
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
-    setSearchTerm('');
-    setSuggestions([]);
-    setShowSuggestions(false);
+  // 필터 변경 핸들러
+  const handleFiltersChange = (newFilters: ModelFiltersType) => {
+    setFilters(newFilters);
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setSearchTerm(suggestion);
-    setShowSuggestions(false);
+  // 검색 실행 핸들러
+  const handleSearch = () => {
+    performSearch(filters, 0, false);
   };
 
-  const handleSearchSubmit = () => {
-    if (activeTab === 'search') {
-      performSearch('search', searchTerm, 0, false);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearchSubmit();
-    }
+  // 자동완성 선택 핸들러
+  const handleSuggestionSelect = (suggestion: string) => {
+    const newFilters = { ...filters, keyword: suggestion };
+    setFilters(newFilters);
+    performSearch(newFilters, 0, false);
   };
 
   const handleModelReport = (model: AIModelDocument) => {
@@ -435,71 +335,29 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     }
   };
 
-
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* 탭 네비게이션 */}
-      <div className="flex gap-1 bg-muted/30 rounded-lg p-1 w-fit">
-        {Object.entries(TAB_CONFIG).map(([key, config]) => {
-          const Icon = config.icon;
-          return (
-            <Button
-              key={key}
-              variant={activeTab === key ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => handleTabChange(key as TabType)}
-              className="px-4 h-9"
-            >
-              <Icon className="w-4 h-4 mr-2" />
-              {config.label}
-            </Button>
-          );
-        })}
-      </div>
+      {/* 필터 컴포넌트 */}
+      <ModelFilters
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onSearch={handleSearch}
+        onSuggestionSelect={handleSuggestionSelect}
+        userProfile={userProfile}
+      />
 
-      {/* 탭 설명 */}
+      {/* 결과 카운트 */}
       <div className="text-sm text-gray-600">
-        {TAB_CONFIG[activeTab].description}
         {searchState.totalElements > 0 && (
-          <span className="ml-2">
-            (총 {searchState.totalElements.toLocaleString()}개)
-          </span>
+          <span>총 {searchState.totalElements.toLocaleString()}개의 모델</span>
         )}
-      </div>
-
-      {/* 검색 입력 및 포인트 표시 */}
-      <div className="flex items-center gap-4 mb-4">
-        {/* 검색 입력 - 검색 탭에서만 표시 */}
-        {activeTab === 'search' && (
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                ref={inputRef}
-                placeholder="AI 모델 검색... (Enter로 검색)"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                onFocus={() => {
-                  if (suggestions.length > 0) {
-                    setShowSuggestions(true);
-                  }
-                }}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="pl-10 h-12"
-              />
-            </div>
-          </div>
-        )}
-        
-        {/* 포인트 표시 */}
         {userProfile && typeof userProfile.points === 'number' && (
           <Badge
             variant="secondary"
-            className="flex items-center gap-2 px-3 py-1.5 h-12 shrink-0"
+            className="ml-4 flex items-center gap-2 px-3 py-1.5"
             style={{
               backgroundColor: '#FFF7ED',
-              borderColor: '#FED7AA', 
+              borderColor: '#FED7AA',
               color: '#C2410C'
             }}
           >
@@ -510,104 +368,72 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
           </Badge>
         )}
       </div>
-      
-      {/* 자동완성 영역을 별도 div로 분리 */}
-      {activeTab === 'search' && (
-        <div className="space-y-0">
-          
-          {/* 자동완성 전용 공간 - 고정 높이로 공간 확보 */}
-          <div 
-            className="transition-all duration-200 overflow-hidden"
-            style={{
-              height: showSuggestions && suggestions.length > 0 
-                ? `${Math.min(suggestions.length * 60, 240) + 16}px` 
-                : '0px'
-            }}
-          >
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="mt-2 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {suggestions.map((suggestion, index) => (
-                  <div
-                    key={index}
-                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Search className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-sm text-gray-800">{suggestion}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* 검색 결과 */}
       <div>
-      {searchState.isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }, (_, i) => (
-            <Card key={i} className="overflow-hidden">
-              <Skeleton className="w-full h-48" />
-              <div className="p-4 space-y-3">
-                <div className="flex justify-between">
-                  <Skeleton className="h-5 w-20" />
-                  <Skeleton className="h-5 w-12" />
-                </div>
-                <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : searchState.models.length === 0 ? (
-        <div className="text-center py-16">
-          <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {activeTab === 'search' && searchTerm 
-              ? '검색 결과가 없습니다' 
-              : activeTab === 'mymodels' 
-                ? '생성한 모델이 없습니다'
-                : '모델이 없습니다'
-            }
-          </h3>
-          <p className="text-gray-600">
-            {activeTab === 'search' && searchTerm 
-              ? '다른 키워드로 다시 검색해보세요.' 
-              : activeTab === 'mymodels' 
-                ? '새 모델을 생성해보세요.'
-                : '나중에 다시 확인해보세요.'
-            }
-          </p>
-        </div>
-      ) : (
-        <>
+        {searchState.isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {searchState.models.map((model) => (
-              <ModelCard 
-                key={model.id} 
-                model={model}
-                onModelReport={handleModelReport}
-                onModelSelect={onModelSelect}
-                onModelCardClick={handleModelCardClick}
-              />
+            {Array.from({ length: 8 }, (_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="w-full h-48" />
+                <div className="p-4 space-y-3">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-5 w-12" />
+                  </div>
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </Card>
             ))}
           </div>
-
-          {/* 무한 스크롤 트리거 */}
-          <div ref={loadMoreRef} className="flex justify-center py-8">
-            {searchState.isLoadingMore && (
-              <div className="flex items-center gap-2 text-gray-600">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                더 많은 모델을 불러오는 중...
-              </div>
-            )}
+        ) : searchState.models.length === 0 ? (
+          <div className="text-center py-16">
+            <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {filters.keyword
+                ? '검색 결과가 없습니다'
+                : filters.modelType === 'USER'
+                ? '생성한 모델이 없습니다'
+                : '모델이 없습니다'
+              }
+            </h3>
+            <p className="text-gray-600">
+              {filters.keyword
+                ? '다른 키워드로 다시 검색해보세요.'
+                : filters.modelType === 'USER'
+                ? '새 모델을 생성해보세요.'
+                : '나중에 다시 확인해보세요.'
+              }
+            </p>
           </div>
-        </>
-      )}
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {searchState.models.map((model) => (
+                <ModelCard
+                  key={model.id}
+                  model={model}
+                  onModelReport={handleModelReport}
+                  onModelSelect={onModelSelect}
+                  onModelCardClick={handleModelCardClick}
+                />
+              ))}
+            </div>
+
+            {/* 무한 스크롤 트리거 */}
+            <div ref={loadMoreRef} className="flex justify-center py-8">
+              {searchState.isLoadingMore && (
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  더 많은 모델을 불러오는 중...
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* 모델 상세 다이얼로그 */}
       <ModelDetailDialog
@@ -616,7 +442,6 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         onOpenChange={setDetailDialogOpen}
         onModelSelect={onModelSelect ? handleDetailDialogModelSelect : undefined}
       />
-      </div>
     </div>
   );
 };

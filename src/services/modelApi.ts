@@ -23,7 +23,7 @@ import { AxiosError } from 'axios';
 export const searchModels = async (params: ModelSearchParams): Promise<ModelSearchResponse> => {
   try {
     const searchParams = new URLSearchParams();
-    
+
     searchParams.append('keyword', params.keyword); // 필수 파라미터
     if (params.page !== undefined) searchParams.append('page', params.page.toString());
     if (params.size !== undefined) searchParams.append('size', params.size.toString());
@@ -31,10 +31,80 @@ export const searchModels = async (params: ModelSearchParams): Promise<ModelSear
     const response = await GetAxiosInstance<ModelSearchResponse>(
       `/models/search?${searchParams.toString()}`
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('모델 검색 API 에러:', error);
+    throw error;
+  }
+};
+
+/**
+ * 필터 기반 통합 모델 검색 API
+ */
+export interface FilteredSearchParams {
+  keyword?: string;
+  modelType: 'ALL' | 'ADMIN' | 'USER';
+  userId?: number;
+  page?: number;
+  size?: number;
+}
+
+export const searchModelsWithFilters = async (params: FilteredSearchParams): Promise<ModelSearchResponse> => {
+  try {
+    const { modelType, keyword, userId, page = 0, size = 20 } = params;
+
+    switch (modelType) {
+      case 'ADMIN':
+        if (keyword) {
+          // 관리자 모델에서 키워드 검색
+          const searchParams = new URLSearchParams();
+          searchParams.append('keyword', keyword);
+          if (page !== undefined) searchParams.append('page', page.toString());
+          if (size !== undefined) searchParams.append('size', size.toString());
+
+          const response = await GetAxiosInstance<ModelSearchResponse>(
+            `/models/search/admin?${searchParams.toString()}`
+          );
+          return response.data;
+        } else {
+          // 전체 관리자 모델 조회
+          return await getAdminModels({ page, size });
+        }
+
+      case 'USER':
+        if (!userId) {
+          throw new Error('사용자 ID가 필요합니다');
+        }
+        if (keyword) {
+          // 내 모델에서 키워드 검색
+          const searchParams = new URLSearchParams();
+          searchParams.append('userId', userId.toString());
+          searchParams.append('keyword', keyword);
+          if (page !== undefined) searchParams.append('page', page.toString());
+          if (size !== undefined) searchParams.append('size', size.toString());
+
+          const response = await GetAxiosInstance<ModelSearchResponse>(
+            `/models/search/my-models?${searchParams.toString()}`
+          );
+          return response.data;
+        } else {
+          // 전체 내 모델 조회
+          return await getUserModels({ userId, page, size });
+        }
+
+      case 'ALL':
+      default:
+        if (keyword) {
+          // 전체 모델에서 키워드 검색
+          return await searchModels({ keyword, page, size });
+        } else {
+          // 인기 모델 표시
+          return await getPopularModels({ page, size });
+        }
+    }
+  } catch (error) {
+    console.error('필터 기반 검색 API 에러:', error);
     throw error;
   }
 };
