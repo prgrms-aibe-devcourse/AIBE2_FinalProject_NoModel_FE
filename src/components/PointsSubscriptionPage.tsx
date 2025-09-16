@@ -66,6 +66,18 @@ export default function PointsSubscriptionPage({
     const [pointBalance, setPointBalance] = useState<number>(0);
     const [pointTransactions, setPointTransactions] = useState<any[]>([]); // 포인트 거래 내역 상태 다시 추가
 
+    const typeLabelMap: Record<string, string> = {
+        PURCHASE: "포인트 구매",
+        CHARGE: "포인트 충전",
+        REWARD: "리뷰 보상",
+        COMMISSION: "수수료 수익",
+        BONUS: "보너스",
+        REFUND: "환불",
+        MODEL_USAGE: "모델 사용료",
+        WITHDRAWAL: "출금",
+        EXPIRY: "만료",
+    };
+
     // 포인트 충전 옵션 정의
     const pointOptions = [
         { points: 100, price: 3000 },
@@ -282,77 +294,56 @@ export default function PointsSubscriptionPage({
         const buyerName = userProfile.name || userProfile.email.split('@')[0];
         const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
-        try {
-            // 1. 결제 준비 (백엔드)
-            const prepareResponse = await fetch(`${apiBase}/points/payment/prepare`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    amount: selectedPointOption.price, // 금액을 백엔드에 전달
-                    paymentMethod: "KAKAO", // 카카오페이로 고정
-                }),
-            });
-
-            if (!prepareResponse.ok) {
-                const errorData = await prepareResponse.json().catch(() => ({}));
-                alert("❌ 결제 준비 실패: " + (errorData.message || prepareResponse.statusText || "서버 오류"));
-                return;
-            }
-
-            const { merchantUid } = await prepareResponse.json();
-
-            // 2. 포트원 결제 진행
-            const IMP = window.IMP;
-            if (!IMP) {
-                alert("❌ 결제 시스템 로딩 실패. 페이지를 새로고침해주세요.");
-                return;
-            }
-
-            IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
-
-            IMP.request_pay(
-                {
-                    pg: import.meta.env.VITE_KAKAO_PG_CODE || "kakaopay.TC0ONETIME",
-                    pay_method: "card", // 카드 결제로 고정 (PortOne 내부적으로 카카오/토스페이와 연동)
-                    merchant_uid: merchantUid, // 백엔드에서 받은 merchantUid 사용
-                    name: `포인트 ${selectedPointOption.points}P 충전`,
-                    amount: selectedPointOption.price,
-                    buyer_email: userProfile.email,
-                    buyer_name: buyerName,
-                    // m_redirect_url: "{YOUR_BACKEND_REDIRECT_URL}", // 모바일 결제 시 리디렉션될 URL (필요시 추가)
-                },
-                async (rsp: any) => {
-                    if (rsp.success) {
-                        // 3. 결제 검증 및 포인트 충전 (백엔드)
-                        const verifyResponse = await fetch(`${apiBase}/points/payment/verify`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include",
-                            body: JSON.stringify({
-                                merchantUid: rsp.merchant_uid, // PortOne에서 반환된 merchantUid 사용
-                            }),
-                        });
-
-                        if (verifyResponse.ok) {
-                            alert(`✅ ${selectedPointOption.points}P 포인트 충전 성공!`);
-                            loadPointBalance(); // 포인트 잔액 갱신
-                            loadPointTransactions(); // 거래 내역 갱신
-                        } else {
-                            const errorData = await verifyResponse.json().catch(() => ({}));
-                            console.error("포인트 검증 및 충전 백엔드 오류:", errorData);
-                            alert("❌ 포인트 충전 실패: " + (errorData.message || verifyResponse.statusText || "서버 오류"));
-                        }
-                    } else {
-                        alert("❌ 결제 실패: " + rsp.error_msg);
-                    }
-                }
-            );
-        } catch (error) {
-            console.error("포인트 충전 중 오류 발생:", error);
-            alert("❌ 포인트 충전 중 알 수 없는 오류가 발생했습니다.");
+        const IMP = window.IMP;
+        if (!IMP) {
+            alert("❌ 결제 시스템 로딩 실패. 페이지를 새로고침해주세요.");
+            return;
         }
+
+        IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
+
+        const merchantUid = `points_${Date.now()}`; // ✅ 프론트에서 직접 생성
+
+        IMP.request_pay(
+            {
+                pg: import.meta.env.VITE_KAKAO_PG_CODE || "kakaopay.TC0ONETIME",
+                pay_method: "card",
+                merchant_uid: merchantUid,
+                name: `포인트 ${selectedPointOption.points}P 충전`,
+                amount: selectedPointOption.price,
+                buyer_email: userProfile.email,
+                buyer_name: buyerName,
+            },
+            async (rsp: any) => {
+                if (rsp.success) {
+                    // 2. 결제 검증 및 포인트 충전 (백엔드)
+                    const verifyResponse = await fetch(`${apiBase}/points/payment/verify`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            impUid: rsp.imp_uid,
+                            merchantUid: rsp.merchant_uid,
+                        }),
+                    });
+
+                    if (verifyResponse.ok) {
+                        alert(`✅ ${selectedPointOption.points}P 포인트 충전 성공!`);
+                        loadPointBalance();
+                        loadPointTransactions();
+                    } else {
+                        const errorData = await verifyResponse.json().catch(() => ({}));
+                        console.error("포인트 검증 및 충전 백엔드 오류:", errorData);
+                        alert("❌ 포인트 충전 실패: " + (errorData.message || verifyResponse.statusText || "서버 오류"));
+                    }
+                } else {
+                    alert("❌ 결제 실패: " + rsp.error_msg);
+                }
+            }
+        );
     };
+
+
 
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
@@ -550,22 +541,31 @@ export default function PointsSubscriptionPage({
                                     <tbody className="bg-white divide-y divide-gray-200">
                                     {pointTransactions.map((transaction, index) => (
                                         <tr key={index}>
+                                            {/* 거래 타입 */}
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {(transaction.type === 'CHARGE' || transaction.direction === 'CHARGE') && '충전'}
-                                                {(transaction.type === 'USE' || transaction.direction === 'USE') && '사용'}
-                                                {(transaction.type === 'EXPIRE' || transaction.direction === 'EXPIRE') && '만료'}
+                                                {typeLabelMap[transaction.transactionType] || "기타"}
                                             </td>
-                                            <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                                                (transaction.type === 'CHARGE' || transaction.direction === 'CHARGE') ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                                {(transaction.type === 'CHARGE' || transaction.direction === 'CHARGE') ? '+' : '-'} 
-                                                {(transaction.amount || transaction.pointAmount || 0).toLocaleString()} P
+
+                                            {/* 금액 (direction 기반 + / - 표시) */}
+                                            <td
+                                                className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                                                    transaction.direction === "CREDIT" ? "text-green-600" : "text-red-600"
+                                                }`}
+                                            >
+                                                {transaction.direction === "CREDIT" ? "+" : "-"}
+                                                {(transaction.pointAmount || 0).toLocaleString()} P
                                             </td>
+
+                                            {/* 설명 */}
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {transaction.description || transaction.transactionType || '포인트 거래'}
+                                                {transaction.description || typeLabelMap[transaction.transactionType] || "포인트 거래"}
                                             </td>
+
+                                            {/* 일시 */}
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : '-'}
+                                                {transaction.createdAt
+                                                    ? new Date(transaction.createdAt).toLocaleString()
+                                                    : "-"}
                                             </td>
                                         </tr>
                                     ))}
