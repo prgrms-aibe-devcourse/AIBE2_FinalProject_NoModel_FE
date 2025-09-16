@@ -50,6 +50,7 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
   const [isAnimating, setIsAnimating] = useState(false);
   const suggestionTimeoutRef = useRef<NodeJS.Timeout>();
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // 자동완성 검색
   const fetchSuggestions = useCallback(async (prefix: string) => {
@@ -68,7 +69,7 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
     try {
       const response = await getModelNameSuggestions(prefix);
       if (response.success) {
-        setSuggestions(response.response.slice(0, 5)); // 최대 5개만
+        setSuggestions(response.response.slice(0, 10)); // 최대 10개
         setShowSuggestions(true);
       }
     } catch (error) {
@@ -106,6 +107,20 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
       }
     };
   }, [filters.keyword, fetchSuggestions]);
+
+  // 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleKeywordChange = (keyword: string) => {
     onFiltersChange({ ...filters, keyword });
@@ -269,7 +284,7 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
 
       {/* 검색 입력 */}
       <div className="flex gap-3 items-center">
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" ref={searchContainerRef}>
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           <Input
             placeholder="모델명, 설명으로 검색... (Enter로 검색)"
@@ -280,10 +295,6 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
               if (suggestions.length > 0 && filters.keyword.trim().length >= 2) {
                 setShowSuggestions(true);
               }
-            }}
-            onBlur={() => {
-              // 부드러운 사라짐을 위한 지연
-              setTimeout(() => setShowSuggestions(false), 150);
             }}
             className="pl-10 h-12"
           />
@@ -296,26 +307,42 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
                 : 'opacity-0 -translate-y-2 pointer-events-none'
             }`}
           >
-            <div className="bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-              {suggestions.map((suggestion, index) => (
-                <div
-                  key={index}
-                  className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${
-                    showSuggestions
-                      ? 'opacity-100 translate-y-0'
-                      : 'opacity-0 translate-y-1'
-                  }`}
-                  style={{
-                    transitionDelay: showSuggestions ? `${index * 50}ms` : '0ms'
-                  }}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                >
-                  <div className="flex items-center gap-3">
-                    <Search className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium text-sm text-gray-800">{suggestion}</span>
+            <div className="bg-white border rounded-lg shadow-lg">
+              {/* 3개 항목 표시하는 스크롤 가능한 컨테이너 */}
+              <div
+                className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+                style={{ maxHeight: '180px' }} // 3개 항목 높이 (60px * 3)
+              >
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${
+                      showSuggestions
+                        ? 'opacity-100 translate-y-0'
+                        : 'opacity-0 translate-y-1'
+                    }`}
+                    style={{
+                      transitionDelay: showSuggestions ? `${Math.min(index, 2) * 50}ms` : '0ms',
+                      minHeight: '60px'
+                    }}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium text-sm text-gray-800">{suggestion}</span>
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* 스크롤 힌트 (4개 이상일 때만 표시) */}
+              {suggestions.length > 3 && (
+                <div className="px-4 py-2 bg-gray-50 border-t text-center">
+                  <span className="text-xs text-gray-500">
+                    {suggestions.length}개 결과 • 스크롤하여 더 보기
+                  </span>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -331,7 +358,9 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
         className="transition-all duration-300 ease-out"
         style={{
           height: showSuggestions && suggestions.length > 0
-            ? Math.min(suggestions.length * 60, 240) + 'px'
+            ? suggestions.length > 3
+              ? '220px' // 3개 항목 + 스크롤 힌트 영역 (180px + 40px)
+              : `${suggestions.length * 60}px` // 실제 항목 수만큼
             : '0px'
         }}
       />
