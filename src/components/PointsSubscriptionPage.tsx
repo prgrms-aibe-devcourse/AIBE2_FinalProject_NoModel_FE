@@ -271,7 +271,7 @@ export default function PointsSubscriptionPage({
                             credentials: "include",
                             body: JSON.stringify({
                                 points: selectedPointOption.points,
-                                amount: selectedPointOption.price,
+                                amount: selectedPointOption.points,
                                 paymentMethod: "KAKAO",
                                 impUid: rsp.imp_uid,
                                 merchantUid: rsp.merchant_uid,
