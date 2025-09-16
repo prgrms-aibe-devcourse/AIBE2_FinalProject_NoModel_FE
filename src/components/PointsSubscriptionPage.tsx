@@ -69,6 +69,7 @@ export default function PointsSubscriptionPage({
     const typeLabelMap: Record<string, string> = {
         PURCHASE: "포인트 구매",
         CHARGE: "포인트 충전",
+        USE: "포인트 사용",
         REWARD: "리뷰 보상",
         COMMISSION: "수수료 수익",
         BONUS: "보너스",
