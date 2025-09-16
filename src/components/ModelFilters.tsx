@@ -4,7 +4,7 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import {
-  Search, Filter, Crown, User, X, ChevronDown
+  Search, Filter, Crown, User, X, ChevronDown, Coins
 } from 'lucide-react';
 import { getModelNameSuggestions } from '../services/modelApi';
 
@@ -129,6 +129,39 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* 활성 필터 표시 */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-gray-600">활성 필터:</span>
+
+          {filters.keyword && (
+            <Badge variant="secondary" className="gap-1">
+              검색: "{filters.keyword}"
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-red-500"
+                onClick={() => handleKeywordChange('')}
+              />
+            </Badge>
+          )}
+
+          {filters.modelType !== 'ALL' && (
+            <Badge variant="secondary" className="gap-1">
+              {selectedTypeOption?.label}
+              <X
+                className="h-3 w-3 cursor-pointer hover:text-red-500"
+                onClick={() => handleModelTypeChange('ALL')}
+              />
+            </Badge>
+          )}
+
+          {/* 전체 초기화 버튼 */}
+          <Button variant="outline" onClick={clearFilters} className="h-7 px-3 text-xs">
+            <X className="h-3 w-3 mr-1" />
+            전체 초기화
+          </Button>
+        </div>
+      )}
+
       {/* 검색 및 필터 컨트롤 */}
       <div className="flex gap-3 items-center">
         {/* 검색 입력 */}
@@ -150,7 +183,7 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
 
           {/* 자동완성 드롭다운 - 검색창 바로 아래에 절대 위치 */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 z-[60] mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
@@ -201,40 +234,28 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
           검색
         </Button>
 
-        {/* 필터 초기화 버튼 */}
-        {hasActiveFilters && (
-          <Button variant="outline" onClick={clearFilters} className="h-12 px-4">
-            <X className="h-4 w-4 mr-2" />
-            초기화
-          </Button>
+        {/* 보유 코인 표시 */}
+        {userProfile && typeof userProfile.points === 'number' && (
+          <Badge
+            variant="secondary"
+            className="flex items-center gap-2 px-3 py-1.5 h-12 shrink-0"
+            style={{
+              backgroundColor: '#FFF7ED',
+              borderColor: '#FED7AA',
+              color: '#C2410C'
+            }}
+          >
+            <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
+            <span className="text-sm font-semibold" style={{ color: '#F97316' }}>
+              {userProfile.points.toLocaleString()}P
+            </span>
+          </Badge>
         )}
       </div>
 
-      {/* 활성 필터 표시 */}
-      {hasActiveFilters && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-gray-600">활성 필터:</span>
-
-          {filters.keyword && (
-            <Badge variant="secondary" className="gap-1">
-              검색: "{filters.keyword}"
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => handleKeywordChange('')}
-              />
-            </Badge>
-          )}
-
-          {filters.modelType !== 'ALL' && (
-            <Badge variant="secondary" className="gap-1">
-              {selectedTypeOption?.label}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => handleModelTypeChange('ALL')}
-              />
-            </Badge>
-          )}
-        </div>
+      {/* 자동완성으로 인한 레이아웃 시프트 방지 */}
+      {showSuggestions && suggestions.length > 0 && (
+        <div style={{ height: Math.min(suggestions.length * 60, 240) + 'px' }} />
       )}
 
       {/* 사용자 알림 */}

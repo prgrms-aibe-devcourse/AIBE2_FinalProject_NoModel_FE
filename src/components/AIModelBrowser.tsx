@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from './ui/skeleton';
 import {
   Star, Download, MoreHorizontal, Flag,
-  AlertCircle, Loader2, Crown, Eye, Coins
+  AlertCircle, Loader2, Crown, Eye
 } from 'lucide-react';
 import {
   searchModelsWithFilters,
@@ -350,22 +350,6 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
       <div className="text-sm text-gray-600">
         {searchState.totalElements > 0 && (
           <span>총 {searchState.totalElements.toLocaleString()}개의 모델</span>
-        )}
-        {userProfile && typeof userProfile.points === 'number' && (
-          <Badge
-            variant="secondary"
-            className="ml-4 flex items-center gap-2 px-3 py-1.5"
-            style={{
-              backgroundColor: '#FFF7ED',
-              borderColor: '#FED7AA',
-              color: '#C2410C'
-            }}
-          >
-            <Coins className="w-4 h-4" style={{ color: '#F97316' }} />
-            <span className="text-sm font-semibold" style={{ color: '#F97316' }}>
-              {userProfile.points.toLocaleString()}P
-            </span>
-          </Badge>
         )}
       </div>
 
