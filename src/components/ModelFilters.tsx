@@ -18,7 +18,7 @@ interface ModelFiltersProps {
   filters: ModelFilters;
   onFiltersChange: (filters: ModelFilters) => void;
   onSearch: () => void;
-  userProfile?: { id: string | number } | null;
+  userProfile?: { id: string | number; points?: number } | null;
   className?: string;
   onSuggestionSelect?: (suggestion: string) => void;
 }
@@ -40,13 +40,21 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
   // 자동완성 상태
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const suggestionTimeoutRef = useRef<NodeJS.Timeout>();
+  const animationTimeoutRef = useRef<NodeJS.Timeout>();
 
   // 자동완성 검색
   const fetchSuggestions = useCallback(async (prefix: string) => {
     if (prefix.length < 2) {
-      setSuggestions([]);
       setShowSuggestions(false);
+      // 애니메이션 후 suggestions 클리어
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      animationTimeoutRef.current = setTimeout(() => {
+        setSuggestions([]);
+      }, 300);
       return;
     }
 
@@ -72,13 +80,22 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
         fetchSuggestions(filters.keyword);
       }, 300);
     } else {
-      setSuggestions([]);
       setShowSuggestions(false);
+      // 애니메이션 후 suggestions 클리어
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+      animationTimeoutRef.current = setTimeout(() => {
+        setSuggestions([]);
+      }, 300);
     }
 
     return () => {
       if (suggestionTimeoutRef.current) {
         clearTimeout(suggestionTimeoutRef.current);
+      }
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
       }
     };
   }, [filters.keyword, fetchSuggestions]);
@@ -173,21 +190,37 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
             onChange={(e) => handleKeywordChange(e.target.value)}
             onKeyPress={handleKeyPress}
             onFocus={() => {
-              if (suggestions.length > 0) {
+              if (suggestions.length > 0 && filters.keyword.trim().length >= 2) {
                 setShowSuggestions(true);
               }
             }}
-            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            onBlur={() => {
+              // 부드러운 사라짐을 위한 지연
+              setTimeout(() => setShowSuggestions(false), 150);
+            }}
             className="pl-10 h-12"
           />
 
           {/* 자동완성 드롭다운 - 검색창 바로 아래에 절대 위치 */}
-          {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute top-full left-0 right-0 z-[60] mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+          <div
+            className={`absolute top-full left-0 right-0 z-[60] mt-1 overflow-hidden transition-all duration-300 ease-out ${
+              showSuggestions && suggestions.length > 0
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 -translate-y-2 pointer-events-none'
+            }`}
+          >
+            <div className="bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto">
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-colors"
+                  className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 transition-all duration-200 ${
+                    showSuggestions
+                      ? 'opacity-100 translate-y-0'
+                      : 'opacity-0 translate-y-1'
+                  }`}
+                  style={{
+                    transitionDelay: showSuggestions ? `${index * 50}ms` : '0ms'
+                  }}
                   onClick={() => handleSuggestionClick(suggestion)}
                 >
                   <div className="flex items-center gap-3">
@@ -197,7 +230,7 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
                 </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
 
         {/* 모델 타입 드롭다운 */}
@@ -254,9 +287,14 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
       </div>
 
       {/* 자동완성으로 인한 레이아웃 시프트 방지 */}
-      {showSuggestions && suggestions.length > 0 && (
-        <div style={{ height: Math.min(suggestions.length * 60, 240) + 'px' }} />
-      )}
+      <div
+        className="transition-all duration-300 ease-out"
+        style={{
+          height: showSuggestions && suggestions.length > 0
+            ? Math.min(suggestions.length * 60, 240) + 'px'
+            : '0px'
+        }}
+      />
 
       {/* 사용자 알림 */}
       {filters.modelType === 'USER' && !userProfile && (
