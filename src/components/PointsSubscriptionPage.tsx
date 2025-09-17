@@ -4,6 +4,13 @@ import { Button } from "./ui/button";
 import { NavigationBar } from "./NavigationBar";
 import { UserProfile } from "../App";
 
+// ✅ PortOne SDK 타입 선언
+declare global {
+    interface Window {
+        IMP: any;
+    }
+}
+
 interface SubscriptionPlan {
     id: number;
     planType: string;
@@ -30,6 +37,7 @@ interface PointsSubscriptionPageProps {
     onMyPage: () => void;
     onAdmin?: () => void;
     onPointsSubscription?: () => void;
+    onPointBalanceUpdate: (newBalance: number) => void; // 포인트 잔액 업데이트 콜백 다시 추가
 }
 
 export default function PointsSubscriptionPage({
@@ -42,6 +50,7 @@ export default function PointsSubscriptionPage({
                                                    onMyPage,
                                                    onAdmin,
                                                    onPointsSubscription,
+                                                   onPointBalanceUpdate, // 콜백을 props로 받기
                                                }: PointsSubscriptionPageProps) {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
@@ -53,6 +62,35 @@ export default function PointsSubscriptionPage({
         "charge" | "subscription" | "history"
     >("subscription");
 
+    // 포인트 충전 관련 상태 추가
+    const [pointBalance, setPointBalance] = useState<number>(0);
+    const [pointTransactions, setPointTransactions] = useState<any[]>([]); // 포인트 거래 내역 상태 다시 추가
+
+    const typeLabelMap: Record<string, string> = {
+        PURCHASE: "포인트 구매",
+        CHARGE: "포인트 충전",
+        USE: "포인트 사용",
+        REWARD: "리뷰 보상",
+        COMMISSION: "수수료 수익",
+        BONUS: "보너스",
+        REFUND: "환불",
+        MODEL_USAGE: "모델 사용료",
+        WITHDRAWAL: "출금",
+        EXPIRY: "만료",
+    };
+
+    // 포인트 충전 옵션 정의
+    const pointOptions = [
+        { points: 100, price: 3000 },
+        { points: 500, price: 15000 },
+        { points: 1000, price: 30000 },
+        { points: 5000, price: 150000 },
+    ];
+    const [selectedPointOption, setSelectedPointOption] = useState<{
+        points: number;
+        price: number;
+    } | null>(null);
+
     // subscriptionId → planType 매핑
     const planTypeMap: Record<number, string> = {
         1: "FREE",
@@ -62,8 +100,10 @@ export default function PointsSubscriptionPage({
 
     // ✅ 구독 현황 + 구독 플랜 목록 불러오기 함수
     const loadSubscriptions = () => {
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+
         // 구독 현황 조회
-        fetch("http://localhost:8080/api/subscriptions", {
+        fetch(`${apiBase}/subscriptions`, {
             method: "GET",
             credentials: "include",
         })
@@ -72,7 +112,7 @@ export default function PointsSubscriptionPage({
             .catch(() => setCurrentSubscription(null));
 
         // 구독 플랜 목록 조회
-        fetch("http://localhost:8080/api/subscriptions/plans", {
+        fetch(`${apiBase}/subscriptions/plans`, {
             method: "GET",
             credentials: "include",
         })
@@ -81,16 +121,70 @@ export default function PointsSubscriptionPage({
             .catch(() => setPlans([]));
     };
 
+    // 포인트 잔액 조회 함수 (availablePoints 기준)
+    const loadPointBalance = React.useCallback(() => {
+        if (!userProfile) {
+            setPointBalance(0);
+            return;
+        }
+        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/points/balance`, {
+            method: "GET",
+            credentials: "include",
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error("포인트 잔액 조회 실패");
+                }
+                return res.json();
+            })
+            .then((data) => {
+                console.log("포인트 잔액 응답:", data);
+                // ✅ 응답 구조: { success, response: { availablePoints, ... }, error }
+                const newBalance = data.availablePoints ?? 0;
+                setPointBalance(newBalance);
+                onPointBalanceUpdate(newBalance); // 상위 컴포넌트에 업데이트된 잔액 전달
+            })
+            .catch((error) => {
+                console.error("포인트 잔액 조회 실패:", error);
+                setPointBalance(0);
+            });
+    }, [userProfile?.id, onPointBalanceUpdate]); // userProfile.id와 onPointBalanceUpdate를 의존성으로 추가
+
+
+    // 포인트 거래 내역 조회 함수
+    const loadPointTransactions = React.useCallback(() => {
+        if (!userProfile) {
+            setPointTransactions([]);
+            return;
+        }
+        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/points/transactions?page=0&size=100`, {
+            method: "GET",
+            credentials: "include",
+        })
+            .then((res) => {
+                if (!res.ok) {
+                    throw new Error('거래 내역 조회 실패');
+                }
+                return res.json();
+            })
+            .then((data) => {
+                console.log('거래 내역 응답:', data);
+                setPointTransactions(data.content || data || []);
+            })
+            .catch((error) => {
+                console.error("포인트 거래 내역 조회 실패:", error);
+                setPointTransactions([]);
+            });
+    }, [userProfile?.id]); // userProfile.id를 의존성으로 추가
+
     useEffect(() => {
         loadSubscriptions();
-    }, []);
-
-    // ✅ PortOne SDK 타입 선언
-    declare global {
-        interface Window {
-            IMP: any;
+        // 로그인 상태일 때 포인트 잔액 로드
+        if (userProfile?.id) { // userProfile?.id를 확인하여 유효한 사용자일 때만 API 호출
+            loadPointBalance();
+            loadPointTransactions();
         }
-    }
+    }, [userProfile?.id, loadPointBalance, loadPointTransactions]); // userProfile.id를 의존성으로 추가
 
     // ✅ 구독 신청
     const handleSubscribe = async () => {
@@ -114,7 +208,7 @@ export default function PointsSubscriptionPage({
 
         // ✅ 0원 플랜은 PG 거치지 않고 바로 백엔드에 등록
         if (selectedPlan.price === 0) {
-            const response = await fetch("http://localhost:8080/api/subscriptions", {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -138,11 +232,16 @@ export default function PointsSubscriptionPage({
         }
 
         const IMP = window.IMP;
-        IMP.init("imp57477065"); // 본인 PortOne 가맹점 식별코드
+        if (!IMP) {
+            alert("❌ 결제 시스템 로딩 실패. 페이지를 새로고침해주세요.");
+            return;
+        }
+
+        IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
 
         IMP.request_pay(
             {
-                pg: "kakaopay.TC0ONETIME", // ✅ 카카오페이 테스트
+                pg: import.meta.env.VITE_KAKAO_PG_CODE || "kakaopay.TC0ONETIME",
                 pay_method: "card",
                 merchant_uid: `order_${Date.now()}`,
                 name: `${selectedPlan.planType} 구독`,
@@ -153,7 +252,7 @@ export default function PointsSubscriptionPage({
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    const response = await fetch("http://localhost:8080/api/subscriptions", {
+                    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
@@ -180,10 +279,77 @@ export default function PointsSubscriptionPage({
         );
     };
 
+    // ✅ 포인트 충전
+    const handleChargePoints = async () => {
+        if (!userProfile) {
+            alert("❌ 로그인이 필요합니다.");
+            onLogin();
+            return;
+        }
+
+        if (!selectedPointOption) {
+            alert("❌ 충전할 포인트를 선택해주세요.");
+            return;
+        }
+
+        const buyerName = userProfile.name || userProfile.email.split('@')[0];
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+
+        const IMP = window.IMP;
+        if (!IMP) {
+            alert("❌ 결제 시스템 로딩 실패. 페이지를 새로고침해주세요.");
+            return;
+        }
+
+        IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
+
+        const merchantUid = `points_${Date.now()}`; // ✅ 프론트에서 직접 생성
+
+        IMP.request_pay(
+            {
+                pg: import.meta.env.VITE_KAKAO_PG_CODE || "kakaopay.TC0ONETIME",
+                pay_method: "card",
+                merchant_uid: merchantUid,
+                name: `포인트 ${selectedPointOption.points}P 충전`,
+                amount: selectedPointOption.price,
+                buyer_email: userProfile.email,
+                buyer_name: buyerName,
+            },
+            async (rsp: any) => {
+                if (rsp.success) {
+                    // 2. 결제 검증 및 포인트 충전 (백엔드)
+                    const verifyResponse = await fetch(`${apiBase}/points/payment/verify`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                            impUid: rsp.imp_uid,
+                            merchantUid: rsp.merchant_uid,
+                        }),
+                    });
+
+                    if (verifyResponse.ok) {
+                        alert(`✅ ${selectedPointOption.points}P 포인트 충전 성공!`);
+                        loadPointBalance();
+                        loadPointTransactions();
+                    } else {
+                        const errorData = await verifyResponse.json().catch(() => ({}));
+                        console.error("포인트 검증 및 충전 백엔드 오류:", errorData);
+                        alert("❌ 포인트 충전 실패: " + (errorData.message || verifyResponse.statusText || "서버 오류"));
+                    }
+                } else {
+                    alert("❌ 결제 실패: " + rsp.error_msg);
+                }
+            }
+        );
+    };
+
+
+
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
         const response = await fetch(
-            "http://localhost:8080/api/subscriptions?reason=USER_REQUESTED",
+            `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions?reason=USER_REQUESTED`,
             {
                 method: "DELETE",
                 credentials: "include",
@@ -213,7 +379,7 @@ export default function PointsSubscriptionPage({
                 onMarketplace={onMarketplace}
                 onMyPage={onMyPage}
                 onAdmin={onAdmin}
-                isAdmin={userProfile?.isAdmin}
+                isAdmin={userProfile?.role === "ADMIN"}
                 onHome={onMyPage}
                 isLoggedIn={!!userProfile}
                 isLandingPage={false}
@@ -229,7 +395,7 @@ export default function PointsSubscriptionPage({
                         <div>
                             <p className="text-sm text-gray-500">보유 포인트</p>
                             <p className="text-xl font-bold text-primary">
-                                {userProfile.points.toLocaleString()} P
+                                {pointBalance.toLocaleString()} P
                             </p>
                         </div>
                         <div>
@@ -239,10 +405,11 @@ export default function PointsSubscriptionPage({
                                     <p className="text-xl font-bold text-green-600">
                                         {planTypeMap[currentSubscription.subscriptionId] || "미구독"}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">
-                                        만료일:{" "}
-                                        {new Date(currentSubscription.expiresAt).toLocaleDateString()}
-                                    </p>
+                                    {currentSubscription.expiresAt && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            만료일: {new Date(currentSubscription.expiresAt).toLocaleDateString()}
+                                        </p>
+                                    )}
                                     {currentSubscription.status === "ACTIVE" && (
                                         <div className="mt-4 text-right">
                                             <Button
@@ -258,6 +425,7 @@ export default function PointsSubscriptionPage({
                             ) : (
                                 <p className="text-xl font-bold text-gray-400">미구독</p>
                             )}
+
                         </div>
                     </div>
                 )}
@@ -322,14 +490,92 @@ export default function PointsSubscriptionPage({
                 {activeTab === "charge" && (
                     <div className="p-4 border rounded-lg shadow">
                         <h2 className="font-bold text-lg mb-4">포인트 충전</h2>
-                        <p>포인트 충전 기능이 여기에 들어갑니다.</p>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            {pointOptions.map((option) => (
+                                <div
+                                    key={option.points}
+                                    className={`p-4 border rounded-lg shadow cursor-pointer text-center
+                                    ${
+                                        selectedPointOption?.points === option.points
+                                            ? "border-primary bg-primary-foreground"
+                                            : "border-gray-200 bg-white"
+                                    }`}
+                                    onClick={() => setSelectedPointOption(option)}
+                                >
+                                    <p className="text-2xl font-bold text-primary">{option.points} P</p>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        {option.price.toLocaleString()} 원
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mb-4 p-4 border rounded-lg bg-gray-50">
+                            <p className="text-sm text-gray-500">선택된 결제 수단</p>
+                            <p className="text-lg font-bold">카카오페이</p>
+                        </div>
+                        <Button
+                            onClick={handleChargePoints}
+                            className="w-full px-6 py-2"
+                            disabled={!selectedPointOption}
+                        >
+                            {selectedPointOption
+                                ? `${selectedPointOption.points}P 충전하기 (${selectedPointOption.price.toLocaleString()}원)`
+                                : "포인트를 선택해주세요"}
+                        </Button>
                     </div>
                 )}
 
                 {activeTab === "history" && (
                     <div className="p-4 border rounded-lg shadow">
-                        <h2 className="font-bold text-lg mb-4">사용 내역</h2>
-                        <p>포인트 사용 내역이 여기에 들어갑니다.</p>
+                        <h2 className="font-bold text-lg mb-4">포인트 사용 내역</h2>
+                        {pointTransactions.length === 0 ? (
+                            <p className="text-gray-500">거래 내역이 없습니다.</p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">타입</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">금액</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">설명</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">일시</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                    {pointTransactions.map((transaction, index) => (
+                                        <tr key={index}>
+                                            {/* 거래 타입 */}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {typeLabelMap[transaction.transactionType] || "기타"}
+                                            </td>
+
+                                            {/* 금액 (direction 기반 + / - 표시) */}
+                                            <td
+                                                className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
+                                                    transaction.direction === "CREDIT" ? "text-green-600" : "text-red-600"
+                                                }`}
+                                            >
+                                                {transaction.direction === "CREDIT" ? "+" : "-"}
+                                                {(transaction.pointAmount || 0).toLocaleString()} P
+                                            </td>
+
+                                            {/* 설명 */}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {transaction.description || typeLabelMap[transaction.transactionType] || "포인트 거래"}
+                                            </td>
+
+                                            {/* 일시 */}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {transaction.createdAt
+                                                    ? new Date(transaction.createdAt).toLocaleString()
+                                                    : "-"}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 )}
 

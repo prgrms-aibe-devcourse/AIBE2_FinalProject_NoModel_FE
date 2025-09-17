@@ -560,6 +560,15 @@ export default function App() {
       )
     );
   };
+  
+      const handlePointBalanceUpdate = React.useCallback((newBalance: number) => {
+        setUserProfile(prevProfile => {
+          if (prevProfile) {
+            return { ...prevProfile, points: newBalance };
+          }
+          return prevProfile;
+        });
+      }, []);
 
   return (
     <div 
@@ -773,6 +782,7 @@ export default function App() {
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
           onPointsSubscription={() => handleStageChange('pointsSubscription')}
+          onPointBalanceUpdate={handlePointBalanceUpdate}
         />
       )}
     </div>
