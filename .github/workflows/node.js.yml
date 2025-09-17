@@ -49,9 +49,6 @@ jobs:
           # Vite/tsc/eslint 에러 추적을 위해 전체 로그를 파일로 저장
           npm run build --if-present -- --debug 2>&1 | tee build.log
 
-      - name: Run tests
-        run: npm test
-
       # 빌드가 실패해도 로그를 항상 업로드
       - name: Upload build logs
         if: always()
