@@ -9,11 +9,10 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
-import { DynamicFontSize } from './common/DynamicFontSize';
-import { 
-  ArrowLeft, Sparkles, Search, Plus, MoreHorizontal, Eye, Edit, 
-  TrendingUp, Users, Coins, Calendar, Award, BarChart3,
-  Globe, EyeOff, DollarSign, Activity, Clock, Star, Filter
+import {
+  Search, MoreHorizontal, Eye, Edit,
+  Users, Coins, BarChart3,
+  Globe, EyeOff, DollarSign, Activity, Star, Filter
 } from 'lucide-react';
 import { UserProfile, UserModel, PointTransaction } from '../App';
 
@@ -248,64 +247,17 @@ export function MyModels({
         onAdmin={onAdmin}
         isAdmin={userProfile?.role === 'ADMIN'}
         onHome={onBack}
+        onBack={onBack}
+        showBackButton={true}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
         onPointsSubscription={onPointsSubscription}
+        userPoints={userProfile?.points}
         currentPage="other"
       />
 
-      {/* Sub Header */}
-      <div className="linear-header border-b" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-        <div className="linear-container h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="flex items-center gap-2"
-              style={{
-                color: 'var(--color-text-secondary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              뒤로 가기
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {userProfile && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-                <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-                <DynamicFontSize
-                  text={`${userProfile.points.toLocaleString()}P`}
-                  baseSize="var(--font-size-small)"
-                  maxWidth="80px"
-                  minSize="10px"
-                  style={{
-                    color: 'var(--color-text-primary)',
-                    fontWeight: 'var(--font-weight-medium)'
-                  }}
-                />
-              </div>
-            )}
-            <Button 
-              onClick={onCreateModel}
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                color: 'var(--color-utility-white)',
-                borderRadius: 'var(--radius-8)',
-                border: 'none'
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              새 모델 생성
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <main className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="page-container">
         {/* Page Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-6">
@@ -621,15 +573,6 @@ export function MyModels({
                   </div>
                 </div>
 
-                {/* Create Model Button */}
-                <Button 
-                  onClick={onCreateModel}
-                  className="h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  style={{ borderRadius: 'var(--radius-8)' }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  새 모델 만들기
-                </Button>
               </div>
             </div>
 
@@ -650,23 +593,12 @@ export function MyModels({
                 >
                   모델이 없습니다
                 </h3>
-                <p 
+                <p
                   className="mb-4"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
-                  첫 번째 AI 모델을 생성해보세요
+                  상단의 "모델 제작" 버튼을 클릭해서 첫 번째 AI 모델을 생성해보세요
                 </p>
-                <Button 
-                  onClick={onCreateModel}
-                  style={{
-                    backgroundColor: 'var(--color-brand-primary)',
-                    color: 'var(--color-utility-white)',
-                    borderRadius: 'var(--radius-8)'
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  모델 생성하기
-                </Button>
               </div>
             ) : (
               <div className="grid gap-6">

@@ -6,10 +6,11 @@ import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { NavigationBar } from './NavigationBar';
-import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome, Github, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome as ChromeIcon, Github as GithubIcon } from 'lucide-react';
 import { authService } from '../services/auth';
 import type { LoginRequest } from '../types/auth';
 import { TermsModal } from './common/TermsModal';
+import { ErrorModal } from './common/ErrorModal';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -27,13 +28,13 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
     
     try {
@@ -43,7 +44,8 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
       };
 
       const result = await authService.login(loginData);
-      
+      console.log('Login result:', result); // 디버깅용 로그
+
       if (result.success) {
         // Get user profile after successful login
         try {
@@ -55,11 +57,16 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
           onLoginSuccess();
         }
       } else {
-        setError(result.error || '로그인에 실패했습니다.');
+        // Show error in modal
+        // error는 객체 형태: { status, errorCode, message, timestamp }
+        const errorMessage = result.error?.message || '로그인에 실패했습니다.';
+        setErrorModalMessage(errorMessage);
+        setShowErrorModal(true);
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+      setErrorModalMessage('네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +113,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialLogin('google')}
               >
-                <Chrome className="w-5 h-5 mr-3" />
+                <ChromeIcon className="w-5 h-5 mr-3" />
                 Google로 계속하기
               </Button>
               
@@ -115,7 +122,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialLogin('github')}
               >
-                <Github className="w-5 h-5 mr-3" />
+                <GithubIcon className="w-5 h-5 mr-3" />
                 GitHub로 계속하기
               </Button>
             </div>
@@ -128,14 +135,6 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 </span>
               </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                <p className="text-sm text-destructive">{error}</p>
-              </div>
-            )}
 
             {/* Email Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -277,6 +276,16 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
         isOpen={showPrivacy}
         onClose={() => setShowPrivacy(false)}
         type="privacy"
+      />
+
+      {/* Error Modal for Login Failures */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="로그인 실패"
+        message={errorModalMessage}
+        buttonText="확인"
+        type="error"
       />
     </div>
   );

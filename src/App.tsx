@@ -148,6 +148,7 @@ export interface UserProfile {
   role: 'USER' | 'ADMIN';
   modelCount: number;
   projectCount: number;
+  isFirstLogin?: boolean; // 응답 바디에서 가져온 최초 로그인 여부
 }
 
 export interface ModelReport {
@@ -293,8 +294,17 @@ export default function App() {
           if (profileData.success) {
             setUserProfile(profileData.response);
             setIsLoggedIn(true);
-            setCurrentStage('mypage');
-            console.log('✅ 인증 성공: 사용자 프로필 로드됨', profileData.response);
+            
+            // JWT Claims의 isFirstLogin을 확인하여 페이지 이동 결정
+            if (profileData.response.isFirstLogin === false) {
+              // 최초 로그인이 아니면 바로 마이 페이지로 이동
+              setCurrentStage('mypage');
+              console.log('✅ 기존 사용자 인증 성공: 마이 페이지로 이동', profileData.response);
+            } else {
+              // 최초 로그인이면 온보딩으로 이동
+              setCurrentStage('onboarding');
+              console.log('✅ 최초 로그인 사용자 인증 성공: 온보딩으로 이동', profileData.response);
+            }
           } else {
             // 서버에서 프로필 가져오기 실패 시 로그아웃
             console.log('❌ 인증 실패: 서버에서 프로필을 가져올 수 없음', profileData);
@@ -377,7 +387,17 @@ export default function App() {
       if (profileData.success) {
         setUserProfile(profileData.response);
         setIsLoggedIn(true);
-        setCurrentStage('onboarding');
+        
+        // JWT Claims의 isFirstLogin을 확인하여 페이지 이동 결정
+        if (profileData.response.isFirstLogin === false) {
+          // 최초 로그인이 아니면 바로 마이 페이지로 이동
+          setCurrentStage('mypage');
+          console.log('🔄 기존 사용자 로그인: 마이 페이지로 이동');
+        } else {
+          // 최초 로그인이거나 정보가 없으면 온보딩으로 이동
+          setCurrentStage('onboarding');
+          console.log('🆕 최초 로그인: 온보딩으로 이동');
+        }
       } else {
         console.error('Failed to get user profile:', profileData.error);
         // Still proceed with basic login
@@ -385,7 +405,12 @@ export default function App() {
         if (storedUserInfo) {
           setUserProfile(storedUserInfo);
           setIsLoggedIn(true);
-          setCurrentStage('onboarding');
+          // 저장된 정보에서 isFirstLogin 확인
+          if (storedUserInfo.isFirstLogin === false) {
+            setCurrentStage('mypage');
+          } else {
+            setCurrentStage('onboarding');
+          }
         }
       }
     } catch (error) {
@@ -658,7 +683,6 @@ export default function App() {
           projects={projects}
           onProjectSelect={handleProjectSelect}
           onNewProject={() => handleStageChange('onboarding')}
-          onProfileSettings={() => handleStageChange('profile')}
           onMyModels={() => handleStageChange('myModels')}
           onCreateModel={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}

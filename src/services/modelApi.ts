@@ -20,18 +20,19 @@ import { AxiosError } from 'axios';
 /**
  * AI 모델 통합 검색 API
  */
-export const searchModels = async (params: ModelSearchParams): Promise<ModelSearchResponse> => {
+export const searchModels = async (params: ModelSearchParams & { isFree?: boolean }): Promise<ModelSearchResponse> => {
   try {
     const searchParams = new URLSearchParams();
-    
+
     searchParams.append('keyword', params.keyword); // 필수 파라미터
     if (params.page !== undefined) searchParams.append('page', params.page.toString());
     if (params.size !== undefined) searchParams.append('size', params.size.toString());
+    if (params.isFree !== undefined) searchParams.append('isFree', params.isFree.toString());
 
     const response = await GetAxiosInstance<ModelSearchResponse>(
       `/models/search?${searchParams.toString()}`
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('모델 검색 API 에러:', error);
@@ -40,14 +41,85 @@ export const searchModels = async (params: ModelSearchParams): Promise<ModelSear
 };
 
 /**
+ * 필터 기반 통합 모델 검색 API
+ */
+export interface FilteredSearchParams {
+  keyword?: string;
+  modelType: 'ALL' | 'ADMIN' | 'USER';
+  priceType?: 'ALL' | 'FREE' | 'PAID';
+  page?: number;
+  size?: number;
+}
+
+export const searchModelsWithFilters = async (params: FilteredSearchParams): Promise<ModelSearchResponse> => {
+  try {
+    const { modelType, keyword, priceType, page = 0, size = 20 } = params;
+
+    // 가격 필터를 isFree 파라미터로 변환
+    const isFree = priceType === 'FREE' ? true : priceType === 'PAID' ? false : undefined;
+
+    switch (modelType) {
+      case 'ADMIN':
+        if (keyword) {
+          // 관리자 모델에서 키워드 검색
+          const searchParams = new URLSearchParams();
+          searchParams.append('keyword', keyword);
+          if (page !== undefined) searchParams.append('page', page.toString());
+          if (size !== undefined) searchParams.append('size', size.toString());
+          if (isFree !== undefined) searchParams.append('isFree', isFree.toString());
+
+          const response = await GetAxiosInstance<ModelSearchResponse>(
+            `/models/search/admin?${searchParams.toString()}`
+          );
+          return response.data;
+        } else {
+          // 전체 관리자 모델 조회
+          return await getAdminModels({ page, size, isFree });
+        }
+
+      case 'USER':
+        // 내 모델 검색 - 인증을 통해 사용자 ID 자동 가져옴
+        const userSearchParams = new URLSearchParams();
+        if (keyword) userSearchParams.append('keyword', keyword);
+        if (page !== undefined) userSearchParams.append('page', page.toString());
+        if (size !== undefined) userSearchParams.append('size', size.toString());
+        if (isFree !== undefined) userSearchParams.append('isFree', isFree.toString());
+
+        const userResponse = await GetAxiosInstance<ModelSearchResponse>(
+          `/models/search/my-models?${userSearchParams.toString()}`
+        );
+        return userResponse.data;
+
+      case 'ALL':
+      default:
+        // 전체 모델 검색 - 통합 검색 API 사용
+        const searchParams = new URLSearchParams();
+        if (keyword) searchParams.append('keyword', keyword);
+        if (page !== undefined) searchParams.append('page', page.toString());
+        if (size !== undefined) searchParams.append('size', size.toString());
+        if (isFree !== undefined) searchParams.append('isFree', isFree.toString());
+
+        const response = await GetAxiosInstance<ModelSearchResponse>(
+          `/models/search?${searchParams.toString()}`
+        );
+        return response.data;
+    }
+  } catch (error) {
+    console.error('필터 기반 검색 API 에러:', error);
+    throw error;
+  }
+};
+
+/**
  * 관리자 모델 목록 조회 API
  */
-export const getAdminModels = async (params: AdminModelParams = {}): Promise<ModelSearchResponse> => {
+export const getAdminModels = async (params: AdminModelParams & { isFree?: boolean } = {}): Promise<ModelSearchResponse> => {
   try {
     const searchParams = new URLSearchParams();
-    
+
     if (params.page !== undefined) searchParams.append('page', params.page.toString());
     if (params.size !== undefined) searchParams.append('size', params.size.toString());
+    if (params.isFree !== undefined) searchParams.append('isFree', params.isFree.toString());
 
     const response = await GetAxiosInstance<ModelSearchResponse>(
       `/models/search/admin?${searchParams.toString()}`
@@ -61,20 +133,21 @@ export const getAdminModels = async (params: AdminModelParams = {}): Promise<Mod
 };
 
 /**
- * 내 모델 목록 조회 API
+ * 내 모델 목록 조회 API (인증 기반)
  */
-export const getUserModels = async (params: UserModelParams): Promise<ModelSearchResponse> => {
+export const getUserModels = async (params: { page?: number; size?: number; isFree?: boolean; keyword?: string } = {}): Promise<ModelSearchResponse> => {
   try {
     const searchParams = new URLSearchParams();
-    
-    searchParams.append('userId', params.userId.toString());
+
+    if (params.keyword) searchParams.append('keyword', params.keyword);
     if (params.page !== undefined) searchParams.append('page', params.page.toString());
     if (params.size !== undefined) searchParams.append('size', params.size.toString());
+    if (params.isFree !== undefined) searchParams.append('isFree', params.isFree.toString());
 
     const response = await GetAxiosInstance<ModelSearchResponse>(
       `/models/search/my-models?${searchParams.toString()}`
     );
-    
+
     return response.data;
   } catch (error) {
     console.error('내 모델 조회 API 에러:', error);
@@ -108,12 +181,13 @@ export const searchAccessibleModels = async (params: AccessibleModelParams): Pro
 /**
  * 인기 모델 검색 API
  */
-export const getPopularModels = async (params: PopularModelParams = {}): Promise<ModelSearchResponse> => {
+export const getPopularModels = async (params: PopularModelParams & { isFree?: boolean } = {}): Promise<ModelSearchResponse> => {
   try {
     const searchParams = new URLSearchParams();
-    
+
     if (params.page !== undefined) searchParams.append('page', params.page.toString());
     if (params.size !== undefined) searchParams.append('size', params.size.toString());
+    if (params.isFree !== undefined) searchParams.append('isFree', params.isFree.toString());
 
     const response = await GetAxiosInstance<ModelSearchResponse>(
       `/models/search/popular?${searchParams.toString()}`
