@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { StyleSettings } from '../ImageGenerationWorkflow';
 import { ProjectRating } from "../../App";
-import { Dialog, DialogContent } from "../ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
 import { ProjectRatingForm } from "../ProjectRatingForm"; // ✅ 리뷰 폼 가져오기
 
 interface ResultDownloadProps {
@@ -26,6 +26,7 @@ interface ResultDownloadProps {
     styleSettings: StyleSettings;
     onBack: () => void;
     onNewGeneration: () => void;
+    selectedModel: SelectedModel | null;
 }
 
 const downloadFormats = [
@@ -46,6 +47,7 @@ export function ResultDownload({
                                    generatedImages,
                                    styleSettings,
                                    onBack,
+                                   selectedModel,
                                    onNewGeneration
                                }: ResultDownloadProps) {
     const [selectedImages, setSelectedImages] = useState<Set<number>>(new Set([0]));
@@ -276,18 +278,20 @@ export function ResultDownload({
 
             {/* ✅ 리뷰 다이얼로그 */}
             <Dialog open={isRatingOpen} onOpenChange={setIsRatingOpen}>
-                <DialogContent className="max-w-xl">
+            <DialogContent className="max-w-2xl">
+                <DialogTitle>리뷰 등록</DialogTitle>
+                <DialogDescription>생성된 모델에 대한 리뷰를 작성해주세요!</DialogDescription>
                     <ProjectRatingForm
-                        existingRating={submittedRating ?? undefined}
-                        onSubmit={(rating) => {
-                            setSubmittedRating(rating);
-                            console.log("리뷰 저장됨:", rating);
+                        modelId={selectedModel?.id!}  // ✅ DB에서 넘어온 모델 ID
+                        onSuccess={(review) => {
+                            console.log("리뷰 저장됨:", review);
                             setIsRatingOpen(false);
                         }}
                         onCancel={() => setIsRatingOpen(false)}
                     />
-                </DialogContent>
-            </Dialog>
+
+            </DialogContent>
+        </Dialog>
         </div>
     );
 }
