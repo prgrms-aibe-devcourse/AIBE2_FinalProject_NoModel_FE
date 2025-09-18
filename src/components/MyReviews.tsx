@@ -192,14 +192,26 @@ export function MyReviews({
 
   // 별점 렌더링
   const renderStars = (rating: number, interactive: boolean = false, onRatingChange?: (rating: number) => void) => {
+    // 별점에 따른 색상 및 클래스 결정
+    const getStarStyle = (starRating: number) => {
+      if (starRating <= 2) return { color: '#ef4444', className: '' }; // 1-2점: 빨간색
+      if (starRating === 3) return { color: '#f97316', className: '' }; // 3점: 주황색
+      return { color: 'var(--color-brand-primary)', className: '' }; // 4-5점: primary 색상
+    };
+
+    const starStyle = getStarStyle(rating);
+    
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
             className={`w-4 h-4 ${interactive ? 'cursor-pointer' : ''} ${
-              star <= rating ? 'fill-current text-yellow-400' : 'text-gray-300'
+              star <= rating ? 'fill-current' : 'text-gray-300'
             }`}
+            style={{
+              color: star <= rating ? starStyle.color : undefined
+            }}
             onClick={interactive && onRatingChange ? () => onRatingChange(star) : undefined}
           />
         ))}
@@ -422,30 +434,8 @@ export function MyReviews({
       <Dialog open={!!selectedReview} onOpenChange={() => setSelectedReview(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader className="py-4 mb-0">
-            <DialogTitle className="flex items-center justify-between">
-              <span>{selectedReview?.modelName} 리뷰</span>
-              <div className="flex items-center gap-2">
-                {!isEditMode && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditToggle}
-                    className="flex items-center gap-1"
-                  >
-                    <Edit className="w-3 h-3" />
-                    수정
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => selectedReview && handleDeleteClick(selectedReview)}
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  삭제
-                </Button>
-              </div>
+            <DialogTitle>
+              {selectedReview?.modelName} 리뷰
             </DialogTitle>
             <DialogDescription className="mb-0">
               {isEditMode ? '리뷰를 수정하세요' : '리뷰 상세 정보'}
@@ -526,6 +516,36 @@ export function MyReviews({
                 )}
               </div>
 
+              {/* 수정/삭제 버튼 */}
+              {!isEditMode && (
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEditToggle}
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="w-3 h-3" />
+                    수정
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => selectedReview && handleDeleteClick(selectedReview)}
+                    className="flex items-center gap-1 text-red-600 hover:text-red-700 transition-all duration-200"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#fee2e2';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    삭제
+                  </Button>
+                </div>
+              )}
+
               {/* 버튼 영역 */}
               {isEditMode && (
                 <div className="flex justify-end gap-2 pt-4 border-t">
@@ -537,9 +557,16 @@ export function MyReviews({
                   </Button>
                   <Button
                     onClick={handleSaveEdit}
+                    className="transition-all duration-200"
                     style={{
                       backgroundColor: 'var(--color-brand-primary)',
                       color: 'var(--color-utility-white)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.filter = 'brightness(0.9)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.filter = 'brightness(1)';
                     }}
                   >
                     저장
