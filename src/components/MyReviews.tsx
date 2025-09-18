@@ -421,7 +421,7 @@ export function MyReviews({
       {/* 리뷰 상세/수정 다이얼로그 */}
       <Dialog open={!!selectedReview} onOpenChange={() => setSelectedReview(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+          <DialogHeader className="py-4 mb-0">
             <DialogTitle className="flex items-center justify-between">
               <span>{selectedReview?.modelName} 리뷰</span>
               <div className="flex items-center gap-2">
@@ -447,13 +447,13 @@ export function MyReviews({
                 </Button>
               </div>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="mb-0">
               {isEditMode ? '리뷰를 수정하세요' : '리뷰 상세 정보'}
             </DialogDescription>
           </DialogHeader>
 
           {selectedReview && (
-            <div className="space-y-6">
+            <div className="space-y-2 py-4">
               {/* 평점 */}
               <div>
                 <label className="block text-sm font-medium mb-2" 
@@ -572,7 +572,12 @@ export function MyReviews({
             <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-red-600 hover:bg-red-700 text-white"
+              style={{
+                backgroundColor: '#dc2626',
+                color: '#ffffff',
+                border: 'none'
+              }}
             >
               삭제
             </AlertDialogAction>
