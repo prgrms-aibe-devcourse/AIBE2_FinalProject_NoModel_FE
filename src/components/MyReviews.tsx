@@ -276,15 +276,19 @@ export function MyReviews({
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1
-                style={{
-                  fontSize: 'var(--font-size-title1)',
-                  fontWeight: 'var(--font-weight-bold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                내 리뷰
-              </h1>
+              <div className="flex items-center gap-3 mb-2">
+                <Star 
+                  className="w-9 h-9"
+                  style={{ color: 'var(--color-brand-primary)' }}
+                />
+                  <h1 style={{
+                      fontSize: 'var(--font-size-title1)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      color: 'var(--color-text-primary)'
+                  }}>
+                  내 리뷰
+                </h1>
+              </div>
               <p style={{ color: 'var(--color-text-secondary)' }}>
                 작성한 리뷰를 확인하고 관리하세요
               </p>

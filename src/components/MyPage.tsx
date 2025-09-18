@@ -691,10 +691,10 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                   className="w-12 h-12 rounded-full flex items-center justify-center"
                   style={{ backgroundColor: 'var(--color-semantic-purple)' + '20' }}
                 >
-                  <Star 
+                <Star
                     className="w-6 h-6"
-                    style={{ color: 'var(--color-semantic-purple)' }}
-                  />
+                    style={{ color: 'var(--color-semantic-orange)' }}
+                />
                 </div>
                 <div>
                   <h3 
