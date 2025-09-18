@@ -166,9 +166,10 @@ interface MyPageProps {
   onAdmin: () => void;
   onLogin: () => void;
   onPointsSubscription: () => void;
+  onMyReviews: () => void;
 }
 
-export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin, onPointsSubscription }: MyPageProps) {
+export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin, onPointsSubscription, onMyReviews }: MyPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -522,7 +523,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-6">
             <Card 
               className="p-6 cursor-pointer transition-all hover:shadow-lg"
               style={{
@@ -662,6 +663,54 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
                     생성한 모델을 관리하고 수익을 확인하세요
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card 
+              className="p-6 cursor-pointer transition-all hover:shadow-lg"
+              style={{
+                backgroundColor: 'var(--color-background-primary)',
+                borderColor: 'var(--color-border-primary)',
+                borderRadius: 'var(--radius-16)',
+                boxShadow: 'var(--shadow-tiny)'
+              }}
+              onClick={onMyReviews}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-tiny)';
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--color-semantic-purple)' + '20' }}
+                >
+                  <Star 
+                    className="w-6 h-6"
+                    style={{ color: 'var(--color-semantic-purple)' }}
+                  />
+                </div>
+                <div>
+                  <h3 
+                    style={{
+                      fontSize: 'var(--font-size-regular)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  >
+                    내 리뷰
+                  </h3>
+                  <p 
+                    className="text-sm"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                  >
+                    작성한 리뷰를 확인하고 관리하세요
                   </p>
                 </div>
               </div>

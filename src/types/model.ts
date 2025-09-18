@@ -111,6 +111,36 @@ export interface ReviewResponse {
   createdAt: string;
 }
 
+// 새로운 리뷰 API용 타입들
+export interface MyReviewResponse {
+  reviewId: number;
+  modelId: number;
+  modelName: string;
+  reviewerId: number;
+  reviewerName: string;
+  rating: number;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 실제 API 응답 타입 (서버에서 받는 데이터)
+export interface ApiReviewResponse {
+  id: number;
+  reviewerId: number;
+  modelId: number;
+  rating: number;
+  content: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface ReviewRequest {
+  rating: number;
+  content: string;
+}
+
 export interface AIModelDetailResponse {
   modelId: number;
   modelName: string;
