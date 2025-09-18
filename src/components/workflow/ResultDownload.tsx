@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -14,7 +14,9 @@ import {
     Mail,
     MessageSquare,
     Globe,
-    Repeat
+    Repeat,
+    Coins,
+    X
 } from 'lucide-react';
 import { StyleSettings } from '../ImageGenerationWorkflow';
 import { ProjectRating } from "../../App";
@@ -58,6 +60,38 @@ export function ResultDownload({
     // ✅ 리뷰 다이얼로그 상태
     const [isRatingOpen, setIsRatingOpen] = useState(false);
     const [submittedRating, setSubmittedRating] = useState<ProjectRating | null>(null);
+    
+    // ✅ 토스트 알림 상태
+    const [showRewardToast, setShowRewardToast] = useState(false);
+    const [toastProgress, setToastProgress] = useState(100);
+    const [isToastPaused, setIsToastPaused] = useState(false);
+
+    // ✅ 토스트 프로그레스 바 관리
+    useEffect(() => {
+        if (showRewardToast && !isToastPaused) {
+            setToastProgress(100);
+            const interval = setInterval(() => {
+                setToastProgress(prev => {
+                    if (prev <= 0) {
+                        clearInterval(interval);
+                        setShowRewardToast(false);
+                        setIsToastPaused(false);
+                        return 0;
+                    }
+                    return prev - 2; // 100ms마다 2% 감소 (5초 = 5000ms)
+                });
+            }, 100);
+            
+            return () => clearInterval(interval);
+        }
+    }, [showRewardToast, isToastPaused]);
+
+    // ✅ 토스트 닫기 함수
+    const closeToast = () => {
+        setShowRewardToast(false);
+        setToastProgress(100);
+        setIsToastPaused(false);
+    };
 
     const toggleImageSelection = (index: number) => {
         setSelectedImages(prev => {
@@ -286,12 +320,69 @@ export function ResultDownload({
                         onSuccess={(review) => {
                             console.log("리뷰 저장됨:", review);
                             setIsRatingOpen(false);
+                            // ✅ 리뷰 등록 성공 시 토스트 표시
+                            setShowRewardToast(true);
                         }}
                         onCancel={() => setIsRatingOpen(false)}
                     />
 
             </DialogContent>
         </Dialog>
+
+        {/* ✅ 포인트 리워드 토스트 알림 */}
+        {showRewardToast && (
+            <div 
+                className="fixed top-4 right-4 z-50 animate-in slide-in-from-right duration-300"
+                style={{ width: '400px' }}
+            >
+                <Card 
+                    className="p-6 shadow-lg border-2 cursor-pointer select-none" 
+                    style={{ 
+                        backgroundColor: '#f0fdf4',
+                        borderColor: '#22c55e'
+                    }}
+                    onMouseDown={() => setIsToastPaused(true)}
+                    onMouseUp={() => setIsToastPaused(false)}
+                    onMouseLeave={() => setIsToastPaused(false)}
+                >
+                    <div className="flex items-start gap-4">
+                        <div 
+                            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ backgroundColor: '#10b981' }}
+                        >
+                            <Coins className="w-5 h-5" style={{ color: 'white' }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between mb-2">
+                                <h4 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>
+                                    리뷰 등록 리워드
+                                </h4>
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="w-7 h-7 p-0 -mt-1"
+                                    onClick={closeToast}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                            <p className="text-base mb-3" style={{ color: 'var(--color-text-secondary)' }}>
+                                <span className="font-bold text-lg" style={{ color: '#10b981' }}>+100P</span> 지급되었습니다
+                            </p>
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                <div 
+                                    className="h-1.5 rounded-full transition-all duration-100 ease-linear"
+                                    style={{ 
+                                        backgroundColor: 'var(--color-brand-primary)',
+                                        width: `${toastProgress}%`
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        )}
         </div>
     );
 }
