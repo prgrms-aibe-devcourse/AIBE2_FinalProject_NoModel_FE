@@ -384,7 +384,14 @@ export default function PointsSubscriptionPage({
             <div className="max-w-6xl mx-auto px-6 py-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-text-primary)' }}>포인트 & 구독 관리</h1>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Coins className="w-8 h-8" style={{ color: 'var(--color-brand-primary)' }} />
+                        <h1 style={{
+                            fontSize: 'var(--font-size-title1)',
+                            fontWeight: 'var(--font-weight-semibold)',
+                            color: 'var(--color-text-primary)'
+                        }}>포인트 & 구독 관리</h1>
+                    </div>
                     <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
                         포인트를 충전하거나 구독 플랜을 선택하여 더 많은 기능을 이용해보세요
                     </p>
@@ -447,11 +454,17 @@ export default function PointsSubscriptionPage({
                                         onClick={handleCancelSubscription}
                                         variant="outline"
                                         size="sm"
-                                        className="text-xs px-3 py-1"
+                                        className="text-xs px-3 py-1 transition-all duration-200"
                                         style={{
                                             borderColor: 'var(--color-semantic-red)',
                                             color: 'var(--color-semantic-red)',
                                             borderRadius: 'var(--radius-6)'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#fee2e2';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
                                         }}
                                     >
                                         구독 취소
@@ -462,21 +475,21 @@ export default function PointsSubscriptionPage({
                     </div>
                 )}
 
-                <Tabs defaultValue="subscription" className="space-y-6">
+                <Tabs defaultValue="charge" className="space-y-6">
                     <TabsList className="grid w-full grid-cols-3 h-10" style={{ 
                         background: 'var(--color-background-secondary)', 
                         border: '1px solid var(--color-border-primary)',
                         borderRadius: 'var(--radius-8)',
                         padding: '3px'
                     }}>
-                        <TabsTrigger value="subscription" className="h-7 text-sm" style={{ 
-                            borderRadius: 'var(--radius-6)',
-                            fontWeight: 'var(--font-weight-medium)'
-                        }}>구독 플랜</TabsTrigger>
                         <TabsTrigger value="charge" className="h-7 text-sm" style={{ 
                             borderRadius: 'var(--radius-6)',
                             fontWeight: 'var(--font-weight-medium)'
                         }}>포인트 충전</TabsTrigger>
+                        <TabsTrigger value="subscription" className="h-7 text-sm" style={{ 
+                            borderRadius: 'var(--radius-6)',
+                            fontWeight: 'var(--font-weight-medium)'
+                        }}>구독 플랜</TabsTrigger>
                         <TabsTrigger value="history" className="h-7 text-sm" style={{ 
                             borderRadius: 'var(--radius-6)',
                             fontWeight: 'var(--font-weight-medium)'
@@ -492,6 +505,9 @@ export default function PointsSubscriptionPage({
                                 </div>
                                 <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>구독 플랜</h3>
                             </div>
+                            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                프로 플랜으로 모든 기능을 무제한 이용하세요
+                            </p>
                             <div className="grid md:grid-cols-3 gap-4 overflow-visible">
                                 {plans.map((plan) => (
                                     <div 
@@ -596,12 +612,18 @@ export default function PointsSubscriptionPage({
                                         </div>
                                         <Button 
                                             onClick={handleSubscribe}
-                                            className="px-4 py-2 text-sm"
+                                            className="px-4 py-2 text-sm transition-all duration-200"
                                             style={{ 
                                                 background: 'var(--color-brand-primary)',
                                                 color: 'white',
                                                 border: 'none',
                                                 borderRadius: 'var(--radius-6)'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(0.9)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(1)';
                                             }}
                                         >
                                             구독 결제하기
@@ -621,32 +643,39 @@ export default function PointsSubscriptionPage({
                                 </div>
                                 <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>포인트 충전</h3>
                             </div>
-                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                포인트를 충전하여 AI 광고 이미지를 생성하세요
+                            </p>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-visible">
                                 {pointOptions.map((option) => (
                                     <div 
                                         key={option.points}
-                                        className={`p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md ${
-                                            selectedPointOption?.points === option.points ? 'border-2' : ''
+                                        className={`relative p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md overflow-visible ${
+                                            selectedPointOption?.points === option.points ? 'border-2' : option.popular ? 'border-2' : ''
                                         }`}
                                         style={{
                                             background: 'var(--color-background-primary)',
                                             borderColor: selectedPointOption?.points === option.points 
                                                 ? 'var(--color-brand-primary)' 
-                                                : 'var(--color-border-primary)'
+                                                : option.popular ? '#fed7aa' : 'var(--color-border-primary)'
                                         }}
                                         onClick={() => setSelectedPointOption(option)}
                                     >
                                         {option.popular && (
-                                            <Badge className="mb-2 text-xs px-2 py-1" style={{ 
-                                                background: 'var(--color-brand-primary)',
-                                                color: 'white',
-                                                borderRadius: 'var(--radius-4)'
-                                            }}>
-                                                인기
-                                            </Badge>
+                                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                                                <Badge
+                                                    className="text-black text-xs px-3 py-1"
+                                                    style={{
+                                                        background: '#f97316',
+                                                        borderRadius: '20px',
+                                                    }}
+                                                >
+                                                    인기
+                                                </Badge>
+                                            </div>
                                         )}
-                                        <div className="font-semibold text-lg mb-1" style={{ color: 'var(--color-text-primary)' }}>
-                                            {option.points.toLocaleString()}P
+                                        <div className="font-semibold text-lg mb-1" style={{ color: 'var(--color-brand-primary)' }}>
+                                            +{option.points.toLocaleString()}P 충전
                                         </div>
                                         <div className="text-xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
                                             {option.price.toLocaleString()}원
@@ -674,12 +703,18 @@ export default function PointsSubscriptionPage({
                                         </div>
                                         <Button 
                                             onClick={handleChargePoints}
-                                            className="px-4 py-2 text-sm"
+                                            className="px-4 py-2 text-sm transition-all duration-200"
                                             style={{ 
                                                 background: 'var(--color-brand-primary)',
                                                 color: 'white',
                                                 border: 'none',
                                                 borderRadius: 'var(--radius-6)'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(0.9)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(1)';
                                             }}
                                         >
                                             구매하기
@@ -699,6 +734,9 @@ export default function PointsSubscriptionPage({
                                 </div>
                                 <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>사용 내역</h3>
                             </div>
+                            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                포인트 충전 및 사용 내역을 확인하세요
+                            </p>
                             <div>
                             {pointTransactions.length === 0 ? (
                                 <div className="text-center py-8">
