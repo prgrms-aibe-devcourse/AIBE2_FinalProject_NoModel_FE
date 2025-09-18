@@ -760,13 +760,13 @@ export default function PointsSubscriptionPage({
                                             }}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="p-1.5 rounded-full" style={{
+                                                <div className="p-3 rounded-full" style={{
                                                     background: transaction.direction === 'CREDIT' 
                                                         ? 'color-mix(in lch, var(--color-semantic-green), transparent 85%)' 
                                                         : 'color-mix(in lch, var(--color-semantic-red), transparent 85%)'
                                                 }}>
-                                                    {transaction.direction === 'CREDIT' && <Coins className="h-3 w-3" style={{ color: 'var(--color-semantic-green)' }} />}
-                                                    {transaction.direction === 'DEBIT' && <Zap className="h-3 w-3" style={{ color: 'var(--color-semantic-red)' }} />}
+                                                    {transaction.direction === 'CREDIT' && <Coins className="h-4 w-4" style={{ color: 'var(--color-semantic-green)' }} />}
+                                                    {transaction.direction === 'DEBIT' && <Zap className="h-4 w-4" style={{ color: 'var(--color-semantic-red)' }} />}
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
@@ -787,7 +787,7 @@ export default function PointsSubscriptionPage({
                                                 <Badge className="text-xs px-2 py-0.5" style={{
                                                     background: 'var(--color-semantic-green)',
                                                     color: 'white',
-                                                    borderRadius: 'var(--radius-4)'
+                                                    borderRadius: '12px'
                                                 }}>
                                                     완료
                                                 </Badge>
