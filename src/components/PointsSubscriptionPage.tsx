@@ -1,8 +1,12 @@
 // @ts-ignore
 import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { NavigationBar } from "./NavigationBar";
 import { UserProfile } from "../App";
+import { Coins, CreditCard, History, Crown, Star, Gift, TrendingUp, Zap, CheckCircle, Sparkles, Check, Clock } from "lucide-react";
 
 // ✅ PortOne SDK 타입 선언
 declare global {
@@ -37,7 +41,7 @@ interface PointsSubscriptionPageProps {
     onMyPage: () => void;
     onAdmin?: () => void;
     onPointsSubscription?: () => void;
-    onPointBalanceUpdate: (newBalance: number) => void; // 포인트 잔액 업데이트 콜백 다시 추가
+    onPointBalanceUpdate: (newBalance: number) => void;
 }
 
 export default function PointsSubscriptionPage({
@@ -50,7 +54,7 @@ export default function PointsSubscriptionPage({
                                                    onMyPage,
                                                    onAdmin,
                                                    onPointsSubscription,
-                                                   onPointBalanceUpdate, // 콜백을 props로 받기
+                                                   onPointBalanceUpdate,
                                                }: PointsSubscriptionPageProps) {
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(
@@ -64,7 +68,7 @@ export default function PointsSubscriptionPage({
 
     // 포인트 충전 관련 상태 추가
     const [pointBalance, setPointBalance] = useState<number>(0);
-    const [pointTransactions, setPointTransactions] = useState<any[]>([]); // 포인트 거래 내역 상태 다시 추가
+    const [pointTransactions, setPointTransactions] = useState<any[]>([]);
 
     const typeLabelMap: Record<string, string> = {
         PURCHASE: "포인트 구매",
@@ -82,7 +86,7 @@ export default function PointsSubscriptionPage({
     // 포인트 충전 옵션 정의
     const pointOptions = [
         { points: 100, price: 3000 },
-        { points: 500, price: 15000 },
+        { points: 500, price: 15000, popular: true },
         { points: 1000, price: 30000 },
         { points: 5000, price: 150000 },
     ];
@@ -139,17 +143,15 @@ export default function PointsSubscriptionPage({
             })
             .then((data) => {
                 console.log("포인트 잔액 응답:", data);
-                // ✅ 응답 구조: { success, response: { availablePoints, ... }, error }
                 const newBalance = data.availablePoints ?? 0;
                 setPointBalance(newBalance);
-                onPointBalanceUpdate(newBalance); // 상위 컴포넌트에 업데이트된 잔액 전달
+                onPointBalanceUpdate(newBalance);
             })
             .catch((error) => {
                 console.error("포인트 잔액 조회 실패:", error);
                 setPointBalance(0);
             });
-    }, [userProfile?.id, onPointBalanceUpdate]); // userProfile.id와 onPointBalanceUpdate를 의존성으로 추가
-
+    }, [userProfile?.id, onPointBalanceUpdate]);
 
     // 포인트 거래 내역 조회 함수
     const loadPointTransactions = React.useCallback(() => {
@@ -175,22 +177,20 @@ export default function PointsSubscriptionPage({
                 console.error("포인트 거래 내역 조회 실패:", error);
                 setPointTransactions([]);
             });
-    }, [userProfile?.id]); // userProfile.id를 의존성으로 추가
+    }, [userProfile?.id]);
 
     useEffect(() => {
         loadSubscriptions();
-        // 로그인 상태일 때 포인트 잔액 로드
-        if (userProfile?.id) { // userProfile?.id를 확인하여 유효한 사용자일 때만 API 호출
+        if (userProfile?.id) {
             loadPointBalance();
             loadPointTransactions();
         }
-    }, [userProfile?.id, loadPointBalance, loadPointTransactions]); // userProfile.id를 의존성으로 추가
+    }, [userProfile?.id, loadPointBalance, loadPointTransactions]);
 
     // ✅ 구독 신청
     const handleSubscribe = async () => {
         if (!selectedPlan) return;
 
-        // 사용자 인증 검증
         if (!userProfile) {
             alert("❌ 로그인이 필요합니다. 로그인 페이지로 이동합니다.");
             onLogin();
@@ -203,10 +203,8 @@ export default function PointsSubscriptionPage({
             return;
         }
 
-        // buyer_name 설정: name이 없으면 email 앞부분 사용
         const buyerName = userProfile.name || userProfile.email.split('@')[0];
 
-        // ✅ 0원 플랜은 PG 거치지 않고 바로 백엔드에 등록
         if (selectedPlan.price === 0) {
             const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
                 method: "POST",
@@ -215,7 +213,7 @@ export default function PointsSubscriptionPage({
                 body: JSON.stringify({
                     subscriptionId: selectedPlan.id,
                     paidAmount: 0,
-                    paymentMethodId: null, // 무료니까 결제수단 없음
+                    paymentMethodId: null,
                     customerUid: null,
                 }),
             });
@@ -223,7 +221,7 @@ export default function PointsSubscriptionPage({
             if (response.ok) {
                 const result = await response.json();
                 alert("✅ FREE 플랜 등록 완료!");
-                loadSubscriptions(); // 새로고침 대신 현황 갱신
+                loadSubscriptions();
             } else {
                 const errorData = await response.json().catch(() => ({}));
                 alert("❌ FREE 플랜 등록 실패: " + (errorData.message || response.statusText));
@@ -246,7 +244,7 @@ export default function PointsSubscriptionPage({
                 merchant_uid: `order_${Date.now()}`,
                 name: `${selectedPlan.planType} 구독`,
                 amount: selectedPlan.price,
-                customer_uid: `user_${Date.now()}`, // 정기결제용 UID
+                customer_uid: `user_${Date.now()}`,
                 buyer_email: userProfile.email,
                 buyer_name: buyerName,
             },
@@ -267,7 +265,7 @@ export default function PointsSubscriptionPage({
                     if (response.ok) {
                         const result = await response.json();
                         alert(`✅ ${selectedPlan.planType} 구독 결제 성공 및 등록 완료!`);
-                        loadSubscriptions(); // 🔥 새로고침 대신 현황 갱신
+                        loadSubscriptions();
                     } else {
                         const errorData = await response.json().catch(() => ({}));
                         alert("❌ 백엔드 등록 실패: " + (errorData.message || response.statusText));
@@ -303,7 +301,7 @@ export default function PointsSubscriptionPage({
 
         IMP.init(import.meta.env.VITE_PORTONE_IMP_CODE || "imp57477065");
 
-        const merchantUid = `points_${Date.now()}`; // ✅ 프론트에서 직접 생성
+        const merchantUid = `points_${Date.now()}`;
 
         IMP.request_pay(
             {
@@ -317,7 +315,6 @@ export default function PointsSubscriptionPage({
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    // 2. 결제 검증 및 포인트 충전 (백엔드)
                     const verifyResponse = await fetch(`${apiBase}/points/payment/verify`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -344,8 +341,6 @@ export default function PointsSubscriptionPage({
         );
     };
 
-
-
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
         const response = await fetch(
@@ -359,7 +354,7 @@ export default function PointsSubscriptionPage({
         if (response.ok) {
             const result = await response.json();
             alert("✅ 구독이 취소되었습니다.");
-            loadSubscriptions(); // 🔥 새로고침 대신 현황 갱신
+            loadSubscriptions();
         } else {
             const errorData = await response.json().catch(() => ({}));
             alert("❌ 구독 취소 실패: " + (errorData.message || response.statusText));
@@ -386,207 +381,425 @@ export default function PointsSubscriptionPage({
                 onPointsSubscription={onPointsSubscription}
             />
 
-            <div className="max-w-4xl mx-auto px-6 py-10 mt-30">
-                <h1 className="text-2xl font-bold mb-6">포인트 & 구독 관리</h1>
+            <div className="max-w-6xl mx-auto px-6 py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-2 mb-2">
+                        <Coins className="w-8 h-8" style={{ color: 'var(--color-brand-primary)' }} />
+                        <h1 style={{
+                            fontSize: 'var(--font-size-title1)',
+                            fontWeight: 'var(--font-weight-semibold)',
+                            color: 'var(--color-text-primary)'
+                        }}>포인트 & 구독 관리</h1>
+                    </div>
+                    <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
+                        포인트를 충전하거나 구독 플랜을 선택하여 더 많은 기능을 이용해보세요
+                    </p>
+                </div>
 
-                {/* 보유 포인트 및 구독 상태 */}
+                {/* Current Status */}
                 {userProfile && (
-                    <div className="mb-6 p-4 border rounded-lg bg-gray-50 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500">보유 포인트</p>
-                            <p className="text-xl font-bold text-primary">
-                                {pointBalance.toLocaleString()} P
+                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                        <Card className="p-4 border rounded-lg" style={{ background: 'var(--color-background-primary)', borderColor: 'var(--color-border-primary)' }}>
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                                    보유 포인트
+                                </span>
+                                <div className="p-2 rounded-lg" style={{ background: 'var(--color-brand-accent-tint)', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Coins className="h-4 w-4" style={{ color: 'var(--color-brand-primary)' }} />
+                                </div>
+                            </div>
+                            <div className="text-2xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                                {pointBalance.toLocaleString()}P
+                            </div>
+                            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                                10포인트 = 1회 AI 생성
                             </p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-500">현재 구독</p>
-                            {currentSubscription ? (
-                                <>
-                                    <p className="text-xl font-bold text-green-600">
-                                        {planTypeMap[currentSubscription.subscriptionId] || "미구독"}
+                        </Card>
+
+                        <Card className="p-4 border rounded-lg" style={{ background: 'var(--color-background-primary)', borderColor: 'var(--color-border-primary)' }}>
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-sm font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+                                    구독 상태
+                                </span>
+                                <div className="p-2 rounded-lg" style={{ 
+                                    background: currentSubscription && planTypeMap[currentSubscription.subscriptionId] ? 'var(--color-brand-accent-tint)' : '#f3f4f6', 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center' 
+                                }}>
+                                    <Crown className="h-4 w-4" style={{ 
+                                        color: currentSubscription && planTypeMap[currentSubscription.subscriptionId] ? 'var(--color-brand-primary)' : '#6b7280' 
+                                    }} />
+                                </div>
+                            </div>
+                            <div className="text-2xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                                {currentSubscription && planTypeMap[currentSubscription.subscriptionId] ? `${planTypeMap[currentSubscription.subscriptionId]} 구독중` : '미구독'}
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                                        {currentSubscription ? '포인트로 간편하게 구독 관리' : '구독하고 더 많은 혜택을 받아보세요'}
                                     </p>
-                                    {currentSubscription.expiresAt && (
-                                        <p className="text-xs text-gray-500 mt-1">
+                                    {currentSubscription?.expiresAt && (
+                                        <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
                                             만료일: {new Date(currentSubscription.expiresAt).toLocaleDateString()}
                                         </p>
                                     )}
-                                    {currentSubscription.status === "ACTIVE" && (
-                                        <div className="mt-4 text-right">
-                                            <Button
-                                                onClick={handleCancelSubscription}
-                                                variant="destructive"
-                                                className="px-6 py-2"
-                                            >
-                                                구독 취소하기
-                                            </Button>
-                                        </div>
-                                    )}
-                                </>
-                            ) : (
-                                <p className="text-xl font-bold text-gray-400">미구독</p>
-                            )}
-
-                        </div>
-                    </div>
-                )}
-
-                {/* 탭 UI */}
-                <div className="flex gap-4 border-b mb-6">
-                    <button
-                        className={`pb-2 ${
-                            activeTab === "subscription"
-                                ? "border-b-2 border-primary text-primary"
-                                : "text-gray-400"
-                        }`}
-                        onClick={() => setActiveTab("subscription")}
-                    >
-                        구독 플랜
-                    </button>
-                    <button
-                        className={`pb-2 ${
-                            activeTab === "charge"
-                                ? "border-b-2 border-primary text-primary"
-                                : "text-gray-400"
-                        }`}
-                        onClick={() => setActiveTab("charge")}
-                    >
-                        포인트 충전
-                    </button>
-                    <button
-                        className={`pb-2 ${
-                            activeTab === "history"
-                                ? "border-b-2 border-primary text-primary"
-                                : "text-gray-400"
-                        }`}
-                        onClick={() => setActiveTab("history")}
-                    >
-                        사용 내역
-                    </button>
-                </div>
-
-                {/* 탭 내용 */}
-                {activeTab === "subscription" && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {plans.map((plan) => (
-                            <div
-                                key={plan.id}
-                                className={`p-4 border rounded-lg shadow cursor-pointer ${
-                                    selectedPlan?.id === plan.id
-                                        ? "border-primary"
-                                        : "border-gray-200"
-                                }`}
-                                onClick={() => setSelectedPlan(plan)}
-                            >
-                                <h2 className="font-bold text-lg">{plan.planType}</h2>
-                                <p className="text-sm text-gray-500">{plan.description}</p>
-                                <p className="mt-2 font-semibold">
-                                    {plan.price}$ / {plan.period}일
-                                </p>
+                                </div>
+                                {currentSubscription?.status === "ACTIVE" && (
+                                    <Button
+                                        onClick={handleCancelSubscription}
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-xs px-3 py-1 transition-all duration-200"
+                                        style={{
+                                            borderColor: 'var(--color-semantic-red)',
+                                            color: 'var(--color-semantic-red)',
+                                            borderRadius: 'var(--radius-6)'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#fee2e2';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                        }}
+                                    >
+                                        구독 취소
+                                    </Button>
+                                )}
                             </div>
-                        ))}
+                        </Card>
                     </div>
                 )}
 
-                {activeTab === "charge" && (
-                    <div className="p-4 border rounded-lg shadow">
-                        <h2 className="font-bold text-lg mb-4">포인트 충전</h2>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            {pointOptions.map((option) => (
-                                <div
-                                    key={option.points}
-                                    className={`p-4 border rounded-lg shadow cursor-pointer text-center
-                                    ${
-                                        selectedPointOption?.points === option.points
-                                            ? "border-primary bg-primary-foreground"
-                                            : "border-gray-200 bg-white"
-                                    }`}
-                                    onClick={() => setSelectedPointOption(option)}
-                                >
-                                    <p className="text-2xl font-bold text-primary">{option.points} P</p>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        {option.price.toLocaleString()} 원
+                <Tabs defaultValue="charge" className="space-y-6">
+                    <TabsList className="grid w-full grid-cols-3 h-10" style={{ 
+                        background: 'var(--color-background-secondary)', 
+                        border: '1px solid var(--color-border-primary)',
+                        borderRadius: 'var(--radius-8)',
+                        padding: '3px'
+                    }}>
+                        <TabsTrigger value="charge" className="h-7 text-sm" style={{ 
+                            borderRadius: 'var(--radius-6)',
+                            fontWeight: 'var(--font-weight-medium)'
+                        }}>포인트 충전</TabsTrigger>
+                        <TabsTrigger value="subscription" className="h-7 text-sm" style={{ 
+                            borderRadius: 'var(--radius-6)',
+                            fontWeight: 'var(--font-weight-medium)'
+                        }}>구독 플랜</TabsTrigger>
+                        <TabsTrigger value="history" className="h-7 text-sm" style={{ 
+                            borderRadius: 'var(--radius-6)',
+                            fontWeight: 'var(--font-weight-medium)'
+                        }}>사용 내역</TabsTrigger>
+                    </TabsList>
+
+                    {/* Subscription Tab */}
+                    <TabsContent value="subscription" className="space-y-6">
+                        <div className="p-5 rounded-lg" style={{ background: 'var(--color-background-primary)' }}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 rounded-lg" style={{ background: 'var(--color-brand-accent-tint)' }}>
+                                    <Crown className="h-4 w-4" style={{ color: 'var(--color-brand-primary)' }} />
+                                </div>
+                                <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>구독 플랜</h3>
+                            </div>
+                            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                프로 플랜으로 모든 기능을 무제한 이용하세요
+                            </p>
+                            <div className="grid md:grid-cols-3 gap-4 overflow-visible">
+                                {plans.map((plan) => (
+                                    <div 
+                                        key={plan.id}
+                                        className={`relative p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md overflow-visible ${
+                                            selectedPlan?.id === plan.id ? 'border-2' : plan.planType === 'PRO' ? 'border-2' : ''
+                                        }`}
+                                        style={{
+                                            background: 'var(--color-background-primary)',
+                                            borderColor: selectedPlan?.id === plan.id ? 'var(--color-brand-primary)' : plan.planType === 'PRO' ? '#fed7aa' : 'var(--color-border-primary)'
+                                        }}
+                                        onClick={() => setSelectedPlan(plan)}
+                                    >
+                                        {plan.planType === 'PRO' && (
+                                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                                                <Badge
+                                                    className="text-black text-xs px-3 py-1"
+                                                    style={{
+                                                        background: '#f97316',
+                                                        borderRadius: '20px',
+                                                    }}
+                                                >
+                                                    인기 · 10%할인
+                                                </Badge>
+                                            </div>
+                                        )}
+                                        {plan.planType === 'ENTERPRISE' && (
+                                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                                                <Badge
+                                                    className="text-black text-xs px-3 py-1"
+                                                    style={{
+                                                        background: '#f97316',
+                                                        borderRadius: '20px',
+                                                    }}
+                                                >
+                                                    10%할인
+                                                </Badge>
+                                            </div>
+                                        )}
+                                        <div className="relative">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <div className="p-1 rounded-lg" style={{ background: 'color-mix(in lch, var(--color-brand-primary), transparent 90%)' }}>
+                                                    {plan.planType === 'PRO' && <Star className="h-3 w-3" style={{ color: 'var(--color-brand-primary)' }} />}
+                                                    {plan.planType === 'ENTERPRISE' && <TrendingUp className="h-3 w-3" style={{ color: 'var(--color-brand-primary)' }} />}
+                                                    {plan.planType === 'FREE' && <Gift className="h-3 w-3" style={{ color: 'var(--color-brand-primary)' }} />}
+                                                </div>
+                                                <span className="font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                                                    {plan.planType}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mb-3">
+                                            <div className="text-sm mb-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                                                {plan.period}일 구독
+                                            </div>
+                                            {plan.planType === 'PRO' && (
+                                                <div className="text-sm mb-1" style={{ color: 'var(--color-text-tertiary)', textDecoration: 'line-through' }}>
+                                                    $22.00
+                                                </div>
+                                            )}
+                                            {plan.planType === 'ENTERPRISE' && (
+                                                <div className="text-sm mb-1" style={{ color: 'var(--color-text-tertiary)', textDecoration: 'line-through' }}>
+                                                    $222.1
+                                                </div>
+                                            )}
+                                            <div className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                                                ${plan.planType === 'PRO' ? '19.99' : plan.planType === 'ENTERPRISE' ? '199.99' : plan.price}
+                                            </div>
+                                            {plan.planType === 'PRO' && (
+                                                <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                                                    월 약 28,000원
+                                                </div>
+                                            )}
+                                            {plan.planType === 'ENTERPRISE' && (
+                                                <div className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                                                    월 약 280,000원
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                            {plan.description}
+                                        </p>
+                                    </div>
+                                ))}
+                                </div>
+
+                            {selectedPlan && (
+                                <div className="mt-4 p-4 border rounded-lg" style={{ 
+                                    background: 'var(--color-background-secondary)', 
+                                    borderColor: 'var(--color-border-primary)'
+                                }}>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                                                선택한 플랜: {selectedPlan.planType} ({selectedPlan.period}일)
+                                            </p>
+                                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                                                결제 금액: ${selectedPlan.price}
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            onClick={handleSubscribe}
+                                            className="px-4 py-2 text-sm transition-all duration-200"
+                                            style={{ 
+                                                background: 'var(--color-brand-primary)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 'var(--radius-6)'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(0.9)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(1)';
+                                            }}
+                                        >
+                                            구독 결제하기
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </TabsContent>
+
+                    {/* Points Tab */}
+                    <TabsContent value="charge" className="space-y-6">
+                        <div className="p-5 rounded-lg" style={{ background: 'var(--color-background-primary)' }}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 rounded-lg" style={{ background: 'var(--color-brand-accent-tint)' }}>
+                                    <Coins className="h-4 w-4" style={{ color: 'var(--color-brand-primary)' }} />
+                                </div>
+                                <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>포인트 충전</h3>
+                            </div>
+                            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                포인트를 충전하여 AI 광고 이미지를 생성하세요
+                            </p>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-visible">
+                                {pointOptions.map((option) => (
+                                    <div 
+                                        key={option.points}
+                                        className={`relative p-4 border rounded-lg cursor-pointer transition-all hover:shadow-md overflow-visible ${
+                                            selectedPointOption?.points === option.points ? 'border-2' : option.popular ? 'border-2' : ''
+                                        }`}
+                                        style={{
+                                            background: 'var(--color-background-primary)',
+                                            borderColor: selectedPointOption?.points === option.points 
+                                                ? 'var(--color-brand-primary)' 
+                                                : option.popular ? '#fed7aa' : 'var(--color-border-primary)'
+                                        }}
+                                        onClick={() => setSelectedPointOption(option)}
+                                    >
+                                        {option.popular && (
+                                            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                                                <Badge
+                                                    className="text-black text-xs px-3 py-1"
+                                                    style={{
+                                                        background: '#f97316',
+                                                        borderRadius: '20px',
+                                                    }}
+                                                >
+                                                    인기
+                                                </Badge>
+                                            </div>
+                                        )}
+                                        <div className="font-semibold text-lg mb-1" style={{ color: 'var(--color-brand-primary)' }}>
+                                            +{option.points.toLocaleString()}P 충전
+                                        </div>
+                                        <div className="text-xl font-semibold mb-1" style={{ color: 'var(--color-text-primary)' }}>
+                                            {option.price.toLocaleString()}원
+                                        </div>
+                                        <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                                            {(option.price / option.points).toFixed(1)}원/포인트
+                                        </p>
+                                    </div>
+                                ))}
+                                </div>
+
+                            {selectedPointOption && (
+                                <div className="mt-4 p-4 border rounded-lg" style={{ 
+                                    background: 'var(--color-background-secondary)', 
+                                    borderColor: 'var(--color-border-primary)'
+                                }}>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                                                선택한 패키지: {selectedPointOption.points.toLocaleString()}P
+                                            </p>
+                                            <p className="text-xs mt-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                                                결제 금액: {selectedPointOption.price.toLocaleString()}원
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            onClick={handleChargePoints}
+                                            className="px-4 py-2 text-sm transition-all duration-200"
+                                            style={{ 
+                                                background: 'var(--color-brand-primary)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: 'var(--radius-6)'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(0.9)';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.filter = 'brightness(1)';
+                                            }}
+                                        >
+                                            구매하기
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </TabsContent>
+
+                    {/* History Tab */}
+                    <TabsContent value="history" className="space-y-6">
+                        <div className="p-5 rounded-lg" style={{ background: 'var(--color-background-primary)' }}>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 rounded-lg" style={{ background: 'var(--color-brand-accent-tint)' }}>
+                                    <History className="h-4 w-4" style={{ color: 'var(--color-brand-primary)' }} />
+                                </div>
+                                <h3 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>사용 내역</h3>
+                            </div>
+                            <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                                포인트 충전 및 사용 내역을 확인하세요
+                            </p>
+                            <div>
+                            {pointTransactions.length === 0 ? (
+                                <div className="text-center py-8">
+                                    <History 
+                                        className="w-8 h-8 mx-auto mb-3" 
+                                        style={{ color: 'var(--color-text-tertiary)' }}
+                                    />
+                                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                                        거래 내역이 없습니다.
                                     </p>
                                 </div>
-                            ))}
-                        </div>
-                        <div className="mb-4 p-4 border rounded-lg bg-gray-50">
-                            <p className="text-sm text-gray-500">선택된 결제 수단</p>
-                            <p className="text-lg font-bold">카카오페이</p>
-                        </div>
-                        <Button
-                            onClick={handleChargePoints}
-                            className="w-full px-6 py-2"
-                            disabled={!selectedPointOption}
-                        >
-                            {selectedPointOption
-                                ? `${selectedPointOption.points}P 충전하기 (${selectedPointOption.price.toLocaleString()}원)`
-                                : "포인트를 선택해주세요"}
-                        </Button>
-                    </div>
-                )}
-
-                {activeTab === "history" && (
-                    <div className="p-4 border rounded-lg shadow">
-                        <h2 className="font-bold text-lg mb-4">포인트 사용 내역</h2>
-                        {pointTransactions.length === 0 ? (
-                            <p className="text-gray-500">거래 내역이 없습니다.</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">타입</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">금액</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">설명</th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">일시</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-gray-200">
+                            ) : (
+                                <div className="space-y-2">
                                     {pointTransactions.map((transaction, index) => (
-                                        <tr key={index}>
-                                            {/* 거래 타입 */}
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {typeLabelMap[transaction.transactionType] || "기타"}
-                                            </td>
-
-                                            {/* 금액 (direction 기반 + / - 표시) */}
-                                            <td
-                                                className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${
-                                                    transaction.direction === "CREDIT" ? "text-green-600" : "text-red-600"
-                                                }`}
-                                            >
-                                                {transaction.direction === "CREDIT" ? "+" : "-"}
-                                                {(transaction.pointAmount || 0).toLocaleString()} P
-                                            </td>
-
-                                            {/* 설명 */}
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                {transaction.description || typeLabelMap[transaction.transactionType] || "포인트 거래"}
-                                            </td>
-
-                                            {/* 일시 */}
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                {transaction.createdAt
-                                                    ? new Date(transaction.createdAt).toLocaleString()
-                                                    : "-"}
-                                            </td>
-                                        </tr>
+                                        <div 
+                                            key={index} 
+                                            className="flex items-center justify-between p-3 border rounded-lg"
+                                            style={{ 
+                                                borderColor: 'var(--color-border-secondary)',
+                                                background: index === 0 ? 'var(--color-background-secondary)' : 'transparent'
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-3 rounded-full" style={{
+                                                    background: transaction.direction === 'CREDIT' 
+                                                        ? 'color-mix(in lch, var(--color-semantic-green), transparent 85%)' 
+                                                        : 'color-mix(in lch, var(--color-semantic-red), transparent 85%)'
+                                                }}>
+                                                    {transaction.direction === 'CREDIT' && <Coins className="h-4 w-4" style={{ color: 'var(--color-semantic-green)' }} />}
+                                                    {transaction.direction === 'DEBIT' && <Zap className="h-4 w-4" style={{ color: 'var(--color-semantic-red)' }} />}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                                                        {typeLabelMap[transaction.transactionType] || "기타"}
+                                                    </p>
+                                                    <p className="text-xs flex items-center gap-1" style={{ color: 'var(--color-text-tertiary)' }}>
+                                                        <Clock className="h-2.5 w-2.5" />
+                                                        {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : "-"}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm font-semibold mb-1" style={{
+                                                    color: transaction.direction === 'CREDIT' ? 'var(--color-semantic-green)' : 'var(--color-semantic-red)'
+                                                }}>
+                                                    {transaction.direction === 'CREDIT' ? '+' : '-'}{(transaction.pointAmount || 0).toLocaleString()}P
+                                                </p>
+                                                <Badge className="text-xs px-2 py-0.5" style={{
+                                                    background: 'var(--color-semantic-green)',
+                                                    color: 'white',
+                                                    borderRadius: '12px'
+                                                }}>
+                                                    완료
+                                                </Badge>
+                                            </div>
+                                        </div>
                                     ))}
-                                    </tbody>
-                                </table>
+                                </div>
+                            )}
                             </div>
-                        )}
-                    </div>
-                )}
-
-                {/* 구독 결제 버튼 */}
-                {selectedPlan && activeTab === "subscription" && (
-                    <div className="mt-6 text-center">
-                        <Button onClick={handleSubscribe} className="px-6 py-2">
-                            {selectedPlan.planType} 구독 결제하기
-                        </Button>
-                    </div>
-                )}
+                        </div>
+                    </TabsContent>
+                </Tabs>
             </div>
         </div>
     );
