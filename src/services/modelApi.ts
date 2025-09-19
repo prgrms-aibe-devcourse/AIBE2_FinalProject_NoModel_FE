@@ -1,4 +1,5 @@
 import { GetAxiosInstance, PostAxiosInstance } from './ApiService';
+import axiosInstance from './AxiosInstance';
 import type {
   ModelSearchParams,
   AdminModelParams,
@@ -335,4 +336,49 @@ export const getReportDetail = async (reportId: number): Promise<ModelReportResp
     console.error('신고 상세 조회 API 에러:', error);
     throw error;
   }
+};
+
+/**
+ * 모델 기본 정보 조회 (ID와 이름만)
+ */
+export interface ModelBasicInfo {
+  modelId: number;
+  modelName: string;
+}
+
+export const getModelBasicInfo = async (modelId: number): Promise<ModelBasicInfo | null> => {
+  try {
+    // 기존 모델 상세 조회 API 사용 (더 간단한 엔드포인트가 있다면 변경 가능)
+    const response = await axiosInstance.get(`/models/${modelId}`);
+    
+    if (response.data.success && response.data.response) {
+      return {
+        modelId: response.data.response.modelId,
+        modelName: response.data.response.modelName
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`모델 ${modelId} 기본 정보 조회 실패:`, error);
+    return null;
+  }
+};
+
+/**
+ * 여러 모델의 기본 정보를 한번에 조회
+ */
+export const getMultipleModelsBasicInfo = async (modelIds: number[]): Promise<Map<number, string>> => {
+  const modelNameMap = new Map<number, string>();
+  
+  // 병렬로 여러 모델 정보 조회
+  const promises = modelIds.map(async (modelId) => {
+    const modelInfo = await getModelBasicInfo(modelId);
+    if (modelInfo) {
+      modelNameMap.set(modelId, modelInfo.modelName);
+    }
+  });
+  
+  await Promise.all(promises);
+  return modelNameMap;
 };

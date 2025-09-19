@@ -18,12 +18,13 @@ import { AdminPage } from './components/AdminPage';
 import { ComponentDemo } from './components/ComponentDemo';
 import LoginTest from './components/LoginTest';
 import PointsSubscriptionPage from './components/PointsSubscriptionPage';
+import { MyReviews } from './components/MyReviews';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews';
 
 export interface UserModel {
   id: string;
@@ -242,7 +243,7 @@ export default function App() {
       status: 'resolved',
       createdAt: new Date('2024-01-25T13:20:00'),
       reviewedAt: new Date('2024-01-25T18:45:00'),
-      reviewedBy: 'admin-2',
+      reviewedBy: 2,
       reviewNotes: '중복된 모델들을 확인했습니다. 동일한 이미지로 생성된 3개의 중복 모델을 발견했으며, 원본 하나만 남기고 나머지는 삭제 조치했습니다.',
       resolution: 'model_removed'
     },
@@ -690,6 +691,7 @@ export default function App() {
           onAdmin={() => handleStageChange('admin')}
           onLogin={() => handleStageChange('login')}
           onPointsSubscription={() => handleStageChange('pointsSubscription')}
+          onMyReviews={() => handleStageChange('myReviews')}
         />
       )}
 
@@ -807,6 +809,21 @@ export default function App() {
           onAdmin={() => handleStageChange('admin')}
           onPointsSubscription={() => handleStageChange('pointsSubscription')}
           onPointBalanceUpdate={handlePointBalanceUpdate}
+        />
+      )}
+
+      {currentStage === 'myReviews' && (
+        <MyReviews 
+          userProfile={userProfile}
+          onBack={() => handleStageChange('mypage')}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onNewProject={() => handleStageChange('onboarding')}
+          onCreateModel={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
     </div>
