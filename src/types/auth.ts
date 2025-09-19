@@ -17,7 +17,7 @@ export interface LoginResponse {
 }
 
 export interface SignupRequest {
-  name: string;
+  username: string;
   email: string;
   password: string;
   agreeToTerms: boolean;

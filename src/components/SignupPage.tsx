@@ -20,7 +20,7 @@ interface SignupPageProps {
 
 export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps) {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -69,7 +69,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
     
     try {
       const signupData: SignupRequest = {
-        name: formData.name,
+        username: formData.username,
         email: formData.email,
         password: formData.password,
         agreeToTerms: agreements.terms,
@@ -102,7 +102,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
     window.location.href = `${API_BASE}/oauth2/authorization/${provider}`;
   };
 
-  const isFormValid = formData.name && formData.email && formData.password && 
+  const isFormValid = formData.username && formData.email && formData.password &&
                       formData.confirmPassword && agreements.terms && agreements.privacy;
 
   return (
@@ -218,17 +218,19 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
             {/* Email Signup Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-foreground">
-                  이름
+                <Label htmlFor="username" className="text-sm font-medium text-foreground">
+                  사용자명
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="name"
+                    id="username"
                     type="text"
-                    placeholder="홍길동"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="username"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    minLength={2}
+                    maxLength={20}
                     required
                     className="pl-10 h-12 text-base bg-background border-2 focus:border-primary/50 transition-colors"
                   />
