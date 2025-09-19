@@ -309,7 +309,7 @@ export default function PointsSubscriptionPage({
                 pay_method: "card",
                 merchant_uid: merchantUid,
                 name: `포인트 ${selectedPointOption.points}P 충전`,
-                amount: selectedPointOption.price,
+                amount: selectedPointOption.points,
                 buyer_email: userProfile.email,
                 buyer_name: buyerName,
             },
