@@ -20,12 +20,13 @@ import LoginTest from './components/LoginTest';
 import PointsSubscriptionPage from './components/PointsSubscriptionPage';
 import { MyReviews } from './components/MyReviews';
 import { ProductImageUpload } from './components/ProductImageUpload';
+import { AdGenerationResult } from './components/AdGenerationResult';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
 
 export interface UserModel {
   id: string;
@@ -33,6 +34,7 @@ export interface UserModel {
   description: string;
   prompt: string;
   seedValue: string;
+  fileId?: number; // 모델 파일 ID 추가
   imageUrl: string;
   previewImages: string[];
   category: string;
@@ -279,6 +281,11 @@ export default function App() {
   ]);
   const [selectedModelToReport, setSelectedModelToReport] = useState<UserModel | null>(null);
   const [selectedModelForAdGeneration, setSelectedModelForAdGeneration] = useState<UserModel | null>(null);
+  const [adGenerationData, setAdGenerationData] = useState<{
+    originalImage: string;
+    generatedImageUrl: string;
+    additionalPrompt?: string;
+  } | null>(null);
 
   // Check authentication status on app load
   useEffect(() => {
@@ -577,6 +584,15 @@ export default function App() {
     setCurrentStage('productUpload');
   };
 
+  const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, additionalPrompt?: string) => {
+    setAdGenerationData({
+      originalImage,
+      generatedImageUrl,
+      additionalPrompt
+    });
+    setCurrentStage('adGenerationResult');
+  };
+
   const handleReportStatusUpdate = (reportId: string, status: ModelReport['status'], reviewNotes?: string, resolution?: ModelReport['resolution']) => {
     setModelReports(prev => 
       prev.map(report => 
@@ -846,11 +862,35 @@ export default function App() {
             console.log('추가 프롬프트:', additionalPrompt);
             console.log('선택된 모델:', selectedModelForAdGeneration);
             
-            // 실제로는 ImageGenerationWorkflow로 이동하거나 새로운 광고 생성 화면으로 이동
-            // 임시로 마이페이지로 이동
-            alert('광고 이미지 생성이 완료되었습니다!');
-            handleStageChange('mypage');
+            // 결과 화면으로 이동 (기존 알림 대신)
+            if (productImages.length > 0) {
+              handleAdGenerationComplete(
+                productImages[0], // 원본 이미지 (첫 번째 업로드된 이미지)
+                productImages[productImages.length - 1], // 생성된 이미지 (마지막 이미지가 생성된 결과)
+                additionalPrompt
+              );
+            }
           }}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onHome={() => handleStageChange('landing')}
+          onAdmin={() => handleStageChange('admin')}
+        />
+      )}
+
+      {currentStage === 'adGenerationResult' && selectedModelForAdGeneration && adGenerationData && (
+        <AdGenerationResult 
+          userProfile={userProfile}
+          selectedModel={selectedModelForAdGeneration}
+          originalImage={adGenerationData.originalImage}
+          generatedImageUrl={adGenerationData.generatedImageUrl}
+          additionalPrompt={adGenerationData.additionalPrompt}
+          onBack={() => handleStageChange('productUpload')}
+          onNewGeneration={() => handleStageChange('productUpload')}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
           onAdGeneration={() => handleStageChange('onboarding')}

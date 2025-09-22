@@ -192,7 +192,8 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
         if (result.status === 'SUCCEEDED' && result.resultFileUrl) {
           // 성공적으로 생성된 이미지 URL 설정
           setPreviewImages([result.resultFileUrl]);
-          setSeedValue(result.jobId || Math.random().toString().slice(2, 7));
+          // 중요: API 응답에서 resultFileId를 seedValue에 저장하여 나중에 사용
+          setSeedValue(result.resultFileId ? result.resultFileId.toString() : (result.jobId || Math.random().toString().slice(2, 7)));
           setIsGenerating(false);
           setStep('preview');
         } else {
@@ -246,6 +247,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
         description: formData.description,
         prompt: enhancedPrompt, // 실제 생성에 사용된 향상된 프롬프트 저장
         seedValue: seedValue,
+        fileId: parseInt(seedValue), // seedValue에 저장된 resultFileId를 fileId로 사용
         imageUrl: previewImages[0],
         previewImages: previewImages,
         category: 'general', // 기본 카테고리
