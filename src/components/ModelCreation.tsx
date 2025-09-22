@@ -27,6 +27,7 @@ interface ModelCreationProps {
   onMyPage: () => void;
   onHome: () => void;
   onAdmin?: () => void;
+  onGoToProductUpload?: (model: UserModel) => void;
 }
 
 const ageOptions = ['10대', '20대 초반', '20대 후반', '30대 초반', '30대 후반', '40대', '50대+'];
@@ -95,7 +96,7 @@ const promptAutoGenButtons = {
   ],
 };
 
-export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, onLogout, onAdGeneration, onModelCreation, onMarketplace, onMyPage, onHome, onAdmin }: ModelCreationProps) {
+export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, onLogout, onAdGeneration, onModelCreation, onMarketplace, onMyPage, onHome, onAdmin, onGoToProductUpload }: ModelCreationProps) {
   const [step, setStep] = useState<'basic' | 'details' | 'preview'>('basic');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,9 +146,12 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
     setIsGenerating(true);
     
     try {
+      // 사용자 프롬프트에 기본 프롬프트 자동 추가 (사용자에게는 보이지 않음)
+      const enhancedPrompt = `${formData.prompt}, upper body, looking at camera`;
+      
       // API 요청 데이터 구성
       const requestData = {
-        prompt: formData.prompt,
+        prompt: enhancedPrompt, // 향상된 프롬프트 사용
         mode: "SUBJECT_SCENE",
         width: 512,
         height: 512,
@@ -219,7 +223,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
   const handleSubmit = async () => {
     if (!userProfile) return;
     
-    if (!formData.name || !formData.description || !formData.prompt || !formData.category) {
+    if (!formData.name || !formData.description || !formData.prompt) {
       alert('필수 필드를 모두 입력해주세요.');
       return;
     }
@@ -233,11 +237,14 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
 
     // Simulate API call
     setTimeout(() => {
+      // 모델 생성 시에도 향상된 프롬프트 사용 (사용자에게는 원본 프롬프트만 표시)
+      const enhancedPrompt = `${formData.prompt}, upper body, looking at camera`;
+      
       const newModel: UserModel = {
         id: `model-${Date.now()}`,
         name: formData.name,
         description: formData.description,
-        prompt: formData.prompt,
+        prompt: enhancedPrompt, // 실제 생성에 사용된 향상된 프롬프트 저장
         seedValue: seedValue,
         imageUrl: previewImages[0],
         previewImages: previewImages,
@@ -264,6 +271,12 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
       };
 
       onModelCreated(newModel);
+      
+      // 모델 생성 후 제품 이미지 업로드 화면으로 이동
+      if (onGoToProductUpload) {
+        onGoToProductUpload(newModel);
+      }
+      
       setIsSubmitting(false);
     }, 2000);
   };
@@ -785,7 +798,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
                     className="text-sm"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
-                    모델을 마켓플레이스에 출시하면 100P의 보너스 포인트를 받게 됩니다.
+                    이제 이 AI 모델을 사용하여 제품 광고 이미지를 생성할 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -816,13 +829,13 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
               >
                 {isSubmitting ? (
                   <>
-                    <Save className="w-4 h-4 mr-2 animate-spin" />
-                    출시 중...
+                    <Wand2 className="w-4 h-4 mr-2 animate-spin" />
+                    모델 생성 중...
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4 mr-2" />
-                    마켓플레이스에 출시
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    이 모델을 사용하여 광고 이미지 생성
                   </>
                 )}
               </Button>

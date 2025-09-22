@@ -19,12 +19,13 @@ import { ComponentDemo } from './components/ComponentDemo';
 import LoginTest from './components/LoginTest';
 import PointsSubscriptionPage from './components/PointsSubscriptionPage';
 import { MyReviews } from './components/MyReviews';
+import { ProductImageUpload } from './components/ProductImageUpload';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload';
 
 export interface UserModel {
   id: string;
@@ -277,6 +278,7 @@ export default function App() {
     }
   ]);
   const [selectedModelToReport, setSelectedModelToReport] = useState<UserModel | null>(null);
+  const [selectedModelForAdGeneration, setSelectedModelForAdGeneration] = useState<UserModel | null>(null);
 
   // Check authentication status on app load
   useEffect(() => {
@@ -570,6 +572,11 @@ export default function App() {
     setCurrentStage('modelMarketplace');
   };
 
+  const handleGoToProductUpload = (model: UserModel) => {
+    setSelectedModelForAdGeneration(model);
+    setCurrentStage('productUpload');
+  };
+
   const handleReportStatusUpdate = (reportId: string, status: ModelReport['status'], reviewNotes?: string, resolution?: ModelReport['resolution']) => {
     setModelReports(prev => 
       prev.map(report => 
@@ -727,6 +734,7 @@ export default function App() {
           onMyPage={() => handleStageChange('mypage')}
           onHome={() => handleStageChange('landing')}
           onAdmin={() => handleStageChange('admin')}
+          onGoToProductUpload={handleGoToProductUpload}
         />
       )}
 
@@ -824,6 +832,33 @@ export default function App() {
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
           onPointsSubscription={() => handleStageChange('pointsSubscription')}
+        />
+      )}
+
+      {currentStage === 'productUpload' && selectedModelForAdGeneration && (
+        <ProductImageUpload 
+          userProfile={userProfile}
+          selectedModel={selectedModelForAdGeneration}
+          onBack={() => handleStageChange('myModels')}
+          onGenerateAd={(productImages, additionalPrompt) => {
+            // 제품 이미지와 선택된 모델로 광고 이미지 생성 로직
+            console.log('제품 이미지:', productImages);
+            console.log('추가 프롬프트:', additionalPrompt);
+            console.log('선택된 모델:', selectedModelForAdGeneration);
+            
+            // 실제로는 ImageGenerationWorkflow로 이동하거나 새로운 광고 생성 화면으로 이동
+            // 임시로 마이페이지로 이동
+            alert('광고 이미지 생성이 완료되었습니다!');
+            handleStageChange('mypage');
+          }}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onHome={() => handleStageChange('landing')}
+          onAdmin={() => handleStageChange('admin')}
         />
       )}
     </div>
