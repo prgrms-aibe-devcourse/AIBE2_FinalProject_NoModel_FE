@@ -1,8 +1,9 @@
 import axios, {AxiosError} from 'axios';
 import { tokenCookies } from '../utils/cookieUtils';
+import { API_BASE_URL } from '../config/env';
 
 const axiosInstance = axios.create({ 
-  baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080/api',
+  baseURL: API_BASE_URL,
   withCredentials: true, // 쿠키를 포함하여 요청 전송
 });
 

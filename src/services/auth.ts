@@ -1,7 +1,57 @@
 import { LoginRequest, LoginResponse, SignupRequest, SignupResponse } from '../types/auth';
 import { PostAxiosInstance, GetAxiosInstance } from './ApiService';
 import { AxiosError } from 'axios';
-import { tokenCookies, cookieUtils } from '../utils/cookieUtils';
+import { tokenCookies } from '../utils/cookieUtils';
+import { buildApiUrl } from '../config/env';
+import { ApiError } from '../types/api';
+
+const buildApiError = (err: unknown, fallbackMessage: string): ApiError => {
+  if (err instanceof AxiosError) {
+    const data = err.response?.data as any;
+    const serverError = data?.error;
+
+    if (serverError && typeof serverError === 'object') {
+      const message = typeof serverError.message === 'string'
+        ? serverError.message
+        : typeof data?.message === 'string'
+          ? data.message
+          : fallbackMessage;
+
+      const status = typeof serverError.status === 'number'
+        ? serverError.status
+        : err.response?.status ?? 500;
+
+      return {
+        message,
+        status,
+        ...serverError,
+      };
+    }
+
+    const derivedMessage = typeof data?.message === 'string'
+      ? data.message
+      : typeof data?.error === 'string'
+        ? data.error
+        : fallbackMessage;
+
+    return {
+      message: derivedMessage,
+      status: err.response?.status ?? 500,
+    };
+  }
+
+  if (err instanceof Error) {
+    return {
+      message: err.message,
+      status: 500,
+    };
+  }
+
+  return {
+    message: fallbackMessage,
+    status: 500,
+  };
+};
 
 class AuthService {
   // Login API call - Cookie based authentication
@@ -29,21 +79,10 @@ class AuthService {
     } catch (error) {
       console.error('Login API error:', error);
       
-      if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message || 
-                           error.response?.data?.error || 
-                           '로그인에 실패했습니다.';
-        return {
-          success: false,
-          response: null,
-          error: errorMessage,
-        };
-      }
-
       return {
         success: false,
         response: null,
-        error: '네트워크 오류가 발생했습니다.',
+        error: buildApiError(error, '로그인에 실패했습니다.'),
       };
     }
   }
@@ -56,21 +95,10 @@ class AuthService {
     } catch (error) {
       console.error('Signup API error:', error);
       
-      if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message || 
-                           error.response?.data?.error || 
-                           '회원가입에 실패했습니다.';
-        return {
-          success: false,
-          response: null,
-          error: errorMessage,
-        };
-      }
-
       return {
         success: false,
         response: null,
-        error: '네트워크 오류가 발생했습니다.',
+        error: buildApiError(error, '회원가입에 실패했습니다.'),
       };
     }
   }
@@ -191,7 +219,7 @@ class AuthService {
       token = this.getAccessToken();
     }
 
-    const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'}${url}`, {
+    const response = await fetch(buildApiUrl(url), {
       ...options,
       headers: {
         ...options.headers,
@@ -205,7 +233,7 @@ class AuthService {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         const newToken = this.getAccessToken();
-        return fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8080/api'}${url}`, {
+        return fetch(buildApiUrl(url), {
           ...options,
           headers: {
             ...options.headers,

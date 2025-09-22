@@ -11,6 +11,7 @@ import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, User, CheckCircle, Chrome
 import { authService } from '../services/auth';
 import type { SignupRequest } from '../types/auth';
 import { TermsModal } from './common/TermsModal';
+import { API_BASE_URL } from '../config/env';
 
 interface SignupPageProps {
   onSignupSuccess: (isAutoLogin?: boolean) => void;
@@ -86,7 +87,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
           onLogin();
         }, 2000);
       } else {
-        setError(result.error || '회원가입에 실패했습니다.');
+        setError(result.error?.message || '회원가입에 실패했습니다.');
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -98,8 +99,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
 
   const handleSocialSignup = (provider: 'google' | 'github') => {
     // 실제 소셜 로그인 처리 - 로그인 페이지와 동일한 로직
-    const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080/api';
-    window.location.href = `${API_BASE}/oauth2/authorization/${provider}`;
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}`;
   };
 
   const isFormValid = formData.username && formData.email && formData.password &&

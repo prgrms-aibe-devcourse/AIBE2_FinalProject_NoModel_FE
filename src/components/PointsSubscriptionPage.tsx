@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import { NavigationBar } from "./NavigationBar";
 import { UserProfile } from "../App";
+import { buildApiUrl } from "../config/env";
 
 interface SubscriptionPlan {
     id: number;
@@ -63,7 +64,7 @@ export default function PointsSubscriptionPage({
     // ✅ 구독 현황 + 구독 플랜 목록 불러오기 함수
     const loadSubscriptions = () => {
         // 구독 현황 조회
-        fetch("http://localhost:8080/api/subscriptions", {
+        fetch(buildApiUrl("/subscriptions"), {
             method: "GET",
             credentials: "include",
         })
@@ -72,7 +73,7 @@ export default function PointsSubscriptionPage({
             .catch(() => setCurrentSubscription(null));
 
         // 구독 플랜 목록 조회
-        fetch("http://localhost:8080/api/subscriptions/plans", {
+        fetch(buildApiUrl("/subscriptions/plans"), {
             method: "GET",
             credentials: "include",
         })
@@ -114,7 +115,7 @@ export default function PointsSubscriptionPage({
 
         // ✅ 0원 플랜은 PG 거치지 않고 바로 백엔드에 등록
         if (selectedPlan.price === 0) {
-            const response = await fetch("http://localhost:8080/api/subscriptions", {
+            const response = await fetch(buildApiUrl("/subscriptions"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -153,7 +154,7 @@ export default function PointsSubscriptionPage({
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    const response = await fetch("http://localhost:8080/api/subscriptions", {
+                    const response = await fetch(buildApiUrl("/subscriptions"), {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
@@ -183,7 +184,7 @@ export default function PointsSubscriptionPage({
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
         const response = await fetch(
-            "http://localhost:8080/api/subscriptions?reason=USER_REQUESTED",
+            buildApiUrl("/subscriptions?reason=USER_REQUESTED"),
             {
                 method: "DELETE",
                 credentials: "include",

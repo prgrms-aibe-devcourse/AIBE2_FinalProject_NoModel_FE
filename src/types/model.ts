@@ -1,3 +1,5 @@
+import { ApiResponse } from './api';
+
 // AI Model Document types (Elasticsearch 기반)
 export interface AIModelDocument {
   id: string; // 문서 ID
@@ -82,13 +84,6 @@ export interface PageResponse<T> {
   number: number; // Spring Data Page의 현재 페이지 번호
   size: number;   // Spring Data Page의 페이지 크기
   numberOfElements: number; // 현재 페이지의 요소 수
-}
-
-// API response wrapper
-export interface ApiResponse<T> {
-  success: boolean;
-  response: T;
-  error?: string;
 }
 
 export type ModelSearchResponse = ApiResponse<PageResponse<AIModelDocument>>;

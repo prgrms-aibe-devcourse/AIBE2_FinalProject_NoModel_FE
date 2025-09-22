@@ -163,6 +163,17 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
   const selectedTypeOption = MODEL_TYPE_OPTIONS.find(opt => opt.value === filters.modelType);
   const selectedPriceOption = PRICE_TYPE_OPTIONS.find(opt => opt.value === filters.priceType);
 
+  const ActiveFilterTag = ({ label, onClear }: { label: string; onClear: () => void }) => (
+    <button
+      type="button"
+      onClick={onClear}
+      className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:text-gray-900"
+    >
+      <span>{label}</span>
+      <X className="h-3 w-3" />
+    </button>
+  );
+
   return (
     <div className={`space-y-4 ${className}`}>
       {/* 필터 및 보유 코인 */}
@@ -251,33 +262,24 @@ export const ModelFilters: React.FC<ModelFiltersProps> = ({
           </span>
 
           {filters.keyword && (
-            <Badge variant="secondary" className="gap-1">
-              검색: "{filters.keyword}"
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => handleKeywordChange('')}
-              />
-            </Badge>
+            <ActiveFilterTag
+              label={`검색: "${filters.keyword}"`}
+              onClear={() => handleKeywordChange('')}
+            />
           )}
 
-          {filters.modelType !== 'ALL' && (
-            <Badge variant="secondary" className="gap-1">
-              {selectedTypeOption?.label}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => handleModelTypeChange('ALL')}
-              />
-            </Badge>
+          {filters.modelType !== 'ALL' && selectedTypeOption && (
+            <ActiveFilterTag
+              label={selectedTypeOption.label}
+              onClear={() => handleModelTypeChange('ALL')}
+            />
           )}
 
-          {filters.priceType !== 'ALL' && (
-            <Badge variant="secondary" className="gap-1">
-              {selectedPriceOption?.label}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-red-500"
-                onClick={() => handlePriceTypeChange('ALL')}
-              />
-            </Badge>
+          {filters.priceType !== 'ALL' && selectedPriceOption && (
+            <ActiveFilterTag
+              label={selectedPriceOption.label}
+              onClear={() => handlePriceTypeChange('ALL')}
+            />
           )}
         </div>
       )}
