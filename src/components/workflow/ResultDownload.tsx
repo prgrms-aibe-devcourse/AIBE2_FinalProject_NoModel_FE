@@ -355,7 +355,7 @@ export function ResultDownload({
                         <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-2">
                                 <h4 className="font-bold text-base" style={{ color: 'var(--color-text-primary)' }}>
-                                    리뷰가 정상적으로 등록되었습니다!
+                                    리뷰가 정상적으로 등록되었습니다
                                 </h4>
                                 <Button 
                                     variant="ghost" 
