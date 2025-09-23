@@ -6,7 +6,7 @@ import {
 import { UserProfile, SelectedModel, UserModel } from '../App';
 import { AIModelBrowser } from './AIModelBrowser';
 import { ModelReportModal } from './ModelReportModal';
-import { AIModelDocument } from '../types/model';
+import { AIModelDocument, AIModelSearchResponse } from '../types/model';
 
 interface ModelMarketplaceProps {
   userProfile: UserProfile | null;
@@ -36,16 +36,16 @@ export function ModelMarketplace({
   onAdmin,
   onPointsSubscription
 }: ModelMarketplaceProps) {
-  const [reportingModel, setReportingModel] = useState<AIModelDocument | null>(null);
+  const [reportingModel, setReportingModel] = useState<AIModelSearchResponse | null>(null);
 
-  const handleSearchModelSelect = (model: AIModelDocument) => {
+  const handleSearchModelSelect = (model: AIModelSearchResponse) => {
     const selectedModel: SelectedModel = {
       id: model.modelId.toString(),
       name: model.modelName,
-      prompt: '',
-      seedValue: '',
-      imageUrl: model.thumbnailUrl || '',
-      category: model.categoryType,
+      prompt: model.prompt,
+      seedValue: model.modelId.toString(),
+      imageUrl: model.primaryImageUrl || (model.imageUrls && model.imageUrls.length > 0 ? model.imageUrls[0] : ''),
+      category: model.ownType,
       isCustom: false,
       metadata: {
         age: '',
@@ -57,7 +57,7 @@ export function ModelMarketplace({
     onModelPurchase(selectedModel);
   };
 
-  const handleAPIModelReport = (model: AIModelDocument) => {
+  const handleAPIModelReport = (model: AIModelSearchResponse) => {
     setReportingModel(model);
   };
 

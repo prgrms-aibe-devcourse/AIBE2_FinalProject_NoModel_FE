@@ -28,6 +28,30 @@ export interface AIModelDocument {
   userId?: number;
 }
 
+// 백엔드에서 실제로 반환하는 검색 응답 타입
+export interface AIModelSearchResponse {
+  id: string;
+  modelId: number;
+  modelName: string;
+  prompt: string;
+  tags: string[];
+  ownType: string;
+  ownerId: number;
+  ownerName: string;
+  price: number;
+  isPublic: boolean;
+  usageCount: number;
+  viewCount: number;
+  rating: number;
+  reviewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  
+  // File 도메인 정보 (별도 조합)
+  imageUrls: string[];
+  primaryImageUrl: string | null;
+}
+
 // Search request parameters
 export interface ModelSearchParams {
   keyword: string; // 필수 파라미터
@@ -91,9 +115,9 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-export type ModelSearchResponse = ApiResponse<PageResponse<AIModelDocument>>;
+export type ModelSearchResponse = ApiResponse<PageResponse<AIModelSearchResponse>>;
 export type ModelSuggestionsResponse = ApiResponse<string[]>;
-export type ModelDetailResponse = ApiResponse<AIModelDocument>;
+export type ModelDetailResponse = ApiResponse<AIModelSearchResponse>;
 
 // Model detail types
 export interface FileInfo {

@@ -550,8 +550,61 @@ export default function App() {
   };
 
   const handleModelPurchase = (model: SelectedModel) => {
-    // 모델 구매 로직은 handleModelSelect에서 처리됨
-    handleModelSelect(model);
+    // SelectedModel을 UserModel 형태로 변환
+    const userModel: UserModel = {
+      id: model.id,
+      name: model.name,
+      description: '',
+      prompt: model.prompt,
+      seedValue: model.seedValue,
+      fileId: model.seedValue ? parseInt(model.seedValue) : undefined,
+      imageUrl: model.imageUrl,
+      previewImages: [model.imageUrl],
+      category: model.category,
+      metadata: model.metadata,
+      creatorId: model.creator?.id || 'unknown',
+      creatorName: model.creator?.name || 'Unknown',
+      creatorAvatar: model.creator?.avatar,
+      price: model.price || 0,
+      usageCount: 0,
+      rating: 0,
+      ratingCount: 0,
+      tags: [],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      earnings: 0
+    };
+
+    // 포인트 차감 로직
+    if (model.creator && model.price && userProfile) {
+      if (userProfile.points >= model.price) {
+        // 포인트 차감
+        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
+        
+        // 거래 내역 추가
+        const transaction: PointTransaction = {
+          id: `transaction-${Date.now()}`,
+          userId: userProfile.id,
+          type: 'spent',
+          amount: -model.price,
+          description: `${model.name} 모델 사용`,
+          relatedModelId: model.id,
+          createdAt: new Date()
+        };
+        setPointTransactions(prev => [transaction, ...prev]);
+        
+        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
+      } else {
+        alert('포인트가 부족합니다.');
+        return;
+      }
+    }
+
+    // 제품 이미지 업로드 화면으로 이동
+    setSelectedModelForAdGeneration(userModel);
+    setCurrentStage('productUpload');
   };
 
   const handleModelReportRequest = (model: UserModel) => {

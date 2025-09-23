@@ -12,7 +12,7 @@ import {
   searchModelsWithFilters,
   FilteredSearchParams
 } from '../services/modelApi';
-import { AIModelDocument } from '../types/model';
+import { AIModelDocument, AIModelSearchResponse } from '../types/model';
 import { toast } from 'sonner';
 import { UserProfile } from '../App';
 import { ModelDetailDialog } from './ModelDetailDialog';
@@ -20,14 +20,14 @@ import { ModelFilters, ModelFilters as ModelFiltersType } from './ModelFilters';
 
 interface AIModelBrowserProps {
   userProfile: UserProfile | null;
-  onModelSelect?: (model: AIModelDocument) => void;
-  onModelReport: (model: AIModelDocument) => void;
+  onModelSelect?: (model: AIModelSearchResponse) => void;
+  onModelReport: (model: AIModelSearchResponse) => void;
   onLogin: () => void;
   className?: string;
 }
 
 interface SearchState {
-  models: AIModelDocument[];
+  models: AIModelSearchResponse[];
   hasMore: boolean;
   isLoading: boolean;
   isLoadingMore: boolean;
@@ -42,22 +42,48 @@ const ModelCard = memo(({
   onModelSelect,
   onModelCardClick
 }: {
-  model: AIModelDocument;
-  onModelReport: (model: AIModelDocument) => void;
-  onModelSelect?: (model: AIModelDocument) => void;
-  onModelCardClick: (model: AIModelDocument) => void;
+  model: AIModelSearchResponse;
+  onModelReport: (model: AIModelSearchResponse) => void;
+  onModelSelect?: (model: AIModelSearchResponse) => void;
+  onModelCardClick: (model: AIModelSearchResponse) => void;
 }) => {
-  // 백엔드 데이터 구조에 맞게 필드 매핑
+  // 백엔드에서 제공하는 실제 Firebase 이미지 URL 사용
+  const getModelImageUrl = () => {
+    // 백엔드에서 제공하는 primaryImageUrl 우선 사용
+    if (model.primaryImageUrl && model.primaryImageUrl !== '') {
+      return model.primaryImageUrl;
+    }
+    
+    // imageUrls 배열에서 첫 번째 이미지 사용
+    if (model.imageUrls && model.imageUrls.length > 0) {
+      return model.imageUrls[0];
+    }
+    
+    // 기본 플레이스홀더 이미지들 (카테고리별로 다르게)
+    const placeholderImages = [
+      'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=300&h=300&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop&crop=face'
+    ];
+    
+    // 모델 ID를 기반으로 일관된 플레이스홀더 선택
+    const imageIndex = model.modelId % placeholderImages.length;
+    return placeholderImages[imageIndex];
+  };
+
   const displayData = {
-    thumbnailUrl: model.thumbnailUrl || '/api/placeholder/300/300',
+    thumbnailUrl: getModelImageUrl(),
     modelName: model.modelName,
-    shortDescription: model.shortDescription || model.prompt || '',
-    categoryType: model.categoryType || model.ownType,
-    developer: model.developer || model.ownerName,
+    shortDescription: model.prompt || '',
+    categoryType: model.ownType,
+    developer: model.ownerName,
     rating: model.rating || 0,
-    downloadCount: model.downloadCount || model.usageCount || 0,
+    downloadCount: model.usageCount || 0,
     viewCount: model.viewCount || 0,
-    isAdmin: model.modelType === 'ADMIN' || model.ownType === 'ADMIN',
+    isAdmin: model.ownType === 'ADMIN',
     isPublic: model.isPublic,
     tags: model.tags || [],
   };
@@ -70,6 +96,14 @@ const ModelCard = memo(({
           alt={displayData.modelName}
           className="w-full h-48 object-cover"
           loading="lazy"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            // 이미 대체 이미지를 사용 중이 아니라면 대체 이미지로 변경
+            const fallbackImage = 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=300&h=300&fit=crop&crop=face';
+            if (target.src !== fallbackImage) {
+              target.src = fallbackImage;
+            }
+          }}
         />
         <div className="absolute top-2 left-2">
           {displayData.isAdmin && (
@@ -156,7 +190,7 @@ const ModelCard = memo(({
         {/* 가격 및 통계 정보 - 항상 하단에 고정 */}
         <div className="flex items-center justify-between pt-3 border-t mt-3">
           <div className="text-sm text-green-600 font-medium">
-            {model.price && model.price > 0 ? `${model.price.toLocaleString()}원` : '무료'}
+            {model.price && model.price > 0 ? `${model.price.toLocaleString()}포인트` : '무료'}
           </div>
           <div className="flex items-center gap-3 text-gray-500 text-xs">
             <div className="flex items-center gap-1">
@@ -314,7 +348,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     performSearch(newFilters, 0, false);
   };
 
-  const handleModelReport = (model: AIModelDocument) => {
+  const handleModelReport = (model: AIModelSearchResponse) => {
     if (!userProfile) {
       toast.error('로그인이 필요합니다.');
       onLogin();
@@ -323,7 +357,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
     onModelReport(model);
   };
 
-  const handleModelCardClick = (model: AIModelDocument) => {
+  const handleModelCardClick = (model: AIModelSearchResponse) => {
     setSelectedModelId(model.modelId);
     setDetailDialogOpen(true);
   };
