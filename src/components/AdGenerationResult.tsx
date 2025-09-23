@@ -13,6 +13,7 @@ interface AdGenerationResultProps {
   selectedModel: UserModel;
   originalImage: string;
   generatedImageUrl: string;
+  resultFileId?: number; // 추가: compose API에서 받은 resultFileId
   additionalPrompt?: string;
   onBack: () => void;
   onNewGeneration: () => void;
@@ -31,6 +32,7 @@ export function AdGenerationResult({
   selectedModel,
   originalImage,
   generatedImageUrl,
+  resultFileId,
   additionalPrompt,
   onBack,
   onNewGeneration,
@@ -48,18 +50,30 @@ export function AdGenerationResult({
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const response = await fetch(generatedImageUrl);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `AI광고이미지_${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      console.log('resultFileId:', resultFileId);
+      
+      if (resultFileId) {
+        // 사용자가 제공한 API를 사용하여 다운로드
+        const downloadUrl = `http://localhost:8080/api/files/${resultFileId}/download`;
+        console.log('Download URL:', downloadUrl);
+        
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `AI광고이미지_${Date.now()}.png`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        throw new Error('resultFileId가 없습니다.');
+      }
     } catch (error) {
       console.error('다운로드 실패:', error);
+      console.error('Error details:', {
+        message: error.message,
+        resultFileId,
+        userAgent: navigator.userAgent
+      });
       alert('다운로드 중 오류가 발생했습니다.');
     } finally {
       setIsDownloading(false);

@@ -285,6 +285,7 @@ export default function App() {
     originalImage: string;
     generatedImageUrl: string;
     additionalPrompt?: string;
+    resultFileId?: number; // compose API에서 받은 resultFileId 추가
   } | null>(null);
 
   // Check authentication status on app load
@@ -640,11 +641,12 @@ export default function App() {
     setCurrentStage('productUpload');
   };
 
-  const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, additionalPrompt?: string) => {
+  const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, resultFileId?: number, additionalPrompt?: string) => {
     setAdGenerationData({
       originalImage,
       generatedImageUrl,
-      additionalPrompt
+      additionalPrompt,
+      resultFileId // resultFileId 추가
     });
     setCurrentStage('adGenerationResult');
   };
@@ -912,17 +914,19 @@ export default function App() {
           userProfile={userProfile}
           selectedModel={selectedModelForAdGeneration}
           onBack={() => handleStageChange('myModels')}
-          onGenerateAd={(productImages, additionalPrompt) => {
+          onGenerateAd={(productImages, resultFileId, additionalPrompt) => {
             // 제품 이미지와 선택된 모델로 광고 이미지 생성 로직
             console.log('제품 이미지:', productImages);
             console.log('추가 프롬프트:', additionalPrompt);
             console.log('선택된 모델:', selectedModelForAdGeneration);
+            console.log('resultFileId:', resultFileId);
             
             // 결과 화면으로 이동 (기존 알림 대신)
             if (productImages.length > 0) {
               handleAdGenerationComplete(
                 productImages[0], // 원본 이미지 (첫 번째 업로드된 이미지)
                 productImages[productImages.length - 1], // 생성된 이미지 (마지막 이미지가 생성된 결과)
+                resultFileId, // 실제 API에서 받은 resultFileId
                 additionalPrompt
               );
             }
@@ -944,6 +948,7 @@ export default function App() {
           selectedModel={selectedModelForAdGeneration}
           originalImage={adGenerationData.originalImage}
           generatedImageUrl={adGenerationData.generatedImageUrl}
+          resultFileId={adGenerationData.resultFileId} // resultFileId 추가
           additionalPrompt={adGenerationData.additionalPrompt}
           onBack={() => handleStageChange('productUpload')}
           onNewGeneration={() => handleStageChange('productUpload')}

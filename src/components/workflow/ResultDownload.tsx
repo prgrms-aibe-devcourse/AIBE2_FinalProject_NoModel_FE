@@ -110,13 +110,50 @@ export function ResultDownload({
 
         setIsDownloading(true);
 
-        // 다운로드 시뮬레이션
-        setTimeout(() => {
-            setIsDownloading(false);
-            console.log(`Downloading ${selectedImages.size} images in ${downloadFormat} format at ${resolution} resolution`);
+        try {
+            // 선택된 이미지들을 다운로드
+            for (const imageIndex of selectedImages) {
+                const imageUrl = generatedImages[imageIndex];
+                
+                // imageUrl에서 fileId를 추출하거나 이미 fileId를 가지고 있는 경우
+                // URL 형식: http://localhost:8080/api/files/{fileId}/view 에서 fileId 추출
+                const fileIdMatch = imageUrl.match(/\/files\/([^\/]+)\//); 
+                if (fileIdMatch) {
+                    const fileId = fileIdMatch[1];
+                    const downloadUrl = `http://localhost:8080/api/files/${fileId}/download`;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `생성이미지_${imageIndex + 1}_${Date.now()}.${downloadFormat}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    // 기존 방식으로 폴백
+                    const response = await fetch(imageUrl);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `생성이미지_${imageIndex + 1}_${Date.now()}.${downloadFormat}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }
+                
+                // 다음 이미지 다운로드 전에 짧은 지연
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            console.log(`Downloaded ${selectedImages.size} images in ${downloadFormat} format at ${resolution} resolution`);
             // ✅ 다운로드 후 리뷰 다이얼로그 열기
             setIsRatingOpen(true);
-        }, 2000);
+        } catch (error) {
+            console.error('다운로드 실패:', error);
+            alert('다운로드 중 오류가 발생했습니다.');
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     const handleShare = (platform: string) => {
