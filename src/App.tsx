@@ -5,7 +5,6 @@ import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { authService } from './services/auth';
 import { OnboardingFlow } from './components/OnboardingFlow';
-import { ModelSelectionPage } from './components/ModelSelectionPage';
 import { ImageGenerationWorkflow } from './components/ImageGenerationWorkflow';
 import { MyPage } from './components/MyPage';
 import { ProjectDetail } from './components/ProjectDetail';
@@ -26,7 +25,7 @@ const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
 
 export interface UserModel {
   id: string;
@@ -351,39 +350,7 @@ export default function App() {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    setCurrentStage('modelSelection');
-  };
-
-  const handleModelSelect = (model: SelectedModel) => {
-    setSelectedModel(model);
-    
-    // 모델 사용 시 포인트 차감 및 제작자에게 포인트 지급
-    if (model.creator && model.price && userProfile) {
-      if (userProfile.points >= model.price) {
-        // 포인트 차감
-        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
-        
-        // 거래 내역 추가
-        const transaction: PointTransaction = {
-          id: `transaction-${Date.now()}`,
-          userId: userProfile.id,
-          type: 'spent',
-          amount: -model.price,
-          description: `${model.name} 모델 사용`,
-          relatedModelId: model.id,
-          createdAt: new Date()
-        };
-        setPointTransactions(prev => [transaction, ...prev]);
-        
-        // 실제 앱에서는 여기서 모델 제작자에게 포인트 지급 API 호출
-        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
-      } else {
-        alert('포인트가 부족합니다.');
-        return;
-      }
-    }
-    
-    setCurrentStage('generation');
+    setCurrentStage('modelMarketplace'); // modelSelection 대신 바로 modelMarketplace로
   };
 
   const handleProjectSelect = (project: GeneratedProject) => {
@@ -732,29 +699,11 @@ export default function App() {
         />
       )}
 
-      {currentStage === 'modelSelection' && (
-        <ModelSelectionPage 
-          selectedCategory={selectedCategory}
-          onModelSelect={handleModelSelect}
-          onBack={() => handleStageChange('onboarding')}
-          userProfile={userProfile}
-          onCreateModel={() => handleStageChange('modelCreation')}
-          onBrowseMarketplace={() => handleStageChange('modelMarketplace')}
-          onLogin={() => handleStageChange('login')}
-          onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
-          onMarketplace={() => handleStageChange('modelMarketplace')}
-          onMyPage={() => handleStageChange('mypage')}
-          onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
-        />
-      )}
-      
       {currentStage === 'generation' && (
         <ImageGenerationWorkflow 
           selectedCategory={selectedCategory}
           selectedModel={selectedModel}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('modelMarketplace')}
           onComplete={handleGenerationComplete}
         />
       )}
@@ -798,7 +747,7 @@ export default function App() {
       {currentStage === 'modelCreation' && (
         <ModelCreation 
           userProfile={userProfile}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('modelMarketplace')} // modelSelection 대신 modelMarketplace로
           onModelCreated={handleModelCreation}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
@@ -815,7 +764,7 @@ export default function App() {
       {currentStage === 'modelMarketplace' && (
         <ModelMarketplace 
           userProfile={userProfile}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('onboarding')} // modelSelection 대신 onboarding으로
           onModelPurchase={handleModelPurchase}
           onCreateModel={() => handleStageChange('modelCreation')}
           onModelReport={handleModelReportRequest}

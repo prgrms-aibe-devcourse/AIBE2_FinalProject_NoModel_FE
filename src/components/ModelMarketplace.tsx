@@ -128,20 +128,47 @@ export function ModelMarketplace({
       <main className="page-container">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <ShoppingCart 
-              className="w-8 h-8"
-              style={{ color: 'var(--color-brand-primary)' }}
-            />
-            <div>
-              <h1 style={{
-                fontSize: 'var(--font-size-title1)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)'
-              }}>
-                마켓플레이스
-              </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <ShoppingCart 
+                className="w-8 h-8"
+                style={{ color: 'var(--color-brand-primary)' }}
+              />
+              <div>
+                <h1 style={{
+                  fontSize: 'var(--font-size-title1)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-primary)'
+                }}>
+                  마켓플레이스
+                </h1>
+              </div>
             </div>
+            
+            {/* 직접 모델 만들기 버튼 */}
+            <button
+              onClick={onCreateModel}
+              className="px-6 py-3 rounded-lg font-medium transition-all hover:shadow-md"
+              style={{
+                backgroundColor: 'var(--color-brand-primary)',
+                color: 'var(--color-utility-white)',
+                borderRadius: 'var(--radius-8)',
+                border: 'none',
+                fontSize: 'var(--font-size-small)',
+                fontWeight: 'var(--font-weight-medium)',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              + 직접 모델 만들기
+            </button>
           </div>
           
         </div>
