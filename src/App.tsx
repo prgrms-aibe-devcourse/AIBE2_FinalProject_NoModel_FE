@@ -557,7 +557,7 @@ export default function App() {
       description: '',
       prompt: model.prompt,
       seedValue: model.seedValue,
-      fileId: model.seedValue ? parseInt(model.seedValue) : undefined,
+      fileId: model.seedValue ? parseInt(model.seedValue) : undefined, // seedValue가 이제 file_id를 담고 있음
       imageUrl: model.imageUrl,
       previewImages: [model.imageUrl],
       category: model.category,
@@ -576,6 +576,9 @@ export default function App() {
       updatedAt: new Date(),
       earnings: 0
     };
+    
+    console.log('UserModel로 변환됨:', userModel);
+    console.log('fileId:', userModel.fileId, 'seedValue:', userModel.seedValue);
 
     // 포인트 차감 로직
     if (model.creator && model.price && userProfile) {

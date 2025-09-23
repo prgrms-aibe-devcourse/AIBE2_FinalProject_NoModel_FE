@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
+import { getModelFullDetail } from '../services/modelApi';
 
 interface ProductImageUploadProps {
   userProfile: UserProfile | null;
@@ -113,25 +114,28 @@ export function ProductImageUpload({
       setCurrentStep('composing');
       console.log('Step 3: 모델과 합성 중...');
       
-      // selectedModel에서 모델 파일 ID 가져오기
+      // selectedModel의 seedValue가 이미 file_id를 담고 있어야 함
       let modelFileId: number;
       
-      // 마켓플레이스에서 옵 모델의 경우 fileId가 없을 수 있음
-      // 이 경우 modelId를 사용해서 모델의 파일 정보를 조회
-      if (selectedModel.fileId) {
+      // seedValue에서 file_id 가져오기 (마켓플레이스에서 이미 설정됨)
+      if (selectedModel.seedValue && !isNaN(parseInt(selectedModel.seedValue))) {
+        modelFileId = parseInt(selectedModel.seedValue);
+        console.log('모델 파일 ID (seedValue에서):', modelFileId);
+      } else if (selectedModel.fileId) {
+        // 기존 방식 (fileId 필드가 있는 경우)
         modelFileId = selectedModel.fileId;
         console.log('모델 파일 ID (fileId에서):', modelFileId);
       } else {
-        // modelId를 사용해서 모델의 첫 번째 파일 ID 가져오기
+        // 마지막 수단: API를 사용해서 모델의 파일 정보를 조회
         console.log('모델의 파일 ID를 조회 중... 모델 ID:', selectedModel.id);
-        const modelFiles = await getModelFiles(parseInt(selectedModel.id));
+        const modelDetailResponse = await getModelFullDetail(parseInt(selectedModel.id));
         
-        if (modelFiles && modelFiles.length > 0) {
-          modelFileId = modelFiles[0].fileId; // 첫 번째 파일 사용
-          console.log('모델 파일 ID (조회해서 가져옴):', modelFileId);
-        } else {
+        if (!modelDetailResponse.success || !modelDetailResponse.response || !modelDetailResponse.response.files || modelDetailResponse.response.files.length === 0) {
           throw new Error('모델 파일을 찾을 수 없습니다.');
         }
+        
+        modelFileId = modelDetailResponse.response.files[0].fileId;
+        console.log('모델 파일 ID (API 조회해서 가져옴):', modelFileId);
       }
       
       // 기본 프롬프트에 사용자의 추가 요청사항을 이어붙이기
@@ -148,6 +152,7 @@ export function ProductImageUpload({
         customPrompt
       );
       
+      console.log('최종 사용할 모델 파일 ID:', modelFileId);
       console.log('합성 결과:', composeResult);
       
       if (composeResult.status !== 'SUCCEEDED' || !composeResult.resultFileUrl) {
@@ -169,28 +174,6 @@ export function ProductImageUpload({
       alert(`광고 이미지 생성 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
       setIsGenerating(false);
       setCurrentStep('upload');
-    }
-  };
-  
-  // 모델 파일 정보 조회 함수
-  const getModelFiles = async (modelId: number): Promise<any[]> => {
-    try {
-      const response = await fetch(`http://localhost:8080/api/models/${modelId}`);
-      
-      if (!response.ok) {
-        throw new Error(`모델 정보 조회 실패: ${response.status} ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success && result.response && result.response.files) {
-        return result.response.files;
-      } else {
-        throw new Error('모델 파일 정보를 찾을 수 없습니다.');
-      }
-    } catch (error) {
-      console.error('모델 파일 조회 에러:', error);
-      throw error;
     }
   };
   
