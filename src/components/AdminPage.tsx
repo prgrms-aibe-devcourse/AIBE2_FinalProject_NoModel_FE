@@ -8,6 +8,7 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from './u
 import {Tabs, TabsContent, TabsList, TabsTrigger} from './ui/tabs';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog';
 import {Alert, AlertDescription} from './ui/alert';
+import { Switch } from './ui/switch';
 import {NavigationBar} from './NavigationBar';
 import {
   AlertOctagon,
@@ -29,7 +30,12 @@ import {
   Star,
   User,
   Users,
-  XCircle
+  XCircle,
+  Database,
+  Settings,
+  Filter,
+  SortAsc,
+  Edit3
 } from 'lucide-react';
 import {
   Area,
@@ -46,7 +52,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
-import {ModelReport, UserProfile} from '../App';
+import {ModelReport, UserProfile, UserModel} from '../App';
 import type {AdminReportItem, ReportStatus} from '../services/reportApi';
 import {fetchAdminReports, fetchReportSummary, processAdminReport, UiSummary} from '../services/reportApi';
 import {
@@ -54,10 +60,39 @@ import {
   fetchStatisticsMonthly, type MonthlyStat,
   fetchDailyActivity, type DailyActivity,
   fetchRatingDistribution, type RatingItem } from '../services/statisticsApi';
+import { fetchAdminModels, updateAdminModelPrice, updateAdminModelIsPublic } from '../services/adminModelApi';
+
+type UiModel = {
+  id: string;
+  modelId: number;
+  name: string;
+  prompt: string;
+  tags: string[];
+  ownerName: string;
+  ownerType: 'ADMIN' | 'USER';
+  price: number | null | undefined;
+  rating: number;
+  reviewCount: number;
+  viewCount: number;
+  usageCount: number;
+  isPublic: boolean;
+  imageUrl?: string;
+  createdAt?: string;
+};
+
+type AdminModelPage = {
+  content: UiModel[];
+  totalElements: number;
+  totalPages: number;
+  number: number; // 현재 페이지(0-base)
+  size: number; // 요청한 size
+};
 
 interface AdminPageProps {
   userProfile: UserProfile | null;
   modelReports: ModelReport[];
+  allModels: UserModel[];
+  onModelUpdate: (modelId: string, updates: Partial<UserModel>) => void;
   onBack: () => void;
   onReportStatusUpdate: (reportId: string, status: ModelReport['status'], reviewNotes?: string, resolution?: ModelReport['resolution']) => void;
   onLogin: () => void;
@@ -196,7 +231,9 @@ const toModelReport = (r: AdminReportItem): ModelReport => ({
 
 export function AdminPage({ 
   userProfile, 
-  modelReports, 
+  modelReports,
+  allModels,
+  onModelUpdate,
   onBack, 
   onReportStatusUpdate,
   onLogin,
@@ -215,6 +252,24 @@ export function AdminPage({
   const [reviewNotes, setReviewNotes] = useState('');
   const [selectedResolution, setSelectedResolution] = useState<ModelReport['resolution']>('no_action');
   const [activeTab, setActiveTab] = useState<string>('statistics');
+
+  // ====== 모델 관리(서버 연동) 상태 ======
+  const [modelKeyword, setModelKeyword] = useState('');
+  const [modelIsFree, setModelIsFree] = useState<boolean | null>(null); // null: 전체, true: 무료, false: 유료
+  const [modelPage, setModelPage] = useState(0);
+  const [modelSize, setModelSize] = useState(12);
+  const [modelData, setModelData] = useState<AdminModelPage | null>(null);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [modelError, setModelError] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [priceSaving, setPriceSaving] = useState(false);
+
+  // Model management states
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
+  const [modelTypeFilter, setModelTypeFilter] = useState<string>('all');
+  const [modelSortBy, setModelSortBy] = useState<string>('createdAt');
+  const [selectedModel, setSelectedModel] = useState<UiModel | null>(null);
+  const [editingPrice, setEditingPrice] = useState<string>('');
 
   // 신고 요약
   const [summary, setSummary] = useState<UiSummary | null>(null);
@@ -285,7 +340,35 @@ export function AdminPage({
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }, [apiReports, searchQuery, typeFilter]);
 
+  // Filter models
+  const filteredModels = useMemo(() => {
+    let models = allModels.filter(model => {
+      if (modelTypeFilter === 'admin' && model.creatorId !== 'admin') return false;
+      if (modelTypeFilter === 'user' && model.creatorId === 'admin') return false;
+      if (modelSearchQuery && !model.name.toLowerCase().includes(modelSearchQuery.toLowerCase()) &&
+          !model.creatorName.toLowerCase().includes(modelSearchQuery.toLowerCase())) return false;
+      return true;
+    });
 
+    // Sort models
+    models.sort((a, b) => {
+      switch (modelSortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'price':
+          return b.price - a.price;
+        case 'usage':
+          return b.usageCount - a.usageCount;
+        case 'rating':
+          return b.rating - a.rating;
+        case 'createdAt':
+        default:
+          return b.createdAt.getTime() - a.createdAt.getTime();
+      }
+    });
+
+    return models;
+  }, [allModels, modelSearchQuery, modelTypeFilter, modelSortBy]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ko-KR', {
@@ -501,6 +584,80 @@ export function AdminPage({
         }));
   }, [ratingDist]);
 
+
+  const handlePriceUpdate = async (model: UiModel) => {
+    const newPrice = Number(editingPrice);
+    if (Number.isNaN(newPrice) || newPrice < 0) return;
+
+    try {
+      setPriceSaving(true);
+      await updateAdminModelPrice(model.id, newPrice);
+
+      // 목록에 반영
+      setModelData(prev => prev ? {
+        ...prev,
+        content: prev.content.map(m => m.id === model.id ? { ...m, price: newPrice } : m)
+      } : prev);
+
+      setSelectedModel(null);
+      setEditingPrice('');
+    } catch (e: any) {
+      alert(e?.message ?? '가격 수정에 실패했습니다.');
+    } finally {
+      setPriceSaving(false);
+    }
+  };
+
+
+  // ====== 서버 연동: 관리자 모델 목록 ======
+  useEffect(() => {
+    let abort = false;
+    (async () => {
+      try {
+        setModelLoading(true);
+        setModelError(null);
+        const res = await fetchAdminModels({ page: modelPage, size: modelSize, keyword: modelKeyword, isFree: modelIsFree });
+        if (!abort) setModelData(res);
+      } catch (e: any) {
+        if (!abort) setModelError(e?.message ?? '모델 목록을 불러오지 못했습니다');
+      } finally {
+        if (!abort) setModelLoading(false);
+      }
+    })();
+    return () => { abort = true; };
+  }, [modelPage, modelSize, modelKeyword, modelIsFree]);
+
+
+  useEffect(() => { setModelPage(0); }, [modelKeyword, modelIsFree, modelSize]);
+
+
+  const fmtPrice = (price: number | null | undefined) => {
+    if (price === null || price === undefined) return '-';
+    if (Number(price) === 0) return '무료';
+    return `${Number(price).toLocaleString()}P`;
+  };
+  const fmtDateText = (iso?: string) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '-';
+    return new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
+  };
+
+  // 현재 페이지/총 페이지 기반으로 숫자 버튼 윈도우(최대 5개) 생성
+  const currModelPage = modelData?.number ?? modelPage;          // 0-base
+  const totalModelPages = modelData?.totalPages ?? 1;
+
+  const modelPageButtons = useMemo(() => {
+    const windowSize = 5;
+    const total = Math.max(1, totalModelPages);
+    const curr = Math.min(Math.max(0, currModelPage), total - 1);
+
+    const start = Math.max(0, Math.min(curr - Math.floor(windowSize / 2), Math.max(0, total - windowSize)));
+    const end   = Math.min(total - 1, start + windowSize - 1);
+
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [currModelPage, totalModelPages]);
+
   if (userProfile?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-background-primary)' }}>
@@ -578,13 +735,17 @@ export function AdminPage({
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 py-8">
+      <main className="linear-container py-8">
         {/* Tab Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
             <TabsTrigger value="statistics" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               통계 대시보드
+            </TabsTrigger>
+            <TabsTrigger value="models" className="flex items-center gap-2">
+              <Database className="w-4 h-4" />
+              모델 관리
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
@@ -914,6 +1075,357 @@ export function AdminPage({
               </Card>
             </div>
           </TabsContent>
+
+          {/* Model Management */}
+          <TabsContent value="models" className="space-y-6">
+
+            {/* Filters and Search */}
+            <Card className="p-6" style={{
+              backgroundColor: 'var(--color-background-primary)',
+              borderColor: 'var(--color-border-primary)',
+              borderRadius: 'var(--radius-16)'
+            }}>
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
+                          style={{ color: 'var(--color-text-tertiary)' }} />
+                  <Input
+                      placeholder="모델명 또는 제작자명으로 검색..."
+                      value={modelKeyword}
+                      onChange={(e) => setModelKeyword(e.target.value)}
+                      className="pl-10"
+                      style={{
+                        backgroundColor: 'var(--color-background-level1)',
+                        borderColor: 'var(--color-border-primary)',
+                        borderRadius: 'var(--radius-8)'
+                      }}
+                  />
+                </div>
+
+              {/*  <Select value={modelTypeFilter} onValueChange={setModelTypeFilter}>*/}
+              {/*    <SelectTrigger className="w-full md:w-48" style={{*/}
+              {/*      backgroundColor: 'var(--color-background-level1)',*/}
+              {/*      borderColor: 'var(--color-border-primary)',*/}
+              {/*      borderRadius: 'var(--radius-8)'*/}
+              {/*    }}>*/}
+              {/*      <Filter className="w-4 h-4 mr-2" />*/}
+              {/*      <SelectValue placeholder="모델 타입" />*/}
+              {/*    </SelectTrigger>*/}
+              {/*    <SelectContent>*/}
+              {/*      <SelectItem value="all">전체 모델</SelectItem>*/}
+              {/*      <SelectItem value="admin">관리자 모델</SelectItem>*/}
+              {/*      <SelectItem value="user">사용자 모델</SelectItem>*/}
+              {/*    </SelectContent>*/}
+              {/*  </Select>*/}
+
+              {/*  <Select value={modelSortBy} onValueChange={setModelSortBy}>*/}
+              {/*    <SelectTrigger className="w-full md:w-48" style={{*/}
+              {/*      backgroundColor: 'var(--color-background-level1)',*/}
+              {/*      borderColor: 'var(--color-border-primary)',*/}
+              {/*      borderRadius: 'var(--radius-8)'*/}
+              {/*    }}>*/}
+              {/*      <SortAsc className="w-4 h-4 mr-2" />*/}
+              {/*      <SelectValue placeholder="정렬" />*/}
+              {/*    </SelectTrigger>*/}
+              {/*    <SelectContent>*/}
+              {/*      <SelectItem value="createdAt">최근 생성순</SelectItem>*/}
+              {/*      <SelectItem value="name">이름순</SelectItem>*/}
+              {/*      <SelectItem value="price">가격순</SelectItem>*/}
+              {/*      <SelectItem value="usage">사용량순</SelectItem>*/}
+              {/*      <SelectItem value="rating">평점순</SelectItem>*/}
+              {/*    </SelectContent>*/}
+              {/*  </Select>*/}
+              </div>
+            </Card>
+            {/* Models List */}
+            <Card style={{
+              backgroundColor: 'var(--color-background-primary)',
+              borderColor: 'var(--color-border-primary)',
+              borderRadius: 'var(--radius-16)'
+            }}>
+              <div className="p-6">
+                <h3 style={{
+                  fontSize: 'var(--font-size-large)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: '24px'
+                }}>
+                  모델 목록 ({modelData?.totalElements ?? 0})
+                </h3>
+
+                <div className="space-y-4">
+                  {modelLoading && (
+                      <p style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>모델 불러오는 중…</p>
+                  )}
+                  {modelError && (
+                      <p style={{ color: 'var(--color-semantic-red)', fontSize: 12 }}>에러: {modelError}</p>
+                  )}
+
+                  {(modelData?.content ?? []).map((model) => (
+                      <div
+                          key={model.id}
+                          className="flex items-center justify-between p-4 rounded-lg border"
+                          style={{ backgroundColor: 'var(--color-background-level1)', borderColor: 'var(--color-border-primary)' }}
+                      >
+                        <div className="flex items-center gap-4 flex-1">
+                          <img
+                              src={model.imageUrl || '/placeholder-model.png'}
+                              alt={model.name}
+                              className="w-16 h-16 rounded-lg object-cover"
+                              style={{ borderRadius: 'var(--radius-8)' }}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 style={{ fontSize: 'var(--font-size-regular)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+                                {model.name}
+                              </h4>
+                              {!model.isPublic && (
+                                  <Badge style={{
+                                    backgroundColor: 'var(--color-text-quaternary)' + '20',
+                                    color: 'var(--color-text-quaternary)',
+                                    fontSize: 'var(--font-size-mini)',
+                                    fontWeight: 'var(--font-weight-medium)',
+                                    padding: '2px 8px',
+                                    borderRadius: 'var(--radius-rounded)'
+                                  }}>
+                                    비공개
+                                  </Badge>
+                              )}
+                            </div>
+
+                            <p style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-small)', marginBottom: '8px' }}>
+                              소유자: {model.ownerName} | 사용횟수: {model.usageCount.toLocaleString()}
+                            </p>
+
+                            <div className="flex items-center gap-4 text-sm">
+              {/*                <div className="flex items-center gap-1">*/}
+              {/*                  <Star className="w-4 h-4" style={{ color: 'var(--color-semantic-yellow)' }} />*/}
+              {/*                  <span style={{ color: 'var(--color-text-tertiary)' }}>*/}
+              {/*  {model.rating.toFixed(1)} ({model.reviewCount})*/}
+              {/*</span>*/}
+              {/*                </div>*/}
+                              <div className="flex items-center gap-1">
+                                <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
+                                <span style={{ color: 'var(--color-text-tertiary)' }}>
+                {fmtPrice(model.price)}
+              </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Eye className="w-4 h-4" />
+                                <span style={{ color: 'var(--color-text-tertiary)' }}>
+                {model.viewCount.toLocaleString()}
+              </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedModel(model);
+                                setEditingPrice((model.price ?? 0).toString());
+                              }}
+                              disabled={priceSaving}
+                              className="flex items-center gap-2"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            가격 수정
+                          </Button>
+
+                          <div className="flex items-center gap-2">
+          <span style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-small)' }}>
+            {model.isPublic ? '공개' : '비공개'}
+          </span>
+                            <Switch
+                                checked={model.isPublic}
+                                disabled={togglingId === model.id}
+                                onCheckedChange={async (checked) => {
+                                  const id = model.id;
+                                  setTogglingId(id);
+
+                                  // 낙관적 업데이트
+                                  setModelData(prev => prev ? {
+                                    ...prev,
+                                    content: prev.content.map(m => m.id === id ? { ...m, isPublic: checked } : m)
+                                  } : prev);
+
+                                  try {
+                                    await updateAdminModelIsPublic(id, checked);
+                                    // 성공 시 그대로 유지
+                                  } catch (e: any) {
+                                    // 실패하면 롤백
+                                    setModelData(prev => prev ? {
+                                      ...prev,
+                                      content: prev.content.map(m => m.id === id ? { ...m, isPublic: !checked } : m)
+                                    } : prev);
+                                    alert(e?.message ?? '공개 설정 변경에 실패했습니다.');
+                                  } finally {
+                                    setTogglingId(null);
+                                  }
+                                }}
+                            />
+
+                          </div>
+                        </div>
+                      </div>
+                  ))}
+
+                  {(modelData?.content?.length ?? 0) === 0 && !modelLoading && !modelError && (
+                      <div className="text-center py-12">
+                        <Database className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-text-quaternary)' }} />
+                        <p style={{ color: 'var(--color-text-tertiary)', fontSize: 'var(--font-size-regular)' }}>
+                          조건에 맞는 모델이 없습니다.
+                        </p>
+                      </div>
+                  )}
+                </div>
+
+                {/* Pagination for models */}
+                <div
+                    className="flex items-center justify-between px-6 py-4 border-t"
+                    style={{ borderColor: 'var(--color-border-primary)' }}
+                >
+  <span style={{ color: 'var(--color-text-tertiary)', fontSize: 12 }}>
+    총 {Number(modelData?.totalElements ?? 0).toLocaleString()}개
+  </span>
+
+                  <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => setModelPage(0)}
+                        disabled={(currModelPage ?? 0) === 0}
+                    >
+                      처음
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setModelPage(p => Math.max(0, p - 1))}
+                        disabled={(currModelPage ?? 0) === 0}
+                    >
+                      이전
+                    </Button>
+
+                    {modelPageButtons.map(p => (
+                        <Button
+                            key={p}
+                            variant={p === currModelPage ? 'default' : 'outline'}
+                            onClick={() => setModelPage(p)}
+                        >
+                          {p + 1}
+                        </Button>
+                    ))}
+
+                    <Button
+                        variant="outline"
+                        onClick={() => setModelPage(p => Math.min((totalModelPages ?? 1) - 1, p + 1))}
+                        disabled={(currModelPage ?? 0) + 1 >= (totalModelPages ?? 1)}
+                    >
+                      다음
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setModelPage((totalModelPages ?? 1) - 1)}
+                        disabled={(currModelPage ?? 0) + 1 >= (totalModelPages ?? 1)}
+                    >
+                      마지막
+                    </Button>
+                  </div>
+                </div>
+
+              </div>
+            </Card>
+          </TabsContent>
+
+          {/* Price Edit Modal */}
+          <Dialog open={selectedModel !== null} onOpenChange={() => setSelectedModel(null)}>
+            <DialogContent style={{
+              backgroundColor: 'var(--color-background-primary)',
+              borderColor: 'var(--color-border-primary)',
+              borderRadius: 'var(--radius-16)',
+              maxWidth: '500px'
+            }}>
+              <DialogHeader>
+                <DialogTitle style={{
+                  fontSize: 'var(--font-size-large)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-primary)'
+                }}>
+                  모델 가격 수정
+                </DialogTitle>
+              </DialogHeader>
+
+              {selectedModel && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <img
+                          src={selectedModel.imageUrl}
+                          alt={selectedModel.name}
+                          className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div>
+                        <h4 style={{
+                          fontSize: 'var(--font-size-regular)',
+                          fontWeight: 'var(--font-weight-semibold)',
+                          color: 'var(--color-text-primary)'
+                        }}>
+                          {selectedModel.name}
+                        </h4>
+                        <p style={{
+                          color: 'var(--color-text-tertiary)',
+                          fontSize: 'var(--font-size-small)'
+                        }}>
+                          현재 가격: {selectedModel.price.toLocaleString()}P
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label style={{
+                        color: 'var(--color-text-primary)',
+                        fontSize: 'var(--font-size-regular)',
+                        fontWeight: 'var(--font-weight-medium)'
+                      }}>
+                        새 가격 (포인트)
+                      </label>
+                      <Input
+                          type="number"
+                          value={editingPrice}
+                          onChange={(e) => setEditingPrice(e.target.value)}
+                          placeholder="가격을 입력하세요"
+                          min="0"
+                          style={{
+                            backgroundColor: 'var(--color-background-level1)',
+                            borderColor: 'var(--color-border-primary)',
+                            borderRadius: 'var(--radius-8)'
+                          }}
+                      />
+                    </div>
+
+                    <div className="flex gap-3 justify-end">
+                      <Button
+                          variant="outline"
+                          onClick={() => setSelectedModel(null)}
+                      >
+                        취소
+                      </Button>
+                      <Button
+                          onClick={()=> selectedModel && handlePriceUpdate(selectedModel)}
+                          disabled={!editingPrice || Number.isNaN(Number(editingPrice)) || Number(editingPrice) < 0 || priceSaving}
+                          style={{
+                            backgroundColor: 'var(--color-brand-primary)',
+                            color: 'white'
+                          }}
+                      >
+                        {priceSaving ? '저장 중…' : '가격 수정'}
+                      </Button>
+                    </div>
+                  </div>
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* Reports Management */}
           <TabsContent value="reports" className="space-y-6">
