@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Input } from './ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { DefaultAvatar } from './common/DefaultAvatar';
 import { NavigationBar } from './NavigationBar';
 import { 
-  Search, ShoppingCart, Plus, 
+  ShoppingCart, Plus, 
   Crown, Wand2, Star, Coins
 } from 'lucide-react';
 import { SelectedModel, UserProfile } from '../App';
@@ -71,7 +70,6 @@ export function ModelSelectionPage({
   onAdmin,
   onPointsSubscription
 }: ModelSelectionPageProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('marketplace');
   
   // 추천 모델 상태
@@ -163,32 +161,6 @@ export function ModelSelectionPage({
           <p style={{ color: 'var(--color-text-secondary)' }}>
             프로젝트에 사용할 AI 모델을 선택하세요. 무료 모델을 사용하거나 마켓플레이스에서 구매할 수 있습니다.
           </p>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col gap-4">
-            {/* Search Input */}
-            <div className="relative max-w-md">
-              <Search 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4"
-                style={{ color: 'var(--color-text-tertiary)' }}
-              />
-              <Input
-                placeholder="모델명 또는 프롬프트 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-12 text-base"
-                style={{
-                  borderRadius: 'var(--radius-8)',
-                  borderColor: 'var(--color-border-primary)',
-                  backgroundColor: 'var(--color-input-background)',
-                  fontSize: 'var(--font-size-regular)'
-                }}
-              />
-            </div>
-            
-          </div>
         </div>
 
         {/* Tabs */}
