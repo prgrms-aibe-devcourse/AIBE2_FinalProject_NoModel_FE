@@ -129,7 +129,13 @@ export function ProductImageUpload({
         throw new Error('모델 파일 ID를 찾을 수 없습니다. 모델 데이터에 fileId 또는 seedValue가 필요합니다.');
       }
       
-      const customPrompt = additionalPrompt || '모델이 이 제품을 자연스럽게 광고하는 사진으로 바꿔줘.';
+      // 기본 프롬프트에 사용자의 추가 요청사항을 이어붙이기
+      let customPrompt = '모델의 복장,표정 등은 그대로 유지하고 이 제품을 자연스럽게 광고하는 사진으로 바꿔줘.';
+      
+      // 사용자가 추가 요청사항을 입력했다면 기본 프롬프트에 추가
+      if (additionalPrompt && additionalPrompt.trim()) {
+        customPrompt += ` ${additionalPrompt.trim()}`;
+      }
       
       const composeResult = await composeImage(
         removeBgResult.resultFileId,
