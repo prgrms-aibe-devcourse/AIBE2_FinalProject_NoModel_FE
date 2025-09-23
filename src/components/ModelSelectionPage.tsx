@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { SelectedModel, UserProfile } from '../App';
 import axiosInstance from '../services/AxiosInstance';
-import { AIModelDocument, PageResponse } from '../types/model';
+import { AIModelSearchResponse, PageResponse } from '../types/model';
 
 interface ModelSelectionPageProps {
   selectedCategory: string;
@@ -30,7 +30,7 @@ interface ModelSelectionPageProps {
 }
 
 // 관리자 추천 모델을 가져오는 API 함수
-const fetchRecommendedModels = async (page = 0, size = 10): Promise<PageResponse<AIModelDocument>> => {
+const fetchRecommendedModels = async (page = 0, size = 10): Promise<PageResponse<AIModelSearchResponse>> => {
   try {
     const response = await axiosInstance.get(`/models/search/recommended?page=${page}&size=${size}`);
     
@@ -75,7 +75,7 @@ export function ModelSelectionPage({
   const [activeTab, setActiveTab] = useState('marketplace');
   
   // 추천 모델 상태
-  const [recommendedModels, setRecommendedModels] = useState<AIModelDocument[]>([]);
+  const [recommendedModels, setRecommendedModels] = useState<AIModelSearchResponse[]>([]);
   const [recommendedLoading, setRecommendedLoading] = useState(false);
 
   // 마켓플레이스 탭에서 추천 모델 로드
@@ -88,8 +88,11 @@ export function ModelSelectionPage({
   const loadRecommendedModels = async () => {
     setRecommendedLoading(true);
     try {
+      console.log('추천 모델 로드 시작...');
       const response = await fetchRecommendedModels(0, 3); // 3개만 한 줄로 표시
+      console.log('추천 모델 API 응답:', response);
       setRecommendedModels(response.content);
+      console.log('추천 모델 설정 완료:', response.content);
     } catch (error) {
       console.error('Failed to load recommended models:', error);
     } finally {
@@ -97,19 +100,19 @@ export function ModelSelectionPage({
     }
   };
 
-  const handleMarketplaceModelSelect = (model: AIModelDocument) => {
+  const handleMarketplaceModelSelect = (model: AIModelSearchResponse) => {
     const selectedModel: SelectedModel = {
-      id: model.id,
+      id: model.modelId.toString(),
       name: model.modelName,
       prompt: model.prompt || '',
-      seedValue: '',
-      imageUrl: model.thumbnailUrl || '',
+      seedValue: model.modelId.toString(),
+      imageUrl: model.primaryImageUrl || (model.imageUrls && model.imageUrls.length > 0 ? model.imageUrls[0] : ''),
       category: selectedCategory,
       isCustom: false,
       metadata: {
         age: '알 수 없음',
         gender: '알 수 없음',
-        style: model.categoryType || '알 수 없음',
+        style: model.ownType || '알 수 없음',
         ethnicity: '알 수 없음'
       },
       creator: {
@@ -300,31 +303,39 @@ export function ModelSelectionPage({
                 >
                     {/* Model Image */}
                     <div className="relative aspect-square overflow-hidden">
-                      {model.thumbnailUrl ? (
+                      {model.primaryImageUrl || (model.imageUrls && model.imageUrls.length > 0) ? (
                         <img 
-                          src={model.thumbnailUrl} 
+                          src={model.primaryImageUrl || model.imageUrls[0]} 
                           alt={model.modelName}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // 이미지 로드 실패 시 기본 이미지로 교체
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
-                        <div 
-                          className="w-full h-full flex items-center justify-center"
-                          style={{ backgroundColor: 'var(--color-background-secondary)' }}
-                        >
-                          <div className="text-center">
-                            <Wand2 
-                              className="w-8 h-8 mx-auto mb-2"
-                              style={{ color: 'var(--color-text-tertiary)' }}
-                            />
-                            <span 
-                              className="text-xs"
-                              style={{ color: 'var(--color-text-tertiary)' }}
-                            >
-                              이미지 없음
-                            </span>
-                          </div>
+                      ) : null}
+                      
+                      {/* 이미지 없음 플레이스홀더 */}
+                      <div 
+                        className={`w-full h-full flex items-center justify-center absolute inset-0 ${
+                          model.primaryImageUrl || (model.imageUrls && model.imageUrls.length > 0) ? 'hidden' : ''
+                        }`}
+                        style={{ backgroundColor: 'var(--color-background-secondary)' }}
+                      >
+                        <div className="text-center">
+                          <Wand2 
+                            className="w-8 h-8 mx-auto mb-2"
+                            style={{ color: 'var(--color-text-tertiary)' }}
+                          />
+                          <span 
+                            className="text-xs"
+                            style={{ color: 'var(--color-text-tertiary)' }}
+                          >
+                            이미지 없음
+                          </span>
                         </div>
-                      )}
+                      </div>
                       
                       {/* Rating */}
                       {model.rating > 0 && (
