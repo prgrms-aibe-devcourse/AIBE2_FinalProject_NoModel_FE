@@ -1,0 +1,90 @@
+# Build & Test with verbose logs + Vercel preview deploy
+name: Node.js CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["develop"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Print tool versions
+        run: |
+          node -v
+          npm -v
+
+      - name: Install deps
+        run: npm ci --audit=false --fund=false
+
+      - name: Quick dep tree (top-level)
+        run: npm ls --depth=0 || true
+
+      # 🔎 실패 원인 빨리 찾는 빌드 로그 강화 포인트
+      - name: Build (verbose)
+        env:
+          # Vite/rollup 디버그 로그 활성화
+          DEBUG: vite:*,rollup:*
+          # 메모리 부족 이슈 예방
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: |
+          set -e
+          echo "CI=${CI}"
+          # Vite/tsc/eslint 에러 추적을 위해 전체 로그를 파일로 저장
+          npm run build --if-present -- --debug 2>&1 | tee build.log
+
+      # 빌드가 실패해도 로그를 항상 업로드
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.node-version }}
+          path: build.log
+          if-no-files-found: ignore
+
+  deploy-preview:
+    # build 잡이 성공해야 실행됩니다.
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20 (for Vercel CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      # vercel CLI 설치
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      # Vercel 환경정보 가져오기 (.vercel / env)
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      # 프리뷰 빌드
+      - name: Build Project Artifacts
+        env:
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      # 프리뷰 배포
+      - name: Deploy Project Artifacts to Vercel
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}

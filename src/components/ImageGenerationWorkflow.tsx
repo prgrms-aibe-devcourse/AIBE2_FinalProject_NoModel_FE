@@ -7,11 +7,13 @@ import { ResultDownload } from './workflow/ResultDownload';
 import { WorkflowHeader } from './workflow/WorkflowHeader';
 import { SelectedModel, GeneratedProject } from '../App';
 
+
 interface ImageGenerationWorkflowProps {
   selectedCategory: string;
   selectedModel: SelectedModel | null;
   onBack: () => void;
   onComplete?: (project: GeneratedProject) => void;
+  selectedModel: { id: number } | null;
 }
 
 export type WorkflowStep = 'upload' | 'style' | 'generate' | 'edit' | 'download';

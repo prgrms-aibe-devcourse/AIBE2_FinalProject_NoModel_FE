@@ -59,55 +59,52 @@ export function StarRating({
   const displayRating = rating;
 
   return (
-    <div className={`flex items-center gap-1 ${className}`} style={{ maxWidth: '100%' }}>
-      <div 
-        className="flex items-center justify-between"
-        style={{ 
-          width: '100%',
-          maxWidth: '100%'
-        }}
-      >
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Button
-            key={star}
-            variant="ghost"
-            size="sm"
-            className={`${buttonSizeClasses[size]} flex-1 hover:bg-transparent focus:bg-transparent active:bg-transparent`}
-            onClick={() => handleStarClick(star)}
-            onMouseDown={handleStarMouseDown}
-            disabled={readonly}
-            style={{
-              cursor: readonly ? 'default' : 'pointer',
-              backgroundColor: 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minHeight: size === 'sm' ? '20px' : 'auto',
-              padding: size === 'sm' ? '2px' : '4px',
-              margin: '0px'
-            }}
-          >
-            <Star
-              className="transition-colors"
-              style={{
-                width: size === 'sm' ? '14px' : size === 'md' ? '20px' : '24px',
-                height: size === 'sm' ? '14px' : size === 'md' ? '20px' : '24px',
-                color: star <= displayRating ? 'var(--color-semantic-orange)' : 'var(--color-text-quaternary)',
-                fill: star <= displayRating ? 'var(--color-semantic-orange)' : 'transparent'
-              }}
-            />
-          </Button>
-        ))}
+      <div className={`flex items-center gap-1 ${className}`} style={{ maxWidth: '100%' }}>
+          {/* 별 아이콘들 */}
+          <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                  <Button
+                      key={star}
+                      variant="ghost"
+                      size="sm"
+                      className={`${buttonSizeClasses[size]} hover:bg-transparent focus:bg-transparent active:bg-transparent`}
+                      onClick={() => handleStarClick(star)}
+                      onMouseDown={handleStarMouseDown}
+                      disabled={readonly}
+                      style={{
+                          cursor: readonly ? 'default' : 'pointer',
+                          backgroundColor: 'transparent',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minHeight: size === 'sm' ? '20px' : 'auto',
+                          padding: size === 'sm' ? '2px' : '4px',
+                          margin: '0px'
+                      }}
+                  >
+                      <Star
+                          className="transition-colors"
+                          style={{
+                              width: size === 'sm' ? '14px' : size === 'md' ? '20px' : '24px',
+                              height: size === 'sm' ? '14px' : size === 'md' ? '20px' : '24px',
+                              color: star <= displayRating ? 'var(--color-semantic-orange)' : 'var(--color-text-quaternary)',
+                              fill: star <= displayRating ? 'var(--color-semantic-orange)' : 'transparent'
+                          }}
+                      />
+                  </Button>
+              ))}
+          </div>
+
+          {/* 텍스트 */}
+          {showText && displayRating > 0 && (
+              <span
+                  className="text-sm whitespace-nowrap"
+                  style={{ color: 'var(--color-text-secondary)' }}
+              >
+      {ratingTexts[displayRating]}
+    </span>
+          )}
       </div>
-      
-      {showText && displayRating > 0 && (
-        <span 
-          className="text-sm ml-2"
-          style={{ color: 'var(--color-text-secondary)' }}
-        >
-          {ratingTexts[displayRating]}
-        </span>
-      )}
-    </div>
+
   );
 }
