@@ -405,46 +405,6 @@ export function ModelSelectionPage({
               </div>
             )}
 
-            {/* CTA Section */}
-            <Card 
-              className="p-8 text-center"
-              style={{
-                backgroundColor: 'var(--color-brand-accent-tint)',
-                borderColor: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-16)'
-              }}
-            >
-              <ShoppingCart 
-                className="w-12 h-12 mx-auto mb-4"
-                style={{ color: 'var(--color-brand-primary)' }}
-              />
-              <h3 
-                className="mb-2"
-                style={{
-                  fontSize: 'var(--font-size-title3)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                더 많은 모델을 찾고 계신가요?
-              </h3>
-              <p 
-                className="mb-4"
-                style={{ color: 'var(--color-text-secondary)' }}
-              >
-                마켓플레이스에서 전문 크리에이터들이 만든 고품질 AI 모델을 만나보세요
-              </p>
-              <Button 
-                onClick={onBrowseMarketplace}
-                style={{
-                  backgroundColor: 'var(--color-brand-primary)',
-                  color: 'var(--color-utility-white)',
-                  borderRadius: 'var(--radius-8)'
-                }}
-              >
-                마켓플레이스 둘러보기
-              </Button>
-            </Card>
           </TabsContent>
 
           {/* Create Model Tab */}
