@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { 
-  ArrowLeft, Download, Share2, 
+  ArrowLeft, Download,
   CheckCircle, RefreshCw
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
@@ -75,23 +75,7 @@ export function AdGenerationResult({
     }
   };
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'AI 광고 이미지',
-          text: '이 멋진 AI 광고 이미지를 확인해보세요!',
-          url: window.location.href
-        });
-      } catch (error) {
-        console.log('공유 취소됨');
-      }
-    } else {
-      // 클립보드에 URL 복사
-      navigator.clipboard.writeText(window.location.href);
-      alert('링크가 클립보드에 복사되었습니다!');
-    }
-  };
+
 
   if (!userProfile) {
     return <div>Loading...</div>;
@@ -204,11 +188,11 @@ export function AdGenerationResult({
               </div>
               
               {/* Action Buttons */}
-              <div className="flex gap-3 mt-4">
+              <div className="mt-4">
                 <Button
                   onClick={handleDownload}
                   disabled={isDownloading}
-                  className="flex-1"
+                  className="w-full"
                   style={{
                     backgroundColor: 'var(--color-brand-primary)',
                     color: 'var(--color-utility-white)',
@@ -227,16 +211,6 @@ export function AdGenerationResult({
                       다운로드
                     </>
                   )}
-                </Button>
-                <Button
-                  onClick={handleShare}
-                  variant="outline"
-                  style={{
-                    borderRadius: 'var(--radius-8)',
-                    borderColor: 'var(--color-border-primary)'
-                  }}
-                >
-                  <Share2 className="w-4 h-4" />
                 </Button>
               </div>
             </Card>
