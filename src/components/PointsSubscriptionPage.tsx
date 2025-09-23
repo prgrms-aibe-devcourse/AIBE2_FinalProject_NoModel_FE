@@ -379,6 +379,7 @@ export default function PointsSubscriptionPage({
                 isLoggedIn={!!userProfile}
                 isLandingPage={false}
                 onPointsSubscription={onPointsSubscription}
+                currentPage="pointsSubscription"
             />
 
             <div className="max-w-6xl mx-auto px-6 py-8">

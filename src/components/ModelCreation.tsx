@@ -180,7 +180,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
         isLoggedIn={!!userProfile}
         showBackButton={true}
         userPoints={userProfile?.points}
-        currentPage="other"
+        currentPage="modelCreation"
       />
 
       {/* Main Content */}

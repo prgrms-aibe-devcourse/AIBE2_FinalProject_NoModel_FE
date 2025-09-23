@@ -253,7 +253,7 @@ export function MyModels({
         isLandingPage={false}
         onPointsSubscription={onPointsSubscription}
         userPoints={userProfile?.points}
-        currentPage="other"
+        currentPage="modelCreation"
       />
 
       {/* Main Content */}
