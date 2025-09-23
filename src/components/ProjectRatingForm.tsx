@@ -61,13 +61,24 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
                 body: JSON.stringify({ rating, content }),
             });
 
-            if (response.status === 409) {
-                // 중복 리뷰 에러 - Alert 컴포넌트로 표시
+            const result = await response.json();
+            
+            // 디버깅: 응답 상태와 내용 확인
+            console.log('응답 상태:', response.status);
+            console.log('응답 내용:', result);
+            
+            // 중복 리뷰 에러 처리 (409 또는 400 상태 코드와 특정 메시지)
+            if (response.status === 409 || 
+                (response.status === 400 && 
+                 (result.error?.includes("Review already exists") || 
+                  result.error?.includes("이미 리뷰") ||
+                  result.message?.includes("Review already exists") ||
+                  result.message?.includes("이미 리뷰")))) {
+                console.log('중복 리뷰 감지, 다이얼로그 표시');
                 setShowDuplicateAlert(true);
                 return;
             }
 
-            const result = await response.json();
             if (result.success) {
                 onSuccess(result.response);
             } else {
@@ -88,26 +99,25 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
         <Card className="p-8 w-full max-w-2xl mx-auto space-y-6">
             {/* 중복 리뷰 알림 */}
             {showDuplicateAlert && (
-                <Alert variant="destructive">
+                <Alert variant="destructive" className="mb-6">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>이미 리뷰를 작성하셨습니다</AlertTitle>
-                    <AlertDescription>
-                        이 모델에 대한 리뷰를 이미 작성하셨습니다. 한 모델당 하나의 리뷰만 작성할 수 있습니다.
-                        <div className="text-xs mt-2 opacity-70">
-                            {countdown}초 후 자동으로 닫힙니다.
-                        </div>
+                    <AlertDescription className="space-y-2">
+                        <p>이 모델에 대한 리뷰를 이미 작성하셨습니다. 한 모델당 하나의 리뷰만 작성할 수 있습니다.</p>
+                        <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">{countdown}초</span> 후 자동으로 닫힙니다.
+                        </p>
                     </AlertDescription>
                 </Alert>
             )}
-
-            {/* 에러 메시지 */}
-            {error && (
-                <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>오류가 발생했습니다</AlertTitle>
-                    <AlertDescription>{error}</AlertDescription>
-                </Alert>
-            )}
+                {/* 에러 메시지 */}
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle>오류가 발생했습니다</AlertTitle>
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
 
             <div>
                 <Label className="block mb-2">평점</Label>

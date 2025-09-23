@@ -236,7 +236,7 @@ export function ModelSelectionPage({
         isLoggedIn={!!userProfile}
         isLandingPage={false}
         onPointsSubscription={onPointsSubscription}
-        currentPage="other"
+        currentPage="adGeneration"
       />
 
       {/* Main Content */}
