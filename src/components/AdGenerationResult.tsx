@@ -69,11 +69,6 @@ export function AdGenerationResult({
       }
     } catch (error) {
       console.error('다운로드 실패:', error);
-      console.error('Error details:', {
-        message: error.message,
-        resultFileId,
-        userAgent: navigator.userAgent
-      });
       alert('다운로드 중 오류가 발생했습니다.');
     } finally {
       setIsDownloading(false);

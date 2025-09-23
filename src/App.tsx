@@ -915,17 +915,11 @@ export default function App() {
           selectedModel={selectedModelForAdGeneration}
           onBack={() => handleStageChange('myModels')}
           onGenerateAd={(productImages, resultFileId, additionalPrompt) => {
-            // 제품 이미지와 선택된 모델로 광고 이미지 생성 로직
-            console.log('제품 이미지:', productImages);
-            console.log('추가 프롬프트:', additionalPrompt);
-            console.log('선택된 모델:', selectedModelForAdGeneration);
-            console.log('resultFileId:', resultFileId);
-            
-            // 결과 화면으로 이동 (기존 알림 대신)
+            // 결과 화면으로 이동
             if (productImages.length > 0) {
               handleAdGenerationComplete(
-                productImages[0], // 원본 이미지 (첫 번째 업로드된 이미지)
-                productImages[productImages.length - 1], // 생성된 이미지 (마지막 이미지가 생성된 결과)
+                productImages[0], // 원본 이미지
+                productImages[productImages.length - 1], // 생성된 이미지
                 resultFileId, // 실제 API에서 받은 resultFileId
                 additionalPrompt
               );

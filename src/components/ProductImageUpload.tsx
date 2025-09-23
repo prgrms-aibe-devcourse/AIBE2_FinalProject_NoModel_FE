@@ -164,11 +164,8 @@ export function ProductImageUpload({
       
       // 완료 후 3초 뒤에 결과 화면으로 이동
       setTimeout(() => {
-        // 원본 이미지와 생성된 이미지 두 개를 전달
-        // 첫 번째: 원본 업로드 이미지, 두 번째: 생성된 AI 광고 이미지
         // composeResult에서 resultFileId를 추출해서 전달
-        const resultFileId = composeResult.resultFileId || composeResult.fileId; // API 응답 구조에 따라 달라질 수 있음
-        console.log('전달할 resultFileId:', resultFileId);
+        const resultFileId = composeResult.resultFileId || composeResult.fileId;
         
         onGenerateAd([uploadedImage, composeResult.resultFileUrl], resultFileId, additionalPrompt);
       }, 3000);

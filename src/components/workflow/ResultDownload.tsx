@@ -115,8 +115,7 @@ export function ResultDownload({
             for (const imageIndex of selectedImages) {
                 const imageUrl = generatedImages[imageIndex];
                 
-                // imageUrl에서 fileId를 추출하거나 이미 fileId를 가지고 있는 경우
-                // URL 형식: http://localhost:8080/api/files/{fileId}/view 에서 fileId 추출
+                // imageUrl에서 fileId 추출
                 const fileIdMatch = imageUrl.match(/\/files\/([^\/]+)\//); 
                 if (fileIdMatch) {
                     const fileId = fileIdMatch[1];
@@ -128,25 +127,14 @@ export function ResultDownload({
                     link.click();
                     document.body.removeChild(link);
                 } else {
-                    // 기존 방식으로 폴백
-                    const response = await fetch(imageUrl);
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `생성이미지_${imageIndex + 1}_${Date.now()}.${downloadFormat}`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
+                    console.error('fileId를 추출할 수 없습니다:', imageUrl);
                 }
                 
                 // 다음 이미지 다운로드 전에 짧은 지연
                 await new Promise(resolve => setTimeout(resolve, 100));
             }
             
-            console.log(`Downloaded ${selectedImages.size} images in ${downloadFormat} format at ${resolution} resolution`);
-            // ✅ 다운로드 후 리뷰 다이얼로그 열기
+            // 리뷰 다이얼로그 열기
             setIsRatingOpen(true);
         } catch (error) {
             console.error('다운로드 실패:', error);
