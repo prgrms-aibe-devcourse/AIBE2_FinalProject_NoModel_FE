@@ -1168,12 +1168,12 @@ export function AdminPage({
                           style={{ backgroundColor: 'var(--color-background-level1)', borderColor: 'var(--color-border-primary)' }}
                       >
                         <div className="flex items-center gap-4 flex-1">
-                          <img
-                              src={model.imageUrl || '/placeholder-model.png'}
-                              alt={model.name}
-                              className="w-16 h-16 rounded-lg object-cover"
-                              style={{ borderRadius: 'var(--radius-8)' }}
-                          />
+                          {/*<img*/}
+                          {/*    src={model.imageUrl || '/placeholder-model.png'}*/}
+                          {/*    alt={model.name}*/}
+                          {/*    className="w-16 h-16 rounded-lg object-cover"*/}
+                          {/*    style={{ borderRadius: 'var(--radius-8)' }}*/}
+                          {/*/>*/}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 style={{ fontSize: 'var(--font-size-regular)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
