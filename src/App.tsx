@@ -279,6 +279,101 @@ export default function App() {
       createdAt: new Date('2024-01-29T10:25:00'),
     }
   ]);
+  const [adminModels, setAdminModels] = useState<UserModel[]>([
+    {
+      id: 'admin-model-1',
+      name: '아시아 여성 패션 모델 - 수지',
+      description: '한국 패션 브랜드를 위한 전문 모델입니다.',
+      prompt: 'Korean fashion model, professional photography, clean background',
+      seedValue: 'seed-admin-1',
+      imageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop&crop=face',
+      previewImages: [
+        'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop'
+      ],
+      category: '패션',
+      metadata: {
+        age: '20대',
+        gender: '여성',
+        style: '모던',
+        ethnicity: '아시아'
+      },
+      creatorId: 'admin',
+      creatorName: 'NoModel 관리자',
+      price: 50,
+      usageCount: 2340,
+      rating: 4.7,
+      ratingCount: 156,
+      tags: ['패션', '한국', '여성', '모던'],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-29'),
+      earnings: 11700
+    },
+    {
+      id: 'admin-model-2',
+      name: '서양 남성 비즈니스 모델 - 톰',
+      description: '비즈니스 및 기업 촬영을 위한 전문 모델입니다.',
+      prompt: 'Professional businessman, corporate photography, suit, confident',
+      seedValue: 'seed-admin-2',
+      imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
+      previewImages: [
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop'
+      ],
+      category: '비즈니스',
+      metadata: {
+        age: '30대',
+        gender: '남성',
+        style: '프로페셔널',
+        ethnicity: '서양'
+      },
+      creatorId: 'admin',
+      creatorName: 'NoModel 관리자',
+      price: 75,
+      usageCount: 1890,
+      rating: 4.5,
+      ratingCount: 98,
+      tags: ['비즈니스', '서양', '남성', '프로페셔널'],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date('2024-01-05'),
+      updatedAt: new Date('2024-01-28'),
+      earnings: 14175
+    },
+    {
+      id: 'admin-model-3',
+      name: '일본 여성 뷰티 모델 - 미유키',
+      description: '���티 및 화장품 브랜드를 위한 전문 모델입니다.',
+      prompt: 'Japanese beauty model, skincare, natural makeup, soft lighting',
+      seedValue: 'seed-admin-3',
+      imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face',
+      previewImages: [
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop'
+      ],
+      category: '뷰티',
+      metadata: {
+        age: '20대',
+        gender: '여성',
+        style: '내추럴',
+        ethnicity: '아시아'
+      },
+      creatorId: 'admin',
+      creatorName: 'NoModel 관리자',
+      price: 60,
+      usageCount: 3120,
+      rating: 4.9,
+      ratingCount: 203,
+      tags: ['뷰티', '일본', '여성', '내추럴'],
+      isPublic: false,
+      isForSale: true,
+      createdAt: new Date('2024-01-10'),
+      updatedAt: new Date('2024-01-27'),
+      earnings: 18720
+    }
+  ]);
   const [selectedModelToReport, setSelectedModelToReport] = useState<UserModel | null>(null);
   const [selectedModelForAdGeneration, setSelectedModelForAdGeneration] = useState<UserModel | null>(null);
   const [adGenerationData, setAdGenerationData] = useState<{
@@ -619,6 +714,26 @@ export default function App() {
         });
       }, []);
 
+  const handleAdminModelUpdate = (modelId: string, updates: Partial<UserModel>) => {
+    // Update admin models
+    setAdminModels(prev =>
+        prev.map(model =>
+            model.id === modelId
+                ? { ...model, ...updates, updatedAt: new Date() }
+                : model
+        )
+    );
+
+    // Update user models if it exists there too
+    setUserModels(prev =>
+        prev.map(model =>
+            model.id === modelId
+                ? { ...model, ...updates, updatedAt: new Date() }
+                : model
+        )
+    );
+  };
+
   return (
     <div 
       className="min-h-screen"
@@ -801,6 +916,8 @@ export default function App() {
         <AdminPage 
           userProfile={userProfile}
           modelReports={modelReports}
+          allModels={[...adminModels, ...userModels]}
+          onModelUpdate={handleAdminModelUpdate}
           onBack={() => handleStageChange('mypage')}
           onReportStatusUpdate={handleReportStatusUpdate}
           onLogin={() => handleStageChange('login')}
