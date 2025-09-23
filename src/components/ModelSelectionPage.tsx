@@ -7,7 +7,7 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { NavigationBar } from './NavigationBar';
 import { 
   Search, ShoppingCart, Plus, 
-  Crown, Wand2, Star, Coins, History
+  Crown, Wand2, Star, Coins
 } from 'lucide-react';
 import { SelectedModel, UserProfile } from '../App';
 import axiosInstance from '../services/AxiosInstance';
@@ -28,50 +28,6 @@ interface ModelSelectionPageProps {
   onAdmin?: () => void;
   onPointsSubscription?: () => void;
 }
-
-// API 타입 정의
-interface ModelUsageHistoryResponse {
-  adResultId: number;
-  modelId: number;
-  modelName: string;
-  prompt: string;
-  modelImageUrl: string;
-  createdAt: string;
-}
-
-interface ModelUsageHistoryPageResponse {
-  content: ModelUsageHistoryResponse[];
-  pageNumber: number;
-  pageSize: number;
-  totalElements: number;
-  totalPages: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-}
-
-// 사용한 모델 내역을 가져오는 API 함수
-const fetchModelUsageHistory = async (page = 0, size = 20): Promise<ModelUsageHistoryPageResponse> => {
-  try {
-    const response = await axiosInstance.get(`/members/me/models/usage?page=${page}&size=${size}`);
-    
-    if (response.data.success) {
-      return response.data.response;
-    } else {
-      throw new Error(response.data.error || 'Failed to fetch model usage history');
-    }
-  } catch (error) {
-    console.error('Error fetching model usage history:', error);
-    return {
-      content: [],
-      pageNumber: 0,
-      pageSize: 20,
-      totalElements: 0,
-      totalPages: 0,
-      hasNext: false,
-      hasPrevious: false
-    };
-  }
-};
 
 // 관리자 추천 모델을 가져오는 API 함수
 const fetchRecommendedModels = async (page = 0, size = 10): Promise<PageResponse<AIModelDocument>> => {
@@ -116,22 +72,11 @@ export function ModelSelectionPage({
   onPointsSubscription
 }: ModelSelectionPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('used-models');
-  const [usedModels, setUsedModels] = useState<ModelUsageHistoryResponse[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
+  const [activeTab, setActiveTab] = useState('marketplace');
   
   // 추천 모델 상태
   const [recommendedModels, setRecommendedModels] = useState<AIModelDocument[]>([]);
   const [recommendedLoading, setRecommendedLoading] = useState(false);
-
-  // API에서 사용한 모델 내역 가져오기
-  useEffect(() => {
-    if (activeTab === 'used-models' && userProfile) {
-      loadUsedModels();
-    }
-  }, [activeTab, userProfile, currentPage]);
 
   // 마켓플레이스 탭에서 추천 모델 로드
   useEffect(() => {
@@ -139,19 +84,6 @@ export function ModelSelectionPage({
       loadRecommendedModels();
     }
   }, [activeTab]);
-
-  const loadUsedModels = async () => {
-    setLoading(true);
-    try {
-      const response = await fetchModelUsageHistory(currentPage, 20);
-      setUsedModels(response.content);
-      setHasNext(response.hasNext);
-    } catch (error) {
-      console.error('Failed to load used models:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadRecommendedModels = async () => {
     setRecommendedLoading(true);
@@ -163,34 +95,6 @@ export function ModelSelectionPage({
     } finally {
       setRecommendedLoading(false);
     }
-  };
-
-  // 사용한 모델 필터링
-  const filteredUsedModels = usedModels.filter(model => {
-    const matchesSearch = !searchQuery || 
-      model.modelName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      model.prompt.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
-
-  const handleUsedModelSelect = (model: ModelUsageHistoryResponse) => {
-    const selectedModel: SelectedModel = {
-      id: model.modelId.toString(),
-      name: model.modelName,
-      prompt: model.prompt,
-      seedValue: '',
-      imageUrl: model.modelImageUrl,
-      category: selectedCategory,
-      isCustom: false,
-      metadata: {
-        age: '알 수 없음',
-        gender: '알 수 없음',
-        style: '이전 사용',
-        ethnicity: '알 수 없음'
-      }
-    };
-    
-    onModelSelect(selectedModel);
   };
 
   const handleMarketplaceModelSelect = (model: AIModelDocument) => {
@@ -287,25 +191,13 @@ export function ModelSelectionPage({
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList 
-            className="grid w-full max-w-2xl grid-cols-3"
+            className="grid w-full max-w-xl grid-cols-2"
             style={{
               backgroundColor: 'var(--color-background-secondary)',
               borderRadius: 'var(--radius-12)',
               padding: '4px'
             }}
           >
-            <TabsTrigger 
-              value="used-models"
-              className="flex items-center gap-2"
-              style={{
-                borderRadius: 'var(--radius-8)',
-                fontSize: 'var(--font-size-small)',
-                padding: '12px 16px'
-              }}
-            >
-              <History className="w-4 h-4" />
-              사용한 모델
-            </TabsTrigger>
             <TabsTrigger 
               value="marketplace"
               className="flex items-center gap-2"
@@ -331,158 +223,6 @@ export function ModelSelectionPage({
               모델 생성
             </TabsTrigger>
           </TabsList>
-
-          {/* Used Models Tab */}
-          <TabsContent value="used-models" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 
-                style={{
-                  fontSize: 'var(--font-size-title2)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                사용한 모델 ({filteredUsedModels.length})
-              </h2>
-              {hasNext && (
-                <Button 
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                  variant="outline"
-                  disabled={loading}
-                  style={{
-                    borderRadius: 'var(--radius-8)',
-                    borderColor: 'var(--color-border-primary)'
-                  }}
-                >
-                  더 보기
-                </Button>
-              )}
-            </div>
-
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="w-8 h-8 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <p style={{ color: 'var(--color-text-secondary)' }}>
-                  사용한 모델을 불러오는 중...
-                </p>
-              </div>
-            ) : filteredUsedModels.length === 0 ? (
-              <div className="text-center py-12">
-                <History 
-                  className="w-12 h-12 mx-auto mb-4"
-                  style={{ color: 'var(--color-text-tertiary)' }}
-                />
-                <h3 
-                  className="mb-2"
-                  style={{
-                    fontSize: 'var(--font-size-title3)',
-                    fontWeight: 'var(--font-weight-semibold)',
-                    color: 'var(--color-text-primary)'
-                  }}
-                >
-                  사용한 모델이 없습니다
-                </h3>
-                <p style={{ color: 'var(--color-text-secondary)' }}>
-                  마켓플레이스에서 모델을 선택하거나 새로운 모델을 생성해보세요
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredUsedModels.map((model) => (
-                  <Card 
-                    key={model.adResultId}
-                    className="group cursor-pointer transition-all hover:shadow-lg p-4"
-                    style={{
-                      backgroundColor: 'var(--color-background-primary)',
-                      borderColor: 'var(--color-border-primary)',
-                      borderRadius: 'var(--radius-16)',
-                      boxShadow: 'var(--shadow-tiny)',
-                      transition: 'all var(--animation-quick-transition) ease'
-                    }}
-                    onClick={() => handleUsedModelSelect(model)}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = 'var(--shadow-tiny)';
-                    }}
-                  >
-                    {/* Model Thumbnail */}
-                    <div 
-                      className="relative w-full aspect-square mb-4 overflow-hidden"
-                      style={{ borderRadius: 'var(--radius-12)' }}
-                    >
-                      {model.modelImageUrl ? (
-                        <img 
-                          src={model.modelImageUrl} 
-                          alt={model.modelName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div 
-                          className="w-full h-full flex items-center justify-center"
-                          style={{ backgroundColor: 'var(--color-background-secondary)' }}
-                        >
-                          <div className="text-center">
-                            <Wand2 
-                              className="w-8 h-8 mx-auto mb-2"
-                              style={{ color: 'var(--color-text-tertiary)' }}
-                            />
-                            <span 
-                              className="text-xs"
-                              style={{ color: 'var(--color-text-tertiary)' }}
-                            >
-                              이미지 없음
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Used Badge */}
-                      <div 
-                        className="absolute top-2 right-2 text-xs"
-                        style={{
-                          backgroundColor: 'var(--color-semantic-blue)',
-                          color: 'var(--color-utility-white)',
-                          borderRadius: 'var(--radius-4)',
-                          fontSize: 'var(--font-size-micro)',
-                          padding: '2px 6px'
-                        }}
-                      >
-                        사용함
-                      </div>
-                    </div>
-
-                    {/* Model Info */}
-                    <div>
-                      <h3 
-                        className="mb-1 line-clamp-1"
-                        style={{
-                          fontSize: 'var(--font-size-regular)',
-                          fontWeight: 'var(--font-weight-semibold)',
-                          color: 'var(--color-text-primary)'
-                        }}
-                      >
-                        {model.modelName}
-                      </h3>
-                      <p 
-                        className="text-sm mb-2 line-clamp-2"
-                        style={{ color: 'var(--color-text-secondary)' }}
-                      >
-                        {model.prompt}
-                      </p>
-                      
-                      <div className="flex items-center justify-end text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                        <span>{new Date(model.createdAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
 
           {/* Marketplace Preview Tab */}
           <TabsContent value="marketplace" className="space-y-6">

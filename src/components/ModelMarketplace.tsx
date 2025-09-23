@@ -52,6 +52,12 @@ export function ModelMarketplace({
         gender: '',
         style: '',
         ethnicity: ''
+      },
+      // 가격 정보 추가
+      price: model.price || 0,
+      creator: {
+        id: model.ownerId.toString(),
+        name: model.ownerName
       }
     };
     onModelPurchase(selectedModel);
