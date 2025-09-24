@@ -191,7 +191,8 @@ export function ProductImageUpload({
     
     const uploadResponse = await fetch(buildApiUrl('/files'), {
       method: 'POST',
-      body: formData
+      body: formData,
+      credentials: 'include',
     });
     
     if (!uploadResponse.ok) {
@@ -209,7 +210,8 @@ export function ProductImageUpload({
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ fileId })
+      body: JSON.stringify({ fileId }),
+      credentials: 'include',
     });
     
     if (!response.ok) {
@@ -223,7 +225,9 @@ export function ProductImageUpload({
   // 작업 상태 폴링 함수
   const pollJobStatus = async (jobId: string, maxAttempts: number = 30): Promise<any> => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const response = await fetch(buildApiUrl(`/generate/jobs/${jobId}`));
+      const response = await fetch(buildApiUrl(`/generate/jobs/${jobId}`), {
+        credentials: 'include',
+      });
       
       if (!response.ok) {
         throw new Error(`작업 상태 확인 실패: ${response.status} ${response.statusText}`);
@@ -253,7 +257,8 @@ export function ProductImageUpload({
         productFileId,
         modelFileId,
         customPrompt
-      })
+      }),
+      credentials: 'include',
     });
     
     if (!response.ok) {

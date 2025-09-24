@@ -181,7 +181,8 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestData)
+          body: JSON.stringify(requestData),
+          credentials: 'include',
         });
         
         if (!response.ok) {
