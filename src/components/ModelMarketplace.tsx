@@ -6,7 +6,8 @@ import {
 import { UserProfile, SelectedModel, UserModel } from '../App';
 import { AIModelBrowser } from './AIModelBrowser';
 import { ModelReportModal } from './ModelReportModal';
-import { AIModelDocument } from '../types/model';
+import { AIModelDocument, AIModelSearchResponse } from '../types/model';
+import { getModelFullDetail } from '../services/modelApi';
 
 interface ModelMarketplaceProps {
   userProfile: UserProfile | null;
@@ -36,28 +37,65 @@ export function ModelMarketplace({
   onAdmin,
   onPointsSubscription
 }: ModelMarketplaceProps) {
-  const [reportingModel, setReportingModel] = useState<AIModelDocument | null>(null);
+  const [reportingModel, setReportingModel] = useState<AIModelSearchResponse | null>(null);
 
-  const handleSearchModelSelect = (model: AIModelDocument) => {
-    const selectedModel: SelectedModel = {
-      id: model.modelId.toString(),
-      name: model.modelName,
-      prompt: '',
-      seedValue: '',
-      imageUrl: model.thumbnailUrl || '',
-      category: model.categoryType,
-      isCustom: false,
-      metadata: {
-        age: '',
-        gender: '',
-        style: '',
-        ethnicity: ''
+  const handleSearchModelSelect = async (model: AIModelSearchResponse) => {
+    try {
+      console.log('모델 선택됨:', model.modelName, '모델 ID:', model.modelId);
+      console.log('전체 모델 데이터:', model);
+      
+      // 올바른 API를 사용해서 모델의 파일 정보 조회
+      const modelDetailResponse = await getModelFullDetail(model.modelId);
+      
+      if (!modelDetailResponse.success || !modelDetailResponse.response) {
+        throw new Error('모델 상세 정보를 가져올 수 없습니다.');
       }
-    };
-    onModelPurchase(selectedModel);
+      
+      const modelDetail = modelDetailResponse.response;
+      console.log('모델 상세 정보:', modelDetail);
+      
+      if (!modelDetail.files || modelDetail.files.length === 0) {
+        throw new Error('모델 파일 정보를 찾을 수 없습니다.');
+      }
+      
+      // 첫 번째 파일의 fileId를 사용
+      const firstFile = modelDetail.files[0];
+      const fileId = firstFile.fileId;
+      
+      console.log('사용할 파일 ID:', fileId);
+      
+      const selectedModel: SelectedModel = {
+        id: model.modelId.toString(),
+        name: model.modelName,
+        prompt: model.prompt,
+        seedValue: fileId.toString(), // 실제 file_id를 사용
+        imageUrl: model.primaryImageUrl || (model.imageUrls && model.imageUrls.length > 0 ? model.imageUrls[0] : ''),
+        category: model.ownType,
+        isCustom: false,
+        metadata: {
+          age: '',
+          gender: '',
+          style: '',
+          ethnicity: ''
+        },
+        // 가격 정보 추가
+        price: model.price || 0,
+        creator: {
+          id: model.ownerId.toString(),
+          name: model.ownerName
+        }
+      };
+      
+      console.log('변환된 SelectedModel:', selectedModel);
+      onModelPurchase(selectedModel);
+      
+    } catch (error) {
+      console.error('모델 선택 중 오류:', error);
+      alert(`모델 선택 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
   };
 
-  const handleAPIModelReport = (model: AIModelDocument) => {
+  const handleAPIModelReport = (model: AIModelSearchResponse) => {
     setReportingModel(model);
   };
 
@@ -90,20 +128,47 @@ export function ModelMarketplace({
       <main className="page-container">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <ShoppingCart 
-              className="w-8 h-8"
-              style={{ color: 'var(--color-brand-primary)' }}
-            />
-            <div>
-              <h1 style={{
-                fontSize: 'var(--font-size-title1)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)'
-              }}>
-                마켓플레이스
-              </h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <ShoppingCart 
+                className="w-8 h-8"
+                style={{ color: 'var(--color-brand-primary)' }}
+              />
+              <div>
+                <h1 style={{
+                  fontSize: 'var(--font-size-title1)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-primary)'
+                }}>
+                  마켓플레이스
+                </h1>
+              </div>
             </div>
+            
+            {/* 직접 모델 만들기 버튼 */}
+            <button
+              onClick={onCreateModel}
+              className="px-6 py-3 rounded-lg font-medium transition-all hover:shadow-md"
+              style={{
+                backgroundColor: 'var(--color-brand-primary)',
+                color: 'var(--color-utility-white)',
+                borderRadius: 'var(--radius-8)',
+                border: 'none',
+                fontSize: 'var(--font-size-small)',
+                fontWeight: 'var(--font-weight-medium)',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              + 직접 모델 만들기
+            </button>
           </div>
           
         </div>

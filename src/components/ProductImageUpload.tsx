@@ -10,12 +10,13 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
+import { getModelFullDetail } from '../services/modelApi';
 
 interface ProductImageUploadProps {
   userProfile: UserProfile | null;
   selectedModel: UserModel;
   onBack: () => void;
-  onGenerateAd: (productImages: string[], additionalPrompt?: string) => void;
+  onGenerateAd: (productImages: string[], resultFileId: number, additionalPrompt?: string) => void; // resultFileId 추가
   onLogin: () => void;
   onLogout: () => void;
   onAdGeneration: () => void;
@@ -113,23 +114,37 @@ export function ProductImageUpload({
       setCurrentStep('composing');
       console.log('Step 3: 모델과 합성 중...');
       
-      // selectedModel에서 모델 파일 ID 가져오기
+      // selectedModel의 seedValue가 이미 file_id를 담고 있어야 함
       let modelFileId: number;
       
-      if (selectedModel.fileId) {
-        // 가장 확실한 방법: 모델에 직접 저장된 fileId 사용
-        modelFileId = selectedModel.fileId;
-        console.log('모델 파일 ID (fileId에서):', modelFileId);
-      } else if (selectedModel.seedValue && !isNaN(parseInt(selectedModel.seedValue))) {
-        // 백업 방법: seedValue에서 가져오기
+      // seedValue에서 file_id 가져오기 (마켓플레이스에서 이미 설정됨)
+      if (selectedModel.seedValue && !isNaN(parseInt(selectedModel.seedValue))) {
         modelFileId = parseInt(selectedModel.seedValue);
         console.log('모델 파일 ID (seedValue에서):', modelFileId);
+      } else if (selectedModel.fileId) {
+        // 기존 방식 (fileId 필드가 있는 경우)
+        modelFileId = selectedModel.fileId;
+        console.log('모델 파일 ID (fileId에서):', modelFileId);
       } else {
-        // 마지막 방법: 오류 발생
-        throw new Error('모델 파일 ID를 찾을 수 없습니다. 모델 데이터에 fileId 또는 seedValue가 필요합니다.');
+        // 마지막 수단: API를 사용해서 모델의 파일 정보를 조회
+        console.log('모델의 파일 ID를 조회 중... 모델 ID:', selectedModel.id);
+        const modelDetailResponse = await getModelFullDetail(parseInt(selectedModel.id));
+        
+        if (!modelDetailResponse.success || !modelDetailResponse.response || !modelDetailResponse.response.files || modelDetailResponse.response.files.length === 0) {
+          throw new Error('모델 파일을 찾을 수 없습니다.');
+        }
+        
+        modelFileId = modelDetailResponse.response.files[0].fileId;
+        console.log('모델 파일 ID (API 조회해서 가져옴):', modelFileId);
       }
       
-      const customPrompt = additionalPrompt || '모델이 이 제품을 자연스럽게 광고하는 사진으로 바꿔줘.';
+      // 기본 프롬프트에 사용자의 추가 요청사항을 이어붙이기
+      let customPrompt = '모델의 복장,표정 등은 그대로 유지하고 이 제품을 자연스럽게 광고하는 사진으로 바꿔줘.';
+      
+      // 사용자가 추가 요청사항을 입력했다면 기본 프롬프트에 추가
+      if (additionalPrompt && additionalPrompt.trim()) {
+        customPrompt += ` ${additionalPrompt.trim()}`;
+      }
       
       const composeResult = await composeImage(
         removeBgResult.resultFileId,
@@ -137,6 +152,7 @@ export function ProductImageUpload({
         customPrompt
       );
       
+      console.log('최종 사용할 모델 파일 ID:', modelFileId);
       console.log('합성 결과:', composeResult);
       
       if (composeResult.status !== 'SUCCEEDED' || !composeResult.resultFileUrl) {
@@ -148,9 +164,10 @@ export function ProductImageUpload({
       
       // 완료 후 3초 뒤에 결과 화면으로 이동
       setTimeout(() => {
-        // 원본 이미지와 생성된 이미지 두 개를 전달
-        // 첫 번째: 원본 업로드 이미지, 두 번째: 생성된 AI 광고 이미지
-        onGenerateAd([uploadedImage, composeResult.resultFileUrl], additionalPrompt);
+        // composeResult에서 resultFileId를 추출해서 전달
+        const resultFileId = composeResult.resultFileId || composeResult.fileId;
+        
+        onGenerateAd([uploadedImage, composeResult.resultFileUrl], resultFileId, additionalPrompt);
       }, 3000);
       
     } catch (error) {
