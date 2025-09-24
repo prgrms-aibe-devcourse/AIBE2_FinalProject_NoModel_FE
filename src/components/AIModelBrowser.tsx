@@ -376,6 +376,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   const handleDetailDialogModelSelect = (modelId: number) => {
     const model = searchState.models.find(m => m.modelId === modelId);
     if (model && onModelSelect) {
+      setDetailDialogOpen(false);
       onModelSelect(model);
     }
   };

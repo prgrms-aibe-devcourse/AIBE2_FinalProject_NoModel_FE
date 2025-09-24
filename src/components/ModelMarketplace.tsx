@@ -54,15 +54,21 @@ export function ModelMarketplace({
       const modelDetail = modelDetailResponse.response;
       console.log('모델 상세 정보:', modelDetail);
       
-      if (!modelDetail.files || modelDetail.files.length === 0) {
-        throw new Error('모델 파일 정보를 찾을 수 없습니다.');
+      // 파일 ID 처리
+      let fileId: string;
+      if (modelDetail.files && modelDetail.files.length > 0) {
+        fileId = modelDetail.files[0].fileId.toString();
+      } else {
+        // 파일이 없을 때 fallback 처리
+        console.warn('⚠️ 모델 파일이 없어 기본값으로 처리합니다.');
+        fileId = '0'; // 기본값
       }
-      
-      // 첫 번째 파일의 fileId를 사용
-      const firstFile = modelDetail.files[0];
-      const fileId = firstFile.fileId;
-      
-      console.log('사용할 파일 ID:', fileId);
+      // 이미지 처리 (없을 때 fallback 이미지 사용)
+      const imageUrl =
+      model.primaryImageUrl ||
+      (model.imageUrls && model.imageUrls.length > 0
+        ? model.imageUrls[0]
+        : 'https://img.icons8.com/ios/50/empty_1.png');
       
       const selectedModel: SelectedModel = {
         id: model.modelId.toString(),
