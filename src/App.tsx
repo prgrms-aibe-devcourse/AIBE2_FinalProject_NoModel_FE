@@ -4,7 +4,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { authService } from './services/auth';
-import { OnboardingFlow } from './components/OnboardingFlow';
+
 import { ImageGenerationWorkflow } from './components/ImageGenerationWorkflow';
 import { MyPage } from './components/MyPage';
 import { ProjectDetail } from './components/ProjectDetail';
@@ -25,7 +25,7 @@ const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
+export type AppStage = 'landing' | 'login' | 'signup' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
 
 export interface UserModel {
   id: string;
@@ -406,9 +406,9 @@ export default function App() {
               setCurrentStage('mypage');
               console.log('✅ 기존 사용자 인증 성공: 마이 페이지로 이동', profileData.response);
             } else {
-              // 최초 로그인이면 온보딩으로 이동
-              setCurrentStage('onboarding');
-              console.log('✅ 최초 로그인 사용자 인증 성공: 온보딩으로 이동', profileData.response);
+              // 최초 로그인이면 마이페이지로 이동
+              setCurrentStage('mypage');
+              console.log('✅ 최초 로그인 사용자 인증 성공: 마이페이지로 이동', profileData.response);
             }
           } else {
             // 서버에서 프로필 가져오기 실패 시 로그아웃
@@ -467,9 +467,9 @@ export default function App() {
           setCurrentStage('mypage');
           console.log('🔄 기존 사용자 로그인: 마이 페이지로 이동');
         } else {
-          // 최초 로그인이거나 정보가 없으면 온보딩으로 이동
-          setCurrentStage('onboarding');
-          console.log('🆕 최초 로그인: 온보딩으로 이동');
+          // 최초 로그인이거나 정보가 없으면 마이페이지로 이동
+          setCurrentStage('mypage');
+          console.log('🆕 최초 로그인: 마이페이지로 이동');
         }
       } else {
         console.error('Failed to get user profile:', profileData.error);
@@ -482,7 +482,7 @@ export default function App() {
           if (storedUserInfo.isFirstLogin === false) {
             setCurrentStage('mypage');
           } else {
-            setCurrentStage('onboarding');
+            setCurrentStage('mypage');
           }
         }
       }
@@ -505,8 +505,8 @@ export default function App() {
         try {
           await handleLoginSuccess();
         } catch {
-          // 실패 시 최소한 마이페이지/온보딩 중 하나로 진입
-          setCurrentStage("onboarding");
+          // 실패 시 최소한 마이페이지로 진입
+          setCurrentStage("mypage");
         }
       })();
     }
@@ -780,7 +780,7 @@ export default function App() {
           onSignup={() => handleStageChange('signup')}  // 회원가입 버튼
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
@@ -807,12 +807,7 @@ export default function App() {
         />
       )}
       
-      {currentStage === 'onboarding' && (
-        <OnboardingFlow 
-          onComplete={handleCategorySelect}
-          onBack={() => handleStageChange('mypage')}
-        />
-      )}
+
 
       {currentStage === 'generation' && (
         <ImageGenerationWorkflow 
@@ -828,7 +823,7 @@ export default function App() {
           userProfile={userProfile}
           projects={projects}
           onProjectSelect={handleProjectSelect}
-          onNewProject={() => handleStageChange('onboarding')}
+          onNewProject={() => handleStageChange('modelMarketplace')}
           onMyModels={() => handleStageChange('myModels')}
           onCreateModel={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
@@ -866,7 +861,7 @@ export default function App() {
           onModelCreated={handleModelCreation}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
@@ -879,13 +874,13 @@ export default function App() {
       {currentStage === 'modelMarketplace' && (
         <ModelMarketplace 
           userProfile={userProfile}
-          onBack={() => handleStageChange('onboarding')} // modelSelection 대신 onboarding으로
+          onBack={() => handleStageChange('mypage')} // modelSelection 대신 mypage로
           onModelPurchase={handleModelPurchase}
           onCreateModel={() => handleStageChange('modelCreation')}
           onModelReport={handleModelReportRequest}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
           onPointsSubscription={() => handleStageChange('pointsSubscription')}
@@ -902,7 +897,7 @@ export default function App() {
           onModelUpdate={handleModelUpdate}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
           onAdmin={() => handleStageChange('admin')}
@@ -929,7 +924,7 @@ export default function App() {
           onReportStatusUpdate={handleReportStatusUpdate}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
@@ -950,7 +945,7 @@ export default function App() {
           userProfile={userProfile}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
@@ -966,7 +961,7 @@ export default function App() {
           onBack={() => handleStageChange('mypage')}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onNewProject={() => handleStageChange('onboarding')}
+          onNewProject={() => handleStageChange('modelMarketplace')}
           onCreateModel={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
@@ -993,7 +988,7 @@ export default function App() {
           }}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}

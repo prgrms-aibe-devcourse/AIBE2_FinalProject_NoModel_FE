@@ -128,18 +128,7 @@ export function NavigationBar({
                 </>
             ) : (
                 <>
-                  <button
-                      type="button"
-                      onClick={onAdGeneration}
-                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
-                        currentPage === 'adGeneration'
-                          ? 'text-foreground bg-accent'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                      }`}
-                  >
-                    <Camera className="w-4 h-4" />
-                    광고 생성
-                  </button>
+
                   <button
                       type="button"
                       onClick={onModelCreation}
@@ -286,18 +275,7 @@ export function NavigationBar({
                     </>
                 ) : (
                     <>
-                      <button
-                          type="button"
-                          onClick={() => { onAdGeneration(); setMobileMenuOpen(false); }}
-                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
-                            currentPage === 'adGeneration'
-                              ? 'text-foreground bg-accent'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                          }`}
-                      >
-                        <Camera className="w-4 h-4" />
-                        광고 생성
-                      </button>
+
                       <button
                           type="button"
                           onClick={() => { onModelCreation(); setMobileMenuOpen(false); }}
