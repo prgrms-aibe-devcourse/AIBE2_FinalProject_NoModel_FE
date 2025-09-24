@@ -6,6 +6,7 @@ import { Textarea } from "./ui/textarea";
 import { StarRating } from "./StarRating";
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { buildApiUrl } from '@/config/env';
 
 interface ProjectRatingFormProps {
     modelId: number; // 리뷰를 등록할 모델 ID
@@ -52,7 +53,7 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
         setShowDuplicateAlert(false);
 
         try {
-            const response = await fetch(`http://localhost:8080/api/models/${modelId}/reviews`, {
+            const response = await fetch(buildApiUrl(`/models/${modelId}/reviews`), {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,10 +1,10 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_API_BASE: string
-  // 다른 환경 변수들...
+  readonly VITE_BASE_URL?: string;
+  readonly VITE_OAUTH_CALLBACK?: string;
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv
+  readonly env: ImportMetaEnv;
 }

@@ -11,6 +11,7 @@ import { authService } from '../services/auth';
 import type { LoginRequest } from '../types/auth';
 import { TermsModal } from './common/TermsModal';
 import { ErrorModal } from './common/ErrorModal';
+import { API_BASE_URL } from '../config/env';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -18,8 +19,8 @@ interface LoginPageProps {
   onBack: () => void;
 }
 
-// 백엔드 API 베이스에서 '/api'를 제거해 OAuth 시작 엔드포인트 도메인 계산
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080/api';
+// 환경 변수에 정의된 API 베이스 URL을 그대로 사용
+const API_BASE = API_BASE_URL;
 
 
 export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) {

@@ -1,3 +1,5 @@
+import { ApiResponse } from './api';
+
 // AI Model Document types (Elasticsearch 기반)
 export interface AIModelDocument {
   id: string; // 문서 ID

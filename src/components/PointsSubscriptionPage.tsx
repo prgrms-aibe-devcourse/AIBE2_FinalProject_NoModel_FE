@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { NavigationBar } from "./NavigationBar";
 import { UserProfile } from "../App";
+import { buildApiUrl } from "@/config/env";
 import { Coins, CreditCard, History, Crown, Star, Gift, TrendingUp, Zap, CheckCircle, Sparkles, Check, Clock } from "lucide-react";
 
 // ✅ PortOne SDK 타입 선언
@@ -104,10 +105,8 @@ export default function PointsSubscriptionPage({
 
     // ✅ 구독 현황 + 구독 플랜 목록 불러오기 함수
     const loadSubscriptions = () => {
-        const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
-
         // 구독 현황 조회
-        fetch(`${apiBase}/subscriptions`, {
+        fetch(buildApiUrl('/subscriptions'), {
             method: "GET",
             credentials: "include",
         })
@@ -116,7 +115,7 @@ export default function PointsSubscriptionPage({
             .catch(() => setCurrentSubscription(null));
 
         // 구독 플랜 목록 조회
-        fetch(`${apiBase}/subscriptions/plans`, {
+        fetch(buildApiUrl('/subscriptions/plans'), {
             method: "GET",
             credentials: "include",
         })
@@ -131,7 +130,7 @@ export default function PointsSubscriptionPage({
             setPointBalance(0);
             return;
         }
-        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/points/balance`, {
+        fetch(buildApiUrl('/points/balance'), {
             method: "GET",
             credentials: "include",
         })
@@ -159,7 +158,7 @@ export default function PointsSubscriptionPage({
             setPointTransactions([]);
             return;
         }
-        fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/points/transactions?page=0&size=100`, {
+        fetch(buildApiUrl('/points/transactions?page=0&size=100'), {
             method: "GET",
             credentials: "include",
         })
@@ -206,7 +205,7 @@ export default function PointsSubscriptionPage({
         const buyerName = userProfile.name || userProfile.email.split('@')[0];
 
         if (selectedPlan.price === 0) {
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
+            const response = await fetch(buildApiUrl('/subscriptions'), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -250,7 +249,7 @@ export default function PointsSubscriptionPage({
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions`, {
+                    const response = await fetch(buildApiUrl('/subscriptions'), {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
@@ -291,7 +290,6 @@ export default function PointsSubscriptionPage({
         }
 
         const buyerName = userProfile.name || userProfile.email.split('@')[0];
-        const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
         const IMP = window.IMP;
         if (!IMP) {
@@ -315,7 +313,7 @@ export default function PointsSubscriptionPage({
             },
             async (rsp: any) => {
                 if (rsp.success) {
-                    const verifyResponse = await fetch(`${apiBase}/points/payment/verify`, {
+                    const verifyResponse = await fetch(buildApiUrl('/points/payment/verify'), {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
@@ -344,7 +342,7 @@ export default function PointsSubscriptionPage({
     // ✅ 구독 취소
     const handleCancelSubscription = async () => {
         const response = await fetch(
-            `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api"}/subscriptions?reason=USER_REQUESTED`,
+            buildApiUrl('/subscriptions?reason=USER_REQUESTED'),
             {
                 method: "DELETE",
                 credentials: "include",

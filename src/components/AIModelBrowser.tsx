@@ -302,15 +302,26 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
   // 무한 스크롤 콜백
   const loadMoreCallback = useCallback((entries: IntersectionObserverEntry[]) => {
     const [entry] = entries;
-    if (entry.isIntersecting && searchState.hasMore && !searchState.isLoadingMore) {
+    if (
+      entry.isIntersecting &&
+      searchState.hasMore &&
+      !searchState.isLoading &&
+      !searchState.isLoadingMore
+    ) {
       performSearch(filters, searchState.page + 1, true);
     }
-  }, [searchState.hasMore, searchState.isLoadingMore, searchState.page, filters, performSearch]);
+  }, [searchState.hasMore, searchState.isLoading, searchState.isLoadingMore, searchState.page, filters, performSearch]);
 
   // 무한 스크롤 설정
   useEffect(() => {
     const element = loadMoreRef.current;
-    if (!element) return;
+    if (!element) {
+      return;
+    }
+
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
 
     observerRef.current = new IntersectionObserver(loadMoreCallback, {
       threshold: 0.1
@@ -323,7 +334,7 @@ export const AIModelBrowser: React.FC<AIModelBrowserProps> = ({
         observerRef.current.disconnect();
       }
     };
-  }, [loadMoreCallback]);
+  }, [loadMoreCallback, searchState.models.length]);
 
 
   // 초기 로드 (빈 키워드로 인기 모델 표시)

@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
+import { buildApiUrl } from '@/config/env';
 import { getModelFullDetail } from '../services/modelApi';
 
 interface ProductImageUploadProps {
@@ -188,7 +189,7 @@ export function ProductImageUpload({
     const formData = new FormData();
     formData.append('file', file);
     
-    const uploadResponse = await fetch('http://localhost:8080/api/files', {
+    const uploadResponse = await fetch(buildApiUrl('/files'), {
       method: 'POST',
       body: formData
     });
@@ -203,7 +204,7 @@ export function ProductImageUpload({
   
   // 배경 제거 요청 함수
   const requestBackgroundRemoval = async (fileId: number): Promise<string> => {
-    const response = await fetch('http://localhost:8080/api/generate/remove-bg', {
+    const response = await fetch(buildApiUrl('/generate/remove-bg'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -222,7 +223,7 @@ export function ProductImageUpload({
   // 작업 상태 폴링 함수
   const pollJobStatus = async (jobId: string, maxAttempts: number = 30): Promise<any> => {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const response = await fetch(`http://localhost:8080/api/generate/jobs/${jobId}`);
+      const response = await fetch(buildApiUrl(`/generate/jobs/${jobId}`));
       
       if (!response.ok) {
         throw new Error(`작업 상태 확인 실패: ${response.status} ${response.statusText}`);
@@ -243,7 +244,7 @@ export function ProductImageUpload({
   
   // 이미지 합성 함수
   const composeImage = async (productFileId: number, modelFileId: number, customPrompt: string): Promise<any> => {
-    const response = await fetch('http://localhost:8080/api/compose/compose', {
+    const response = await fetch(buildApiUrl('/compose/compose'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
