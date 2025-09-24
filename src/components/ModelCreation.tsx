@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
+import { buildApiUrl } from '@/config/env';
 
 interface ModelCreationProps {
   userProfile: UserProfile | null;
@@ -172,9 +173,10 @@ export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, on
       const USE_BACKEND = true; // 실제 API 사용
       
       if (USE_BACKEND) {
-        console.log(`API 요청: http://localhost:8080/api/generate/stable-diffusion/generate-file`);
+        const endpoint = buildApiUrl('/generate/stable-diffusion/generate-file');
+        console.log(`API 요청: ${endpoint}`);
         
-        const response = await fetch('http://localhost:8080/api/generate/stable-diffusion/generate-file', {
+        const response = await fetch(endpoint, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

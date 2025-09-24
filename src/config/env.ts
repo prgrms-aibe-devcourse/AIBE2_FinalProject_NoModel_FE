@@ -1,4 +1,4 @@
-const rawApiBase = import.meta.env.VITE_BASE_URL?.trim();
+const rawApiBase = import.meta.env.VITE_API_BASE?.trim();
 
 export const API_BASE_URL = rawApiBase && rawApiBase.length > 0
   ? rawApiBase.replace(/\/$/, '')
