@@ -354,8 +354,8 @@ export function ResultDownload({
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between mb-2">
-                                <h4 className="font-semibold text-base" style={{ color: 'var(--color-text-primary)' }}>
-                                    리뷰 등록 리워드
+                                <h4 className="font-bold text-base" style={{ color: 'var(--color-text-primary)' }}>
+                                    리뷰가 정상적으로 등록되었습니다
                                 </h4>
                                 <Button 
                                     variant="ghost" 
@@ -367,7 +367,7 @@ export function ResultDownload({
                                 </Button>
                             </div>
                             <p className="text-base mb-3" style={{ color: 'var(--color-text-secondary)' }}>
-                                <span className="font-bold text-lg" style={{ color: '#10b981' }}>+100P</span> 지급되었습니다
+                                리뷰 등록 리워드로 <span className="font-bold" style={{ color: '#10b981' }}>+100포인트</span>가 지급되었습니다!
                             </p>
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
                                 <div 

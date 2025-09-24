@@ -20,7 +20,7 @@ interface NavigationBarProps {
   isLandingPage?: boolean;
   showBackButton?: boolean;
   userPoints?: number;
-  currentPage?: 'marketplace' | 'mypage' | 'home' | 'admin' | 'other';
+  currentPage?: 'marketplace' | 'mypage' | 'home' | 'admin' | 'adGeneration' | 'modelCreation' | 'pointsSubscription' | 'other';
 }
 
 export function NavigationBar({
@@ -131,7 +131,11 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onAdGeneration}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md"
+                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
+                        currentPage === 'adGeneration'
+                          ? 'text-foreground bg-accent'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                      }`}
                   >
                     <Camera className="w-4 h-4" />
                     광고 생성
@@ -139,7 +143,11 @@ export function NavigationBar({
                   <button
                       type="button"
                       onClick={onModelCreation}
-                      className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md"
+                      className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
+                        currentPage === 'modelCreation'
+                          ? 'text-foreground bg-accent'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                      }`}
                   >
                     <Palette className="w-4 h-4" />
                     모델 제작
@@ -158,7 +166,11 @@ export function NavigationBar({
                   <button
                             type="button"
                             onClick={onPointsSubscription}
-                            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center gap-2"
+                            className={`text-sm font-medium transition-all duration-200 flex items-center gap-1 px-2 py-2 rounded-md ${
+                              currentPage === 'pointsSubscription'
+                                ? 'text-foreground bg-accent'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                            }`}
                         >
                             <Coins className="w-4 h-4" />
                             포인트&구독
@@ -277,7 +289,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onAdGeneration(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                            currentPage === 'adGeneration'
+                              ? 'text-foreground bg-accent'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          }`}
                       >
                         <Camera className="w-4 h-4" />
                         광고 생성
@@ -285,7 +301,11 @@ export function NavigationBar({
                       <button
                           type="button"
                           onClick={() => { onModelCreation(); setMobileMenuOpen(false); }}
-                          className="text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2"
+                          className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                            currentPage === 'modelCreation'
+                              ? 'text-foreground bg-accent'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                          }`}
                       >
                         <Palette className="w-4 h-4" />
                         모델 제작
@@ -302,6 +322,20 @@ export function NavigationBar({
                         <ShoppingBag className="w-4 h-4" />
                         마켓플레이스
                       </button>
+                      {onPointsSubscription && (
+                          <button
+                              type="button"
+                              onClick={() => { onPointsSubscription(); setMobileMenuOpen(false); }}
+                              className={`text-sm font-medium transition-all duration-200 py-3 px-3 rounded-md flex items-center gap-2 ${
+                                currentPage === 'pointsSubscription'
+                                  ? 'text-foreground bg-accent'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                              }`}
+                          >
+                            <Coins className="w-4 h-4" />
+                            포인트&구독
+                          </button>
+                      )}
                         {isAdmin && onAdmin && (
                             <button
                                 type="button"
