@@ -5,12 +5,12 @@ import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { AlertTriangle, Loader2, Flag } from 'lucide-react';
 import { reportModel } from '../services/modelApi';
-import { AIModelDocument } from '../types/model';
+import { AIModelDocument, AIModelSearchResponse } from '../types/model';
 import { toast } from 'sonner';
 import { ErrorModal } from './common/ErrorModal';
 
 interface ModelReportModalProps {
-  model: AIModelDocument | null;
+  model: AIModelDocument | AIModelSearchResponse | null;
   modelId?: number | null;
   modelName?: string;
   isOpen: boolean;
@@ -86,10 +86,12 @@ export const ModelReportModal: React.FC<ModelReportModalProps> = ({
   if (!model && !modelId) return null;
 
   const displayName = model?.modelName || modelName || '알 수 없는 모델';
-  const displayDeveloper = model?.developer || '알 수 없음';
-  const displayCategory = model?.categoryType || '기타';
-  const displayDescription = model?.shortDescription || '';
-  const displayThumbnail = model?.thumbnailUrl || '/api/placeholder/60/60';
+  const displayDeveloper = (model && 'ownerName' in model) ? model.ownerName : (model && 'developer' in model) ? model.developer : '알 수 없음';
+  const displayCategory = (model && 'ownType' in model) ? model.ownType : (model && 'categoryType' in model) ? model.categoryType : '기타';
+  const displayDescription = (model && 'prompt' in model) ? model.prompt : (model && 'shortDescription' in model) ? model.shortDescription : '';
+  const displayThumbnail = (model && 'primaryImageUrl' in model && model.primaryImageUrl) ? model.primaryImageUrl : 
+                          (model && 'imageUrls' in model && model.imageUrls && model.imageUrls.length > 0) ? model.imageUrls[0] :
+                          (model && 'thumbnailUrl' in model) ? model.thumbnailUrl : '/api/placeholder/60/60';
 
   return (
     <>

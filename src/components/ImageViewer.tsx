@@ -75,7 +75,13 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
 
   const handleDownload = () => {
     if (currentImage) {
-      window.open(currentImage.fileUrl, '_blank');
+      const downloadUrl = `http://localhost:8080/api/files/${currentImage.fileId}/download`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = currentImage.fileName || 'download';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 

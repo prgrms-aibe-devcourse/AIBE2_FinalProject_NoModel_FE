@@ -5,7 +5,6 @@ import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { authService } from './services/auth';
 import { OnboardingFlow } from './components/OnboardingFlow';
-import { ModelSelectionPage } from './components/ModelSelectionPage';
 import { ImageGenerationWorkflow } from './components/ImageGenerationWorkflow';
 import { MyPage } from './components/MyPage';
 import { ProjectDetail } from './components/ProjectDetail';
@@ -26,7 +25,7 @@ const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
+export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
 
 export interface UserModel {
   id: string;
@@ -380,6 +379,7 @@ export default function App() {
     originalImage: string;
     generatedImageUrl: string;
     additionalPrompt?: string;
+    resultFileId?: number; // compose API에서 받은 resultFileId 추가
   } | null>(null);
 
   // Check authentication status on app load
@@ -445,39 +445,7 @@ export default function App() {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    setCurrentStage('modelSelection');
-  };
-
-  const handleModelSelect = (model: SelectedModel) => {
-    setSelectedModel(model);
-    
-    // 모델 사용 시 포인트 차감 및 제작자에게 포인트 지급
-    if (model.creator && model.price && userProfile) {
-      if (userProfile.points >= model.price) {
-        // 포인트 차감
-        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
-        
-        // 거래 내역 추가
-        const transaction: PointTransaction = {
-          id: `transaction-${Date.now()}`,
-          userId: userProfile.id,
-          type: 'spent',
-          amount: -model.price,
-          description: `${model.name} 모델 사용`,
-          relatedModelId: model.id,
-          createdAt: new Date()
-        };
-        setPointTransactions(prev => [transaction, ...prev]);
-        
-        // 실제 앱에서는 여기서 모델 제작자에게 포인트 지급 API 호출
-        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
-      } else {
-        alert('포인트가 부족합니다.');
-        return;
-      }
-    }
-    
-    setCurrentStage('generation');
+    setCurrentStage('modelMarketplace'); // modelSelection 대신 바로 modelMarketplace로
   };
 
   const handleProjectSelect = (project: GeneratedProject) => {
@@ -645,8 +613,64 @@ export default function App() {
   };
 
   const handleModelPurchase = (model: SelectedModel) => {
-    // 모델 구매 로직은 handleModelSelect에서 처리됨
-    handleModelSelect(model);
+    // SelectedModel을 UserModel 형태로 변환
+    const userModel: UserModel = {
+      id: model.id,
+      name: model.name,
+      description: '',
+      prompt: model.prompt,
+      seedValue: model.seedValue,
+      fileId: model.seedValue ? parseInt(model.seedValue) : undefined, // seedValue가 이제 file_id를 담고 있음
+      imageUrl: model.imageUrl,
+      previewImages: [model.imageUrl],
+      category: model.category,
+      metadata: model.metadata,
+      creatorId: model.creator?.id || 'unknown',
+      creatorName: model.creator?.name || 'Unknown',
+      creatorAvatar: model.creator?.avatar,
+      price: model.price || 0,
+      usageCount: 0,
+      rating: 0,
+      ratingCount: 0,
+      tags: [],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      earnings: 0
+    };
+    
+    console.log('UserModel로 변환됨:', userModel);
+    console.log('fileId:', userModel.fileId, 'seedValue:', userModel.seedValue);
+
+    // 포인트 차감 로직
+    if (model.creator && model.price && userProfile) {
+      if (userProfile.points >= model.price) {
+        // 포인트 차감
+        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
+        
+        // 거래 내역 추가
+        const transaction: PointTransaction = {
+          id: `transaction-${Date.now()}`,
+          userId: userProfile.id,
+          type: 'spent',
+          amount: -model.price,
+          description: `${model.name} 모델 사용`,
+          relatedModelId: model.id,
+          createdAt: new Date()
+        };
+        setPointTransactions(prev => [transaction, ...prev]);
+        
+        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
+      } else {
+        alert('포인트가 부족합니다.');
+        return;
+      }
+    }
+
+    // 제품 이미지 업로드 화면으로 이동
+    setSelectedModelForAdGeneration(userModel);
+    setCurrentStage('productUpload');
   };
 
   const handleModelReportRequest = (model: UserModel) => {
@@ -679,11 +703,12 @@ export default function App() {
     setCurrentStage('productUpload');
   };
 
-  const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, additionalPrompt?: string) => {
+  const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, resultFileId?: number, additionalPrompt?: string) => {
     setAdGenerationData({
       originalImage,
       generatedImageUrl,
-      additionalPrompt
+      additionalPrompt,
+      resultFileId // resultFileId 추가
     });
     setCurrentStage('adGenerationResult');
   };
@@ -789,29 +814,11 @@ export default function App() {
         />
       )}
 
-      {currentStage === 'modelSelection' && (
-        <ModelSelectionPage 
-          selectedCategory={selectedCategory}
-          onModelSelect={handleModelSelect}
-          onBack={() => handleStageChange('onboarding')}
-          userProfile={userProfile}
-          onCreateModel={() => handleStageChange('modelCreation')}
-          onBrowseMarketplace={() => handleStageChange('modelMarketplace')}
-          onLogin={() => handleStageChange('login')}
-          onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
-          onMarketplace={() => handleStageChange('modelMarketplace')}
-          onMyPage={() => handleStageChange('mypage')}
-          onAdmin={() => handleStageChange('admin')}
-          onPointsSubscription={() => handleStageChange('pointsSubscription')}
-        />
-      )}
-      
       {currentStage === 'generation' && (
         <ImageGenerationWorkflow 
           selectedCategory={selectedCategory}
           selectedModel={selectedModel}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('modelMarketplace')}
           onComplete={handleGenerationComplete}
         />
       )}
@@ -855,7 +862,7 @@ export default function App() {
       {currentStage === 'modelCreation' && (
         <ModelCreation 
           userProfile={userProfile}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('modelMarketplace')} // modelSelection 대신 modelMarketplace로
           onModelCreated={handleModelCreation}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
@@ -872,7 +879,7 @@ export default function App() {
       {currentStage === 'modelMarketplace' && (
         <ModelMarketplace 
           userProfile={userProfile}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('onboarding')} // modelSelection 대신 onboarding으로
           onModelPurchase={handleModelPurchase}
           onCreateModel={() => handleStageChange('modelCreation')}
           onModelReport={handleModelReportRequest}
@@ -973,17 +980,13 @@ export default function App() {
           userProfile={userProfile}
           selectedModel={selectedModelForAdGeneration}
           onBack={() => handleStageChange('myModels')}
-          onGenerateAd={(productImages, additionalPrompt) => {
-            // 제품 이미지와 선택된 모델로 광고 이미지 생성 로직
-            console.log('제품 이미지:', productImages);
-            console.log('추가 프롬프트:', additionalPrompt);
-            console.log('선택된 모델:', selectedModelForAdGeneration);
-            
-            // 결과 화면으로 이동 (기존 알림 대신)
+          onGenerateAd={(productImages, resultFileId, additionalPrompt) => {
+            // 결과 화면으로 이동
             if (productImages.length > 0) {
               handleAdGenerationComplete(
-                productImages[0], // 원본 이미지 (첫 번째 업로드된 이미지)
-                productImages[productImages.length - 1], // 생성된 이미지 (마지막 이미지가 생성된 결과)
+                productImages[0], // 원본 이미지
+                productImages[productImages.length - 1], // 생성된 이미지
+                resultFileId, // 실제 API에서 받은 resultFileId
                 additionalPrompt
               );
             }
@@ -1005,6 +1008,7 @@ export default function App() {
           selectedModel={selectedModelForAdGeneration}
           originalImage={adGenerationData.originalImage}
           generatedImageUrl={adGenerationData.generatedImageUrl}
+          resultFileId={adGenerationData.resultFileId} // resultFileId 추가
           additionalPrompt={adGenerationData.additionalPrompt}
           onBack={() => handleStageChange('productUpload')}
           onNewGeneration={() => handleStageChange('productUpload')}

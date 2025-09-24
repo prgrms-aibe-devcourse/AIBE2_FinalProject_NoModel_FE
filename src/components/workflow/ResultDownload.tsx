@@ -110,13 +110,38 @@ export function ResultDownload({
 
         setIsDownloading(true);
 
-        // 다운로드 시뮬레이션
-        setTimeout(() => {
-            setIsDownloading(false);
-            console.log(`Downloading ${selectedImages.size} images in ${downloadFormat} format at ${resolution} resolution`);
-            // ✅ 다운로드 후 리뷰 다이얼로그 열기
+        try {
+            // 선택된 이미지들을 다운로드
+            for (const imageIndex of selectedImages) {
+                const imageUrl = generatedImages[imageIndex];
+                
+                // imageUrl에서 fileId 추출
+                const fileIdMatch = imageUrl.match(/\/files\/([^\/]+)\//); 
+                if (fileIdMatch) {
+                    const fileId = fileIdMatch[1];
+                    const downloadUrl = `http://localhost:8080/api/files/${fileId}/download`;
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = `생성이미지_${imageIndex + 1}_${Date.now()}.${downloadFormat}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } else {
+                    console.error('fileId를 추출할 수 없습니다:', imageUrl);
+                }
+                
+                // 다음 이미지 다운로드 전에 짧은 지연
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            // 리뷰 다이얼로그 열기
             setIsRatingOpen(true);
-        }, 2000);
+        } catch (error) {
+            console.error('다운로드 실패:', error);
+            alert('다운로드 중 오류가 발생했습니다.');
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     const handleShare = (platform: string) => {
