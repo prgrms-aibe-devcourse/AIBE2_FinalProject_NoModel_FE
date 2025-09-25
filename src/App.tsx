@@ -704,11 +704,17 @@ export default function App() {
   };
 
   const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, resultFileId?: number, additionalPrompt?: string) => {
+    console.log('handleAdGenerationComplete 호출됨');
+    console.log('- originalImage:', originalImage);
+    console.log('- generatedImageUrl:', generatedImageUrl);
+    console.log('- resultFileId:', resultFileId);
+    console.log('- additionalPrompt:', additionalPrompt);
+    
     setAdGenerationData({
       originalImage,
       generatedImageUrl,
       additionalPrompt,
-      resultFileId // resultFileId 추가
+      resultFileId // 올바른 resultFileId 전달
     });
     setCurrentStage('adGenerationResult');
   };
