@@ -4,8 +4,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { SignupPage } from './components/SignupPage';
 import { authService } from './services/auth';
-import { OnboardingFlow } from './components/OnboardingFlow';
-import { ModelSelectionPage } from './components/ModelSelectionPage';
+
 import { ImageGenerationWorkflow } from './components/ImageGenerationWorkflow';
 import { MyPage } from './components/MyPage';
 import { ProjectDetail } from './components/ProjectDetail';
@@ -17,21 +16,16 @@ import { ModelReport } from './components/ModelReport';
 import { AdminPage } from './components/AdminPage';
 import { ComponentDemo } from './components/ComponentDemo';
 import LoginTest from './components/LoginTest';
+import PointsSubscriptionPage from './components/PointsSubscriptionPage';
+import { MyReviews } from './components/MyReviews';
+import { ProductImageUpload } from './components/ProductImageUpload';
+import { AdGenerationResult } from './components/AdGenerationResult';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
 
-function parseOAuthHash(hash: string) {
-  const h = hash.startsWith("#") ? hash.slice(1) : hash;
-  const p = new URLSearchParams(h);
-  return {
-    access: p.get("access"),
-    refresh: p.get("refresh"),
-    error: p.get("error"),
-  };
-}
 
-export type AppStage = 'landing' | 'login' | 'signup' | 'onboarding' | 'modelSelection' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest';
+export type AppStage = 'landing' | 'login' | 'signup' | 'generation' | 'mypage' | 'projectDetail' | 'profile' | 'modelCreation' | 'modelMarketplace' | 'myModels' | 'modelReport' | 'admin' | 'componentDemo' | 'loginTest' | 'pointsSubscription' | 'myReviews' | 'productUpload' | 'adGenerationResult';
 
 export interface UserModel {
   id: string;
@@ -39,6 +33,7 @@ export interface UserModel {
   description: string;
   prompt: string;
   seedValue: string;
+  fileId?: number; // 모델 파일 ID 추가
   imageUrl: string;
   previewImages: string[];
   category: string;
@@ -137,7 +132,7 @@ export interface GeneratedProject {
 
 export interface PointTransaction {
   id: string;
-  userId: string;
+  userId: number;
   type: 'earned' | 'spent' | 'bonus' | 'refund';
   amount: number;
   description: string;
@@ -147,24 +142,16 @@ export interface PointTransaction {
 }
 
 export interface UserProfile {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  avatar?: string;
-  bio?: string;
-  company?: string;
-  location?: string;
-  website?: string;
   joinedAt: Date;
   planType: 'free' | 'pro' | 'enterprise';
-  generatedCount: number;
-  downloadCount: number;
-  points: number; // 현재 포인트
-  totalEarned: number; // 총 획득 포인트
-  totalSpent: number; // 총 사용 포인트
-  modelsCreated: number; // 생성한 모델 수
-  modelsEarnings: number; // 모델 판매 수익
-  isAdmin?: boolean; // 관리자 여부
+  points: number;
+  role: 'USER' | 'ADMIN';
+  modelCount: number;
+  projectCount: number;
+  isFirstLogin?: boolean; // 응답 바디에서 가져온 최초 로그인 여부
 }
 
 export interface ModelReport {
@@ -180,7 +167,7 @@ export interface ModelReport {
   status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
   createdAt: Date;
   reviewedAt?: Date;
-  reviewedBy?: string;
+  reviewedBy?: number;
   reviewNotes?: string;
   resolution?: 'model_removed' | 'warning_issued' | 'no_action' | 'user_banned';
 }
@@ -227,7 +214,7 @@ export default function App() {
       status: 'reviewed',
       createdAt: new Date('2024-01-27T09:15:00'),
       reviewedAt: new Date('2024-01-27T16:20:00'),
-      reviewedBy: 'admin-1',
+      reviewedBy: 1,
       reviewNotes: '해당 이미지의 저작권 확인이 필요합니다. 원본 이미지 소스를 조사 중입니다.',
     },
     {
@@ -242,7 +229,7 @@ export default function App() {
       status: 'resolved',
       createdAt: new Date('2024-01-26T11:45:00'),
       reviewedAt: new Date('2024-01-26T15:30:00'),
-      reviewedBy: 'admin-1',
+      reviewedBy: 1,
       reviewNotes: '조사 결과 해당 모델은 적절한 AI 생성 과정을 통해 만들어진 것으로 확인됩니다. 실제 인물을 모방한 것이 아니므로 문제없습니다.',
       resolution: 'no_action'
     },
@@ -258,7 +245,7 @@ export default function App() {
       status: 'resolved',
       createdAt: new Date('2024-01-25T13:20:00'),
       reviewedAt: new Date('2024-01-25T18:45:00'),
-      reviewedBy: 'admin-2',
+      reviewedBy: 2,
       reviewNotes: '중복된 모델들을 확인했습니다. 동일한 이미지로 생성된 3개의 중복 모델을 발견했으며, 원본 하나만 남기고 나머지는 삭제 조치했습니다.',
       resolution: 'model_removed'
     },
@@ -274,7 +261,7 @@ export default function App() {
       status: 'dismissed',
       createdAt: new Date('2024-01-24T16:10:00'),
       reviewedAt: new Date('2024-01-24T20:30:00'),
-      reviewedBy: 'admin-1',
+      reviewedBy: 1,
       reviewNotes: '해당 모델은 성인 모델이며, "학생"은 대학생을 의미하는 컨셉으로 확인됩니다. 부적절한 콘텐츠 생성을 방지하는 필터가 적용되어 있어 문제없습니다.',
       resolution: 'no_action'
     },
@@ -291,61 +278,157 @@ export default function App() {
       createdAt: new Date('2024-01-29T10:25:00'),
     }
   ]);
+  const [adminModels, setAdminModels] = useState<UserModel[]>([
+    {
+      id: 'admin-model-1',
+      name: '아시아 여성 패션 모델 - 수지',
+      description: '한국 패션 브랜드를 위한 전문 모델입니다.',
+      prompt: 'Korean fashion model, professional photography, clean background',
+      seedValue: 'seed-admin-1',
+      imageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop&crop=face',
+      previewImages: [
+        'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=600&fit=crop'
+      ],
+      category: '패션',
+      metadata: {
+        age: '20대',
+        gender: '여성',
+        style: '모던',
+        ethnicity: '아시아'
+      },
+      creatorId: 'admin',
+      creatorName: 'NoModel 관리자',
+      price: 50,
+      usageCount: 2340,
+      rating: 4.7,
+      ratingCount: 156,
+      tags: ['패션', '한국', '여성', '모던'],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-29'),
+      earnings: 11700
+    },
+    {
+      id: 'admin-model-2',
+      name: '서양 남성 비즈니스 모델 - 톰',
+      description: '비즈니스 및 기업 촬영을 위한 전문 모델입니다.',
+      prompt: 'Professional businessman, corporate photography, suit, confident',
+      seedValue: 'seed-admin-2',
+      imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face',
+      previewImages: [
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop'
+      ],
+      category: '비즈니스',
+      metadata: {
+        age: '30대',
+        gender: '남성',
+        style: '프로페셔널',
+        ethnicity: '서양'
+      },
+      creatorId: 'admin',
+      creatorName: 'NoModel 관리자',
+      price: 75,
+      usageCount: 1890,
+      rating: 4.5,
+      ratingCount: 98,
+      tags: ['비즈니스', '서양', '남성', '프로페셔널'],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date('2024-01-05'),
+      updatedAt: new Date('2024-01-28'),
+      earnings: 14175
+    },
+    {
+      id: 'admin-model-3',
+      name: '일본 여성 뷰티 모델 - 미유키',
+      description: '���티 및 화장품 브랜드를 위한 전문 모델입니다.',
+      prompt: 'Japanese beauty model, skincare, natural makeup, soft lighting',
+      seedValue: 'seed-admin-3',
+      imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face',
+      previewImages: [
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop'
+      ],
+      category: '뷰티',
+      metadata: {
+        age: '20대',
+        gender: '여성',
+        style: '내추럴',
+        ethnicity: '아시아'
+      },
+      creatorId: 'admin',
+      creatorName: 'NoModel 관리자',
+      price: 60,
+      usageCount: 3120,
+      rating: 4.9,
+      ratingCount: 203,
+      tags: ['뷰티', '일본', '여성', '내추럴'],
+      isPublic: false,
+      isForSale: true,
+      createdAt: new Date('2024-01-10'),
+      updatedAt: new Date('2024-01-27'),
+      earnings: 18720
+    }
+  ]);
   const [selectedModelToReport, setSelectedModelToReport] = useState<UserModel | null>(null);
-
-  // Mock user data (in real app, this would come from API/database)
-  const mockUserProfile: UserProfile = {
-    id: 'user-1',
-    name: '홍길동',
-    email: 'hong@example.com',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    bio: 'AI 기반 제품 이미지 생성에 관심이 많은 마케터입니다.',
-    company: '스타트업 코리아',
-    location: '서울, 대한민국',
-    website: 'https://example.com',
-    joinedAt: new Date('2024-01-15'),
-    planType: 'pro',
-    generatedCount: 47,
-    downloadCount: 152,
-    points: 2500,
-    totalEarned: 4200,
-    totalSpent: 1700,
-    modelsCreated: 3,
-    modelsEarnings: 1850,
-    isAdmin: true
-  };
+  const [selectedModelForAdGeneration, setSelectedModelForAdGeneration] = useState<UserModel | null>(null);
+  const [adGenerationData, setAdGenerationData] = useState<{
+    originalImage: string;
+    generatedImageUrl: string;
+    additionalPrompt?: string;
+    resultFileId?: number; // compose API에서 받은 resultFileId 추가
+  } | null>(null);
 
   // Check authentication status on app load
   useEffect(() => {
     const checkAuthStatus = async () => {
-      if (authService.isAuthenticated()) {
+      console.log('🔍 인증 상태 확인 시작');
+      const isAuth = authService.isAuthenticated();
+      console.log('🔍 isAuthenticated() 결과:', isAuth);
+      
+      if (isAuth) {
         try {
-          const userInfo = authService.getStoredUserInfo();
-          if (userInfo) {
-            setUserProfile(userInfo);
+          console.log('🔍 서버에서 사용자 프로필 가져오기 시도');
+          // 쿠키에 토큰이 있으면 서버에서 사용자 프로필 가져오기 시도
+          const profileData = await authService.getUserProfile();
+          console.log('🔍 getUserProfile 응답:', profileData);
+          
+          if (profileData.success) {
+            setUserProfile(profileData.response);
             setIsLoggedIn(true);
-            // If user is already logged in, go to main page
-            setCurrentStage('mypage');
-          } else {
-            // Try to fetch user profile
-            const profileData = await authService.getUserProfile();
-            if (profileData.success) {
-              setUserProfile(profileData.response);
-              setIsLoggedIn(true);
+            
+            // JWT Claims의 isFirstLogin을 확인하여 페이지 이동 결정
+            if (profileData.response.isFirstLogin === false) {
+              // 최초 로그인이 아니면 바로 마이 페이지로 이동
               setCurrentStage('mypage');
+              console.log('✅ 기존 사용자 인증 성공: 마이 페이지로 이동', profileData.response);
             } else {
-              // Failed to get profile, logout
-              await authService.logout();
-              setIsLoggedIn(false);
-              setUserProfile(null);
+              // 최초 로그인이면 마이페이지로 이동
+              setCurrentStage('mypage');
+              console.log('✅ 최초 로그인 사용자 인증 성공: 마이페이지로 이동', profileData.response);
             }
+          } else {
+            // 서버에서 프로필 가져오기 실패 시 로그아웃
+            console.log('❌ 인증 실패: 서버에서 프로필을 가져올 수 없음', profileData);
+            await authService.logout();
+            setIsLoggedIn(false);
+            setUserProfile(null);
+            setCurrentStage('landing');
           }
         } catch (error) {
-          console.error('Auth check failed:', error);
+          console.error('❌ Auth check failed:', error);
           await authService.logout();
           setIsLoggedIn(false);
           setUserProfile(null);
+          setCurrentStage('landing');
         }
+      } else {
+        // 토큰이 없으면 랜딩 페이지로
+        console.log('토큰이 없음: 랜딩 페이지로 이동');
+        setCurrentStage('landing');
       }
     };
 
@@ -362,39 +445,7 @@ export default function App() {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
-    setCurrentStage('modelSelection');
-  };
-
-  const handleModelSelect = (model: SelectedModel) => {
-    setSelectedModel(model);
-    
-    // 모델 사용 시 포인트 차감 및 제작자에게 포인트 지급
-    if (model.creator && model.price && userProfile) {
-      if (userProfile.points >= model.price) {
-        // 포인트 차감
-        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price!, totalSpent: prev.totalSpent + model.price! } : prev);
-        
-        // 거래 내역 추가
-        const transaction: PointTransaction = {
-          id: `transaction-${Date.now()}`,
-          userId: userProfile.id,
-          type: 'spent',
-          amount: -model.price,
-          description: `${model.name} 모델 사용`,
-          relatedModelId: model.id,
-          createdAt: new Date()
-        };
-        setPointTransactions(prev => [transaction, ...prev]);
-        
-        // 실제 앱에서는 여기서 모델 제작자에게 포인트 지급 API 호출
-        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
-      } else {
-        alert('포인트가 부족합니다.');
-        return;
-      }
-    }
-    
-    setCurrentStage('generation');
+    setCurrentStage('modelMarketplace'); // modelSelection 대신 바로 modelMarketplace로
   };
 
   const handleProjectSelect = (project: GeneratedProject) => {
@@ -409,7 +460,17 @@ export default function App() {
       if (profileData.success) {
         setUserProfile(profileData.response);
         setIsLoggedIn(true);
-        setCurrentStage('onboarding');
+        
+        // JWT Claims의 isFirstLogin을 확인하여 페이지 이동 결정
+        if (profileData.response.isFirstLogin === false) {
+          // 최초 로그인이 아니면 바로 마이 페이지로 이동
+          setCurrentStage('mypage');
+          console.log('🔄 기존 사용자 로그인: 마이 페이지로 이동');
+        } else {
+          // 최초 로그인이거나 정보가 없으면 마이페이지로 이동
+          setCurrentStage('mypage');
+          console.log('🆕 최초 로그인: 마이페이지로 이동');
+        }
       } else {
         console.error('Failed to get user profile:', profileData.error);
         // Still proceed with basic login
@@ -417,38 +478,24 @@ export default function App() {
         if (storedUserInfo) {
           setUserProfile(storedUserInfo);
           setIsLoggedIn(true);
-          setCurrentStage('onboarding');
+          // 저장된 정보에서 isFirstLogin 확인
+          if (storedUserInfo.isFirstLogin === false) {
+            setCurrentStage('mypage');
+          } else {
+            setCurrentStage('mypage');
+          }
         }
       }
     } catch (error) {
       console.error('Login success handler error:', error);
-      // Use mock profile as fallback
-      setIsLoggedIn(true);
-      setUserProfile(mockUserProfile);
-      setCurrentStage('onboarding');
+      // API 요청 실패 시 로그인 페이지로 이동
+      setCurrentStage('login');
     }
   };
 
   useEffect(() => {
     // 백엔드 성공 핸들러가 http://localhost:5173/oauth2/callback#access=...&refresh=... 로 보낸다고 가정
     if (window.location.pathname === OAUTH_CALLBACK_PATH) {
-      const { access, refresh, error } = parseOAuthHash(window.location.hash);
-
-      if (error || !access || !refresh) {
-        console.error("OAuth2 callback error:", error);
-        // 나쁜 해시면 로그인 화면으로 돌려보냄
-        window.history.replaceState({}, "", "/");
-        setCurrentStage("login");
-        return;
-      }
-
-      // 토큰 저장 (authService에 setTokens가 없다면 localStorage에 직접 저장해도 됨)
-      if ((authService as any).setTokens) {
-        (authService as any).setTokens(access, refresh);
-      } else {
-        localStorage.setItem("access", access);
-        localStorage.setItem("refresh", refresh);
-      }
 
       // 주소 정리: 해시/콜백 경로 제거
       window.history.replaceState({}, "", "/");
@@ -458,8 +505,8 @@ export default function App() {
         try {
           await handleLoginSuccess();
         } catch {
-          // 실패 시 최소한 마이페이지/온보딩 중 하나로 진입
-          setCurrentStage("onboarding");
+          // 실패 시 최소한 마이페이지로 진입
+          setCurrentStage("mypage");
         }
       })();
     }
@@ -468,9 +515,15 @@ export default function App() {
   }, []);
 
 
-  const handleSignupSuccess = () => {
-    // After signup, redirect to login
-    setCurrentStage('login');
+  const handleSignupSuccess = (isAutoLogin: boolean = false) => {
+    if (isAutoLogin) {
+      // 소셜 로그인의 경우 자동 로그인 처리
+      setIsLoggedIn(true);
+      setCurrentStage('mypage');
+    } else {
+      // 일반 회원가입의 경우 로그인 페이지로 이동
+      setCurrentStage('login');
+    }
   };
 
   const handleLogout = async () => {
@@ -525,14 +578,12 @@ export default function App() {
   const handleModelCreation = (newModel: UserModel) => {
     setUserModels(prev => [newModel, ...prev]);
     
-    // 모델 생성 보너스 포인트 지급
+    // 모델 생성 보너스 포인트 지급 (백엔드에서 처리)
     const bonusPoints = 100;
     if (userProfile) {
       setUserProfile(prev => prev ? { 
         ...prev, 
-        points: prev.points + bonusPoints,
-        totalEarned: prev.totalEarned + bonusPoints,
-        modelsCreated: prev.modelsCreated + 1
+        points: prev.points + bonusPoints
       } : prev);
       
       // 거래 내역 추가
@@ -562,8 +613,64 @@ export default function App() {
   };
 
   const handleModelPurchase = (model: SelectedModel) => {
-    // 모델 구매 로직은 handleModelSelect에서 처리됨
-    handleModelSelect(model);
+    // SelectedModel을 UserModel 형태로 변환
+    const userModel: UserModel = {
+      id: model.id,
+      name: model.name,
+      description: '',
+      prompt: model.prompt,
+      seedValue: model.seedValue,
+      fileId: model.seedValue ? parseInt(model.seedValue) : undefined, // seedValue가 이제 file_id를 담고 있음
+      imageUrl: model.imageUrl,
+      previewImages: [model.imageUrl],
+      category: model.category,
+      metadata: model.metadata,
+      creatorId: model.creator?.id || 'unknown',
+      creatorName: model.creator?.name || 'Unknown',
+      creatorAvatar: model.creator?.avatar,
+      price: model.price || 0,
+      usageCount: 0,
+      rating: 0,
+      ratingCount: 0,
+      tags: [],
+      isPublic: true,
+      isForSale: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      earnings: 0
+    };
+    
+    console.log('UserModel로 변환됨:', userModel);
+    console.log('fileId:', userModel.fileId, 'seedValue:', userModel.seedValue);
+
+    // 포인트 차감 로직
+    if (model.creator && model.price && userProfile) {
+      if (userProfile.points >= model.price) {
+        // 포인트 차감
+        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
+        
+        // 거래 내역 추가
+        const transaction: PointTransaction = {
+          id: `transaction-${Date.now()}`,
+          userId: userProfile.id,
+          type: 'spent',
+          amount: -model.price,
+          description: `${model.name} 모델 사용`,
+          relatedModelId: model.id,
+          createdAt: new Date()
+        };
+        setPointTransactions(prev => [transaction, ...prev]);
+        
+        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
+      } else {
+        alert('포인트가 부족합니다.');
+        return;
+      }
+    }
+
+    // 제품 이미지 업로드 화면으로 이동
+    setSelectedModelForAdGeneration(userModel);
+    setCurrentStage('productUpload');
   };
 
   const handleModelReportRequest = (model: UserModel) => {
@@ -591,6 +698,21 @@ export default function App() {
     setCurrentStage('modelMarketplace');
   };
 
+  const handleGoToProductUpload = (model: UserModel) => {
+    setSelectedModelForAdGeneration(model);
+    setCurrentStage('productUpload');
+  };
+
+  const handleAdGenerationComplete = (originalImage: string, generatedImageUrl: string, resultFileId?: number, additionalPrompt?: string) => {
+    setAdGenerationData({
+      originalImage,
+      generatedImageUrl,
+      additionalPrompt,
+      resultFileId // resultFileId 추가
+    });
+    setCurrentStage('adGenerationResult');
+  };
+
   const handleReportStatusUpdate = (reportId: string, status: ModelReport['status'], reviewNotes?: string, resolution?: ModelReport['resolution']) => {
     setModelReports(prev => 
       prev.map(report => 
@@ -607,6 +729,35 @@ export default function App() {
       )
     );
   };
+  
+      const handlePointBalanceUpdate = React.useCallback((newBalance: number) => {
+        setUserProfile(prevProfile => {
+          if (prevProfile) {
+            return { ...prevProfile, points: newBalance };
+          }
+          return prevProfile;
+        });
+      }, []);
+
+  const handleAdminModelUpdate = (modelId: string, updates: Partial<UserModel>) => {
+    // Update admin models
+    setAdminModels(prev =>
+        prev.map(model =>
+            model.id === modelId
+                ? { ...model, ...updates, updatedAt: new Date() }
+                : model
+        )
+    );
+
+    // Update user models if it exists there too
+    setUserModels(prev =>
+        prev.map(model =>
+            model.id === modelId
+                ? { ...model, ...updates, updatedAt: new Date() }
+                : model
+        )
+    );
+  };
 
   return (
     <div 
@@ -618,14 +769,25 @@ export default function App() {
     >
       {currentStage === 'landing' && (
         <LandingPage 
-          onGetStarted={() => handleStageChange('signup')}
+          onGetStarted={() => {
+            // 무료로 시작하기: 로그인 상태에 따라 다르게 동작
+            if (isLoggedIn) {
+              handleStageChange('mypage');  // 로그인되어 있으면 마이페이지로
+            } else {
+              handleStageChange('login');   // 로그인 안되어 있으면 로그인 페이지로
+            }
+          }}
+          onSignup={() => handleStageChange('signup')}  // 회원가입 버튼
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
           isLoggedIn={isLoggedIn}
+          isAdmin={userProfile?.role === 'ADMIN'}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -645,34 +807,13 @@ export default function App() {
         />
       )}
       
-      {currentStage === 'onboarding' && (
-        <OnboardingFlow 
-          onComplete={handleCategorySelect}
-          onBack={() => handleStageChange('mypage')}
-        />
-      )}
 
-      {currentStage === 'modelSelection' && (
-        <ModelSelectionPage 
-          selectedCategory={selectedCategory}
-          onModelSelect={handleModelSelect}
-          onBack={() => handleStageChange('onboarding')}
-          userProfile={userProfile}
-          onCreateModel={() => handleStageChange('modelCreation')}
-          onBrowseMarketplace={() => handleStageChange('modelMarketplace')}
-          onLogin={() => handleStageChange('login')}
-          onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
-          onMarketplace={() => handleStageChange('modelMarketplace')}
-          onMyPage={() => handleStageChange('mypage')}
-        />
-      )}
-      
+
       {currentStage === 'generation' && (
         <ImageGenerationWorkflow 
           selectedCategory={selectedCategory}
           selectedModel={selectedModel}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('modelMarketplace')}
           onComplete={handleGenerationComplete}
         />
       )}
@@ -682,14 +823,15 @@ export default function App() {
           userProfile={userProfile}
           projects={projects}
           onProjectSelect={handleProjectSelect}
-          onNewProject={() => handleStageChange('onboarding')}
-          onProfileSettings={() => handleStageChange('profile')}
+          onNewProject={() => handleStageChange('modelMarketplace')}
           onMyModels={() => handleStageChange('myModels')}
           onCreateModel={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onLogout={handleLogout}
           onAdmin={() => handleStageChange('admin')}
           onLogin={() => handleStageChange('login')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
+          onMyReviews={() => handleStageChange('myReviews')}
         />
       )}
 
@@ -715,22 +857,33 @@ export default function App() {
       {currentStage === 'modelCreation' && (
         <ModelCreation 
           userProfile={userProfile}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('modelMarketplace')} // modelSelection 대신 modelMarketplace로
           onModelCreated={handleModelCreation}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onHome={() => handleStageChange('landing')}
+          onAdmin={() => handleStageChange('admin')}
+          onGoToProductUpload={handleGoToProductUpload}
         />
       )}
 
       {currentStage === 'modelMarketplace' && (
         <ModelMarketplace 
           userProfile={userProfile}
-          onBack={() => handleStageChange('modelSelection')}
+          onBack={() => handleStageChange('mypage')} // modelSelection 대신 mypage로
           onModelPurchase={handleModelPurchase}
           onCreateModel={() => handleStageChange('modelCreation')}
           onModelReport={handleModelReportRequest}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -744,9 +897,11 @@ export default function App() {
           onModelUpdate={handleModelUpdate}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -763,14 +918,18 @@ export default function App() {
         <AdminPage 
           userProfile={userProfile}
           modelReports={modelReports}
+          allModels={[...adminModels, ...userModels]}
+          onModelUpdate={handleAdminModelUpdate}
           onBack={() => handleStageChange('mypage')}
           onReportStatusUpdate={handleReportStatusUpdate}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 
@@ -779,6 +938,84 @@ export default function App() {
       )}
       {currentStage === 'loginTest' && (
         <LoginTest />
+      )}
+
+      {currentStage === 'pointsSubscription' && (
+        <PointsSubscriptionPage 
+          userProfile={userProfile}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
+          onPointBalanceUpdate={handlePointBalanceUpdate}
+        />
+      )}
+
+      {currentStage === 'myReviews' && (
+        <MyReviews 
+          userProfile={userProfile}
+          onBack={() => handleStageChange('mypage')}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onNewProject={() => handleStageChange('modelMarketplace')}
+          onCreateModel={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
+        />
+      )}
+
+      {currentStage === 'productUpload' && selectedModelForAdGeneration && (
+        <ProductImageUpload 
+          userProfile={userProfile}
+          selectedModel={selectedModelForAdGeneration}
+          onBack={() => handleStageChange('myModels')}
+          onGenerateAd={(productImages, resultFileId, additionalPrompt) => {
+            // 결과 화면으로 이동
+            if (productImages.length > 0) {
+              handleAdGenerationComplete(
+                productImages[0], // 원본 이미지
+                productImages[productImages.length - 1], // 생성된 이미지
+                resultFileId, // 실제 API에서 받은 resultFileId
+                additionalPrompt
+              );
+            }
+          }}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onHome={() => handleStageChange('landing')}
+          onAdmin={() => handleStageChange('admin')}
+        />
+      )}
+
+      {currentStage === 'adGenerationResult' && selectedModelForAdGeneration && adGenerationData && (
+        <AdGenerationResult 
+          userProfile={userProfile}
+          selectedModel={selectedModelForAdGeneration}
+          originalImage={adGenerationData.originalImage}
+          generatedImageUrl={adGenerationData.generatedImageUrl}
+          resultFileId={adGenerationData.resultFileId} // resultFileId 추가
+          additionalPrompt={adGenerationData.additionalPrompt}
+          onBack={() => handleStageChange('productUpload')}
+          onNewGeneration={() => handleStageChange('productUpload')}
+          onLogin={() => handleStageChange('login')}
+          onLogout={handleLogout}
+          onAdGeneration={() => handleStageChange('onboarding')}
+          onModelCreation={() => handleStageChange('modelCreation')}
+          onMarketplace={() => handleStageChange('modelMarketplace')}
+          onMyPage={() => handleStageChange('mypage')}
+          onHome={() => handleStageChange('landing')}
+          onAdmin={() => handleStageChange('admin')}
+        />
       )}
     </div>
   );

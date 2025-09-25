@@ -9,16 +9,26 @@ import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
 import { Separator } from './ui/separator';
 import { 
-  ArrowLeft, Sparkles, Upload, Wand2, Save, Eye, 
-  Image as ImageIcon, Tags, Coins, Users, Globe,
-  AlertTriangle, Info, CheckCircle
+  ArrowLeft, Wand2, Save,
+  Image as ImageIcon, Info, CheckCircle, Plus
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
+import { NavigationBar } from './NavigationBar';
+import { buildApiUrl } from '@/config/env';
 
 interface ModelCreationProps {
   userProfile: UserProfile | null;
   onBack: () => void;
   onModelCreated: (model: UserModel) => void;
+  onLogin: () => void;
+  onLogout: () => void;
+  onAdGeneration: () => void;
+  onModelCreation: () => void;
+  onMarketplace: () => void;
+  onMyPage: () => void;
+  onHome: () => void;
+  onAdmin?: () => void;
+  onGoToProductUpload?: (model: UserModel) => void;
 }
 
 const ageOptions = ['10대', '20대 초반', '20대 후반', '30대 초반', '30대 후반', '40대', '50대+'];
@@ -34,10 +44,64 @@ const categoryOptions = [
   { value: 'lifestyle', label: '라이프스타일' }
 ];
 
-export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCreationProps) {
+// 고정된 네거티브 프롬프트
+const FIXED_NEGATIVE_PROMPT = "(worst quality:2),(low quality:2),(normal quality:2),lowres,watermark,lower body,text";
+
+// AI 프롬프트 자동 생성 버튼들
+const promptAutoGenButtons = {
+  gender: [
+    { label: "남성", value: "male" },
+    { label: "여성", value: "female" },
+  ],
+  age: [
+    { label: "젊은", value: "young" },
+    { label: "성인", value: "adult" },
+    { label: "나이든", value: "elderly" },
+  ],
+  appearance: [
+    { label: "아름다운", value: "beautiful" },
+    { label: "잘생긴", value: "handsome" },
+    { label: "귀여운", value: "cute" },
+    { label: "세련된", value: "elegant" },
+    { label: "자연스러운", value: "natural" },
+  ],
+  emotion: [
+    { label: "행복한", value: "happy" },
+    { label: "슬픈", value: "sad" },
+    { label: "진지한", value: "serious" },
+    { label: "놀란", value: "surprised" },
+    { label: "평온한", value: "peaceful" },
+    { label: "자신감 있는", value: "confident" },
+  ],
+  style: [
+    { label: "프로페셔널", value: "professional" },
+    { label: "캐주얼", value: "casual" },
+    { label: "럭셔리", value: "luxury" },
+    { label: "빈티지", value: "vintage" },
+    { label: "모던", value: "modern" },
+    { label: "스포티", value: "sporty" },
+  ],
+  lighting: [
+    { label: "자연광", value: "natural lighting" },
+    { label: "스튜디오 조명", value: "studio lighting" },
+    { label: "드라마틱", value: "dramatic lighting" },
+    { label: "따뜻한 조명", value: "warm lighting" },
+    { label: "차가운 조명", value: "cool lighting" },
+  ],
+  background: [
+    { label: "화이트 배경", value: "white background" },
+    { label: "도시 배경", value: "urban background" },
+    { label: "자연 배경", value: "natural background" },
+    { label: "스튜디오", value: "studio background" },
+    { label: "인테리어", value: "interior background" },
+  ],
+};
+
+export function ModelCreation({ userProfile, onBack, onModelCreated, onLogin, onLogout, onAdGeneration, onModelCreation, onMarketplace, onMyPage, onHome, onAdmin, onGoToProductUpload }: ModelCreationProps) {
   const [step, setStep] = useState<'basic' | 'details' | 'preview'>('basic');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clickedButton, setClickedButton] = useState<string | null>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -82,25 +146,88 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
 
     setIsGenerating(true);
     
-    // Simulate AI generation
-    setTimeout(() => {
-      // Mock generated images
-      const mockImages = [
-        'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
-        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'
-      ];
-      setPreviewImages(mockImages);
-      setSeedValue(Math.random().toString().slice(2, 7));
+    try {
+      // 사용자 프롬프트에 기본 프롬프트 자동 추가 (사용자에게는 보이지 않음)
+      const enhancedPrompt = `${formData.prompt}, upper body, looking at camera`;
+      
+      // API 요청 데이터 구성
+      const requestData = {
+        prompt: enhancedPrompt, // 향상된 프롬프트 사용
+        mode: "SUBJECT_SCENE",
+        width: 512,
+        height: 512,
+        steps: 40,
+        cfgScale: 7.0,
+        negativePrompt: FIXED_NEGATIVE_PROMPT, // 고정된 네거티브 프롬프트 사용
+        relationId: 0,
+        relationType: "MODEL",
+        userId: userProfile?.id || 1,
+        modelName: formData.name,
+        price: formData.price,
+        isPublic: formData.isPublic
+      };
+
+      console.log('이미지 생성 요청:', requestData);
+
+      // 백엔드 서버 사용 가능 여부 확인
+      const USE_BACKEND = true; // 실제 API 사용
+      
+      if (USE_BACKEND) {
+        const endpoint = buildApiUrl('/generate/stable-diffusion/generate-file');
+        console.log(`API 요청: ${endpoint}`);
+        
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestData),
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API 요청 실패: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('API 응답:', result);
+
+        if (result.status === 'SUCCEEDED' && result.resultFileUrl) {
+          // 성공적으로 생성된 이미지 URL 설정
+          setPreviewImages([result.resultFileUrl]);
+          // 중요: API 응답에서 resultFileId를 seedValue에 저장하여 나중에 사용
+          setSeedValue(result.resultFileId ? result.resultFileId.toString() : (result.jobId || Math.random().toString().slice(2, 7)));
+          setIsGenerating(false);
+          setStep('preview');
+        } else {
+          throw new Error(result.errorMessage || '이미지 생성에 실패했습니다.');
+        }
+      } else {
+        // Mock 데이터 사용 (백엔드 서버 없을 때)
+        console.log('백엔드 서버가 없으므로 Mock 데이터 사용');
+        
+        // 2-3초 대기 (실제 생성 시간 모방)
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        
+        // 고품질 AI 생성 이미지 Mock URL
+        const mockGeneratedImage = 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=512&h=512&fit=crop&crop=face';
+        
+        setPreviewImages([mockGeneratedImage]);
+        setSeedValue(`mock-${Date.now()}`);
+        setIsGenerating(false);
+        setStep('preview');
+      }
+    } catch (error) {
+      console.error('이미지 생성 오류:', error);
       setIsGenerating(false);
-      setStep('preview');
-    }, 3000);
+      alert(`이미지 생성 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+    }
   };
 
   const handleSubmit = async () => {
     if (!userProfile) return;
     
-    if (!formData.name || !formData.description || !formData.prompt || !formData.category) {
+    if (!formData.name || !formData.description || !formData.prompt) {
       alert('필수 필드를 모두 입력해주세요.');
       return;
     }
@@ -114,43 +241,52 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
 
     // Simulate API call
     setTimeout(() => {
+      // 모델 생성 시에도 향상된 프롬프트 사용 (사용자에게는 원본 프롬프트만 표시)
+      const enhancedPrompt = `${formData.prompt}, upper body, looking at camera`;
+      
       const newModel: UserModel = {
         id: `model-${Date.now()}`,
         name: formData.name,
         description: formData.description,
-        prompt: formData.prompt,
+        prompt: enhancedPrompt, // 실제 생성에 사용된 향상된 프롬프트 저장
         seedValue: seedValue,
+        fileId: parseInt(seedValue), // seedValue에 저장된 resultFileId를 fileId로 사용
         imageUrl: previewImages[0],
         previewImages: previewImages,
-        category: formData.category,
+        category: 'general', // 기본 카테고리
         metadata: {
-          age: formData.age,
-          gender: formData.gender,
-          style: formData.style,
-          ethnicity: formData.ethnicity
+          age: '20대',
+          gender: '일반',
+          style: '일반',
+          ethnicity: '아시아'
         },
-        creatorId: userProfile.id,
+        creatorId: userProfile.id.toString(),
         creatorName: userProfile.name,
-        creatorAvatar: userProfile.avatar,
+        creatorAvatar: undefined, // 기본 아바타는 DefaultAvatar 컴포넌트에서 처리
         price: formData.price,
         usageCount: 0,
         rating: 0,
         ratingCount: 0,
-        tags: formData.tags,
+        tags: [], // 태그 기능 제거로 빈 배열
         isPublic: formData.isPublic,
-        isForSale: formData.isForSale,
+        isForSale: true, // 기본적으로 판매 허용
         createdAt: new Date(),
         updatedAt: new Date(),
         earnings: 0
       };
 
       onModelCreated(newModel);
+      
+      // 모델 생성 후 제품 이미지 업로드 화면으로 이동
+      if (onGoToProductUpload) {
+        onGoToProductUpload(newModel);
+      }
+      
       setIsSubmitting(false);
     }, 2000);
   };
 
-  const isBasicValid = formData.name && formData.description && formData.prompt && formData.category;
-  const isDetailsValid = formData.age && formData.gender && formData.ethnicity && formData.style;
+  const isBasicValid = formData.name && formData.description && formData.prompt;
 
   if (!userProfile) {
     return <div>Loading...</div>;
@@ -158,69 +294,25 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-      {/* Header */}
-      <header className="linear-header sticky top-0 z-50">
-        <div className="linear-container h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="flex items-center gap-2"
-              style={{
-                color: 'var(--color-text-secondary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              뒤로 가기
-            </Button>
-            
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-8 h-8 flex items-center justify-center"
-                style={{
-                  backgroundColor: 'var(--color-brand-primary)',
-                  borderRadius: 'var(--radius-8)'
-                }}
-              >
-                <Sparkles className="w-5 h-5" style={{ color: 'var(--color-utility-white)' }} />
-              </div>
-              <h1 
-                style={{ 
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                NoModel
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-              <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-              <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                {userProfile.points.toLocaleString()}P
-              </span>
-            </div>
-            <Badge 
-              style={{
-                backgroundColor: 'var(--color-brand-accent-tint)',
-                color: 'var(--color-brand-primary)',
-                borderRadius: 'var(--radius-rounded)',
-                fontSize: 'var(--font-size-small)',
-                fontWeight: 'var(--font-weight-medium)',
-                padding: '8px 16px'
-              }}
-            >
-              AI 모델 생성
-            </Badge>
-          </div>
-        </div>
-      </header>
+      <NavigationBar
+        onLogin={onLogin}
+        onLogout={onLogout}
+        onAdGeneration={onAdGeneration}
+        onModelCreation={onModelCreation}
+        onMarketplace={onMarketplace}
+        onMyPage={onMyPage}
+        onHome={onHome}
+        onBack={onBack}
+        onAdmin={onAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
+        isLoggedIn={!!userProfile}
+        showBackButton={true}
+        userPoints={userProfile?.points}
+        currentPage="modelCreation"
+      />
 
       {/* Main Content */}
-      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <main className="page-container">
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center mb-6">
@@ -261,12 +353,12 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                 }}
               >
                 {step === 'basic' && 'AI 모델 기본 정보'}
-                {step === 'details' && '모델 세부 설정'}
+                {step === 'details' && '판매 및 공개 설정'}
                 {step === 'preview' && '미리보기 및 출시'}
               </h1>
               <p style={{ color: 'var(--color-text-secondary)' }}>
                 {step === 'basic' && '모델의 기본 정보와 프롬프트를 설정하세요'}
-                {step === 'details' && '모델의 특성과 판매 설정을 완료하세요'}
+                {step === 'details' && '모델의 판매 가격과 공개 설정을 완료하세요'}
                 {step === 'preview' && '생성된 모델을 확인하고 마켓플레이스에 출시하세요'}
               </p>
             </div>
@@ -333,34 +425,104 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="category">
-                    카테고리 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
+                {/* AI 프롬프트 자동 생성 버튼들 */}
+                <div className="space-y-4">
+                  <Label>
+                    AI 프롬프트 자동 생성
                   </Label>
-                  <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                    <SelectTrigger className="mt-2 h-12">
-                      <SelectValue placeholder="카테고리를 선택하세요" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categoryOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <p
+                    className="text-sm"
+                    style={{ color: "var(--color-text-secondary)" }}
+                  >
+                    아래 버튼들을 클릭하여 영어 프롬프트를 자동으로 추가하세요
+                  </p>
+                  
+                  {Object.entries(promptAutoGenButtons).map(([category, buttons]) => (
+                    <div key={category} className="space-y-2">
+                      <h4 
+                        className="text-sm font-medium"
+                        style={{ color: "var(--color-text-primary)" }}
+                      >
+                        {category === 'gender' ? '성별' :
+                         category === 'age' ? '연령' :
+                         category === 'appearance' ? '외모' :
+                         category === 'emotion' ? '감정/표정' :
+                         category === 'style' ? '스타일' :
+                         category === 'lighting' ? '조명' :
+                         category === 'background' ? '배경' : category}
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {buttons.map((button, index) => {
+                          const buttonId = `${category}-${index}`;
+                          const isClicked = clickedButton === buttonId;
+                          
+                          return (
+                            <Button
+                              key={index}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const currentPrompt = formData.prompt || "";
+                                const newPrompt = currentPrompt 
+                                  ? `${currentPrompt}, ${button.value}`
+                                  : button.value;
+                                handleInputChange('prompt', newPrompt);
+                                
+                                // 클릭 효과
+                                setClickedButton(buttonId);
+                                setTimeout(() => setClickedButton(null), 200);
+                              }}
+                              style={{
+                                borderRadius: "var(--radius-6)",
+                                borderColor: isClicked ? "var(--color-brand-primary)" : "var(--color-border-primary)",
+                                fontSize: "var(--font-size-small)",
+                                padding: "6px 12px",
+                                height: "auto",
+                                backgroundColor: isClicked ? "var(--color-brand-primary)" : "transparent",
+                                color: isClicked ? "var(--color-utility-white)" : "var(--color-text-primary)",
+                                transform: isClicked ? "scale(0.95)" : "scale(1)",
+                                transition: "all 0.15s ease-in-out",
+                                boxShadow: isClicked ? "0 2px 8px rgba(0,0,0,0.2)" : "none"
+                              }}
+                              className="hover:scale-105 active:scale-95"
+                            >
+                              <Plus className={`w-3 h-3 mr-1 transition-transform duration-150 ${
+                                isClicked ? 'rotate-45' : ''
+                              }`} />
+                              {button.label}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div>
-                  <Label htmlFor="prompt">
-                    AI 프롬프트 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
-                  </Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="prompt">
+                      AI 프롬프트 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
+                    </Label>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleInputChange('prompt', "")}
+                      style={{
+                        borderRadius: "var(--radius-6)",
+                        fontSize: "var(--font-size-small)",
+                        height: "32px",
+                        padding: "0 12px"
+                      }}
+                    >
+                      초기화
+                    </Button>
+                  </div>
                   <Textarea
                     id="prompt"
                     value={formData.prompt}
                     onChange={(e) => handleInputChange('prompt', e.target.value)}
-                    placeholder="professional young asian woman, studio lighting, clean background, high quality portrait"
-                    className="mt-2 min-h-32"
+                    placeholder="예: beautiful young woman, professional model, natural lighting, studio background, high quality portrait..."
+                    className="min-h-32"
                     style={{
                       borderRadius: 'var(--radius-8)',
                       borderColor: 'var(--color-border-primary)',
@@ -370,7 +532,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                     }}
                   />
                   <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                    영어로 작성하면 더 정확한 결과를 얻을 수 있습니다
+                    위의 자동 생성 버튼을 사용하거나 직접 영어 프롬프트를 입력하세요. 영어로 작성하면 더 정확한 결과를 얻을 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -414,152 +576,10 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                   color: 'var(--color-text-primary)'
                 }}
               >
-                모델 특성
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="age">
-                    연령대 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
-                  </Label>
-                  <Select value={formData.age} onValueChange={(value) => handleInputChange('age', value)}>
-                    <SelectTrigger className="mt-2 h-12">
-                      <SelectValue placeholder="연령대 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ageOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="gender">
-                    성별 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
-                  </Label>
-                  <Select value={formData.gender} onValueChange={(value) => handleInputChange('gender', value)}>
-                    <SelectTrigger className="mt-2 h-12">
-                      <SelectValue placeholder="성별 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {genderOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="ethnicity">
-                    인종 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
-                  </Label>
-                  <Select value={formData.ethnicity} onValueChange={(value) => handleInputChange('ethnicity', value)}>
-                    <SelectTrigger className="mt-2 h-12">
-                      <SelectValue placeholder="인종 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ethnicityOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="style">
-                    스타일 <span style={{ color: 'var(--color-semantic-red)' }}>*</span>
-                  </Label>
-                  <Select value={formData.style} onValueChange={(value) => handleInputChange('style', value)}>
-                    <SelectTrigger className="mt-2 h-12">
-                      <SelectValue placeholder="스타일 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {styleOptions.map((option) => (
-                        <SelectItem key={option} value={option}>
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-6"
-              style={{
-                backgroundColor: 'var(--color-background-primary)',
-                borderColor: 'var(--color-border-primary)',
-                borderRadius: 'var(--radius-16)'
-              }}
-            >
-              <h3 
-                className="mb-6"
-                style={{
-                  fontSize: 'var(--font-size-title3)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  color: 'var(--color-text-primary)'
-                }}
-              >
-                태그 및 설정
+                판매 및 공개 설정
               </h3>
 
               <div className="space-y-6">
-                <div>
-                  <Label htmlFor="tags">검색 태그</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      value={currentTag}
-                      onChange={(e) => setCurrentTag(e.target.value)}
-                      placeholder="태그 입력"
-                      onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                      style={{
-                        borderRadius: 'var(--radius-8)',
-                        borderColor: 'var(--color-border-primary)',
-                        backgroundColor: 'var(--color-input-background)',
-                        height: '40px'
-                      }}
-                    />
-                    <Button 
-                      onClick={addTag}
-                      variant="outline"
-                      disabled={!currentTag.trim()}
-                    >
-                      추가
-                    </Button>
-                  </div>
-                  {formData.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {formData.tags.map((tag) => (
-                        <Badge 
-                          key={tag}
-                          className="cursor-pointer"
-                          onClick={() => removeTag(tag)}
-                          style={{
-                            backgroundColor: 'var(--color-brand-accent-tint)',
-                            color: 'var(--color-brand-primary)',
-                            borderRadius: 'var(--radius-rounded)'
-                          }}
-                        >
-                          {tag} ×
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                  <p className="text-xs mt-2" style={{ color: 'var(--color-text-tertiary)' }}>
-                    {formData.tags.length}/10 개 태그
-                  </p>
-                </div>
-
-                <Separator />
-
                 <div>
                   <Label htmlFor="price">판매 가격 (포인트)</Label>
                   <div className="flex items-center gap-4 mt-2">
@@ -593,6 +613,8 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                   </p>
                 </div>
 
+                <Separator />
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -605,22 +627,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                     </div>
                     <Switch
                       checked={formData.isPublic}
-                      onCheckedChange={(checked) => handleInputChange('isPublic', checked)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 style={{ fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-primary)' }}>
-                        판매 허용
-                      </h4>
-                      <p className="text-sm" style={{ color: 'var(--color-text-tertiary)' }}>
-                        다른 사용자가 포인트로 이 모델을 구매할 수 있도록 허용
-                      </p>
-                    </div>
-                    <Switch
-                      checked={formData.isForSale}
-                      onCheckedChange={(checked) => handleInputChange('isForSale', checked)}
+                      onCheckedChange={(checked: boolean) => handleInputChange('isPublic', checked)}
                     />
                   </div>
                 </div>
@@ -641,19 +648,20 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
               </Button>
               <Button 
                 onClick={handleGeneratePreview}
-                disabled={!isDetailsValid || isGenerating}
+                disabled={isGenerating}
                 style={{
                   backgroundColor: 'var(--color-brand-primary)',
                   color: 'var(--color-utility-white)',
                   borderRadius: 'var(--radius-8)',
                   border: 'none',
-                  opacity: (!isDetailsValid || isGenerating) ? 0.6 : 1
+                  opacity: isGenerating ? 0.6 : 1,
+                  minWidth: '180px'
                 }}
               >
                 {isGenerating ? (
                   <>
-                    <Wand2 className="w-4 h-4 mr-2 animate-spin" />
-                    AI 생성 중...
+                    <div className="w-4 h-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    AI 이미지 생성 중...
                   </>
                 ) : (
                   <>
@@ -689,20 +697,38 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
               </h3>
 
               {previewImages.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  {previewImages.map((image, index) => (
+                <div className="space-y-4">
+                  <div className="flex justify-center">
                     <div 
-                      key={index}
-                      className="aspect-square rounded-lg overflow-hidden"
+                      className="w-96 h-96 rounded-lg overflow-hidden"
                       style={{ backgroundColor: 'var(--color-background-secondary)' }}
                     >
                       <img 
-                        src={image} 
-                        alt={`Preview ${index + 1}`}
+                        src={previewImages[0]} 
+                        alt="Generated Preview"
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          console.error('이미지 로드 실패:', previewImages[0]);
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop';
+                        }}
                       />
                     </div>
-                  ))}
+                  </div>
+                  <div className="text-center">
+                    <h4 
+                      className="mb-2"
+                      style={{
+                        fontSize: 'var(--font-size-regular)',
+                        fontWeight: 'var(--font-weight-semibold)',
+                        color: 'var(--color-text-primary)'
+                      }}
+                    >
+                      생성된 AI 모델 미리보기
+                    </h4>
+                    <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      AI가 생성한 모델 이미지입니다. 마켓플레이스에 출시할 준비가 되었습니다.
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <div 
@@ -739,12 +765,6 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                       <span style={{ color: 'var(--color-text-primary)' }}>{formData.name}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>카테고리</span>
-                      <span style={{ color: 'var(--color-text-primary)' }}>
-                        {categoryOptions.find(c => c.value === formData.category)?.label}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
                       <span style={{ color: 'var(--color-text-tertiary)' }}>판매 가격</span>
                       <span style={{ color: 'var(--color-text-primary)' }}>{formData.price}P</span>
                     </div>
@@ -754,67 +774,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <h4 
-                    className="mb-3"
-                    style={{
-                      fontSize: 'var(--font-size-regular)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                  >
-                    모델 특성
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>연령대</span>
-                      <span style={{ color: 'var(--color-text-primary)' }}>{formData.age}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>성별</span>
-                      <span style={{ color: 'var(--color-text-primary)' }}>{formData.gender}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>인종</span>
-                      <span style={{ color: 'var(--color-text-primary)' }}>{formData.ethnicity}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span style={{ color: 'var(--color-text-tertiary)' }}>스타일</span>
-                      <span style={{ color: 'var(--color-text-primary)' }}>{formData.style}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
-
-              {formData.tags.length > 0 && (
-                <div className="mt-4">
-                  <h4 
-                    className="mb-3"
-                    style={{
-                      fontSize: 'var(--font-size-regular)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                  >
-                    태그
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.tags.map((tag) => (
-                      <Badge 
-                        key={tag}
-                        style={{
-                          backgroundColor: 'var(--color-background-tertiary)',
-                          color: 'var(--color-text-secondary)',
-                          borderRadius: 'var(--radius-rounded)'
-                        }}
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
             </Card>
 
             <div 
@@ -843,7 +803,7 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
                     className="text-sm"
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
-                    모델을 마켓플레이스에 출시하면 100P의 보너스 포인트를 받게 됩니다.
+                    이제 이 AI 모델을 사용하여 제품 광고 이미지를 생성할 수 있습니다.
                   </p>
                 </div>
               </div>
@@ -874,13 +834,13 @@ export function ModelCreation({ userProfile, onBack, onModelCreated }: ModelCrea
               >
                 {isSubmitting ? (
                   <>
-                    <Save className="w-4 h-4 mr-2 animate-spin" />
-                    출시 중...
+                    <Wand2 className="w-4 h-4 mr-2 animate-spin" />
+                    모델 생성 중...
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4 mr-2" />
-                    마켓플레이스에 출시
+                    <Wand2 className="w-4 h-4 mr-2" />
+                    이 모델을 사용하여 광고 이미지 생성
                   </>
                 )}
               </Button>

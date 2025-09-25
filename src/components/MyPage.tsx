@@ -1,20 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
+import { DynamicFontSize } from './common/DynamicFontSize';
 import { 
-  Sparkles, Plus, Search, Filter, Grid3X3, List, Calendar, Download, 
-  Eye, MoreHorizontal, User, Settings, LogOut, TrendingUp, Image as ImageIcon,
-  Crown, Clock, CheckCircle, XCircle, Star, ShoppingCart, Users, Coins, Shield
+  Plus, Search, Filter, Grid3X3, List, Download, 
+  Eye, Image as ImageIcon,
+  Crown, Star, ShoppingCart, Users, Coins
 } from 'lucide-react';
 import { GeneratedProject, UserProfile } from '../App';
+import { getMyProjectCount, getMyAverageRating, getMyAdResults, convertAdResultToProject } from '../services/adResultApi';
 
 
 
@@ -127,7 +126,7 @@ const defaultMockProjects: GeneratedProject[] = [
       isCustom: true,
       metadata: { age: '30대', gender: '남성', style: '비즈니스', ethnicity: '서양' }
     },
-    originalPrompt: '스마트워치를 착용한 비즈니스���',
+    originalPrompt: '스마트워치를 착용한 비즈니스맨',
     finalPrompt: 'professional businessman wearing smartwatch, technology photography, modern office background',
     generatedImages: [
       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&h=800&fit=crop'
@@ -154,36 +153,79 @@ const categoryNames: Record<string, string> = {
   lifestyle: '라이프스타일'
 };
 
-const statusNames: Record<string, { label: string; color: string }> = {
-  completed: { label: '완료', color: 'var(--color-semantic-green)' },
-  processing: { label: '처리중', color: 'var(--color-semantic-orange)' },
-  failed: { label: '실패', color: 'var(--color-semantic-red)' }
-};
 
 interface MyPageProps {
   userProfile: UserProfile | null;
   projects: GeneratedProject[];
   onProjectSelect: (project: GeneratedProject) => void;
   onNewProject: () => void;
-  onProfileSettings: () => void;
   onMyModels: () => void;
   onCreateModel: () => void;
   onMarketplace: () => void;
   onLogout: () => void;
   onAdmin: () => void;
   onLogin: () => void;
+  onPointsSubscription: () => void;
+  onMyReviews: () => void;
 }
 
-export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onProfileSettings, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin }: MyPageProps) {
+export function MyPage({ userProfile, projects = defaultMockProjects, onProjectSelect, onNewProject, onMyModels, onCreateModel, onMarketplace, onLogout, onAdmin, onLogin, onPointsSubscription, onMyReviews }: MyPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'downloads' | 'rating'>('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [projectCount, setProjectCount] = useState<number>(0);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [apiProjects, setApiProjects] = useState<GeneratedProject[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [useApiData, setUseApiData] = useState(false);
+
+  // Fetch API data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userProfile) return;
+      
+      try {
+        setLoading(true);
+        const [countResponse, ratingResponse, projectsResponse] = await Promise.all([
+          getMyProjectCount(),
+          getMyAverageRating(),
+          getMyAdResults(0, 100) // Get up to 100 projects
+        ]);
+        
+        if (countResponse.success) {
+          setProjectCount(countResponse.response.totalProjects);
+        }
+        
+        if (ratingResponse.success) {
+          setAverageRating(ratingResponse.response.averageRating);
+        }
+        
+        if (projectsResponse.success && projectsResponse.response.content) {
+          const convertedProjects = projectsResponse.response.content.map(convertAdResultToProject);
+          setApiProjects(convertedProjects);
+          setUseApiData(true);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+        // Fallback to project count from props and mock data
+        setProjectCount(projects.length);
+        setUseApiData(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userProfile, projects.length]);
+
+  // Use API data if available, fallback to props
+  const currentProjects = useApiData ? apiProjects : projects;
 
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
-    let filtered = projects.filter(project => {
+    let filtered = currentProjects.filter(project => {
       if (selectedCategory !== 'all' && project.category !== selectedCategory) return false;
       if (selectedStatus !== 'all' && project.status !== selectedStatus) return false;
       if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -206,7 +248,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
           return 0;
       }
     });
-  }, [projects, searchQuery, selectedCategory, selectedStatus, sortBy]);
+  }, [currentProjects, searchQuery, selectedCategory, selectedStatus, sortBy]);
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ko-KR', {
@@ -216,33 +258,17 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
     }).format(date);
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4" />;
-      case 'processing':
-        return <Clock className="w-4 h-4" />;
-      case 'failed':
-        return <XCircle className="w-4 h-4" />;
-      default:
-        return null;
-    }
-  };
 
   // Calculate user stats including ratings
   const userStats = useMemo(() => {
-    const ratedProjects = projects.filter(p => p.rating);
-    const totalRating = ratedProjects.reduce((sum, p) => sum + (p.rating?.overallRating || 0), 0);
-    const avgRating = ratedProjects.length > 0 ? totalRating / ratedProjects.length : 0;
+    const ratedProjects = currentProjects.filter(p => p.rating);
     
     return {
-      totalProjects: projects.length,
-      completedProjects: projects.filter(p => p.status === 'completed').length,
-      totalDownloads: projects.reduce((sum, p) => sum + p.downloadCount, 0),
-      averageRating: avgRating,
+      totalDownloads: currentProjects.reduce((sum, p) => sum + p.downloadCount, 0),
+      averageRating: averageRating,
       ratedProjects: ratedProjects.length
     };
-  }, [projects]);
+  }, [currentProjects, averageRating]);
 
   if (!userProfile) {
     return <div>Loading...</div>;
@@ -259,22 +285,19 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
         onMyPage={() => {}} // Already on MyPage
         onHome={onNewProject}
         onAdmin={onAdmin}
-        isAdmin={!!userProfile?.isAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        onPointsSubscription={onPointsSubscription}
+        showBackButton={false}
+        currentPage="mypage"
       />
 
       {/* Main Content */}
-      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <main className="page-container">
         {/* User Stats */}
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={userProfile.avatar} alt={userProfile.name} />
-              <AvatarFallback style={{ fontSize: 'var(--font-size-title3)' }}>
-                {userProfile.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
+          <div className="mb-6">
             <div>
               <div className="flex items-center gap-3 mb-1">
                 <h1 
@@ -302,7 +325,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                 </Badge>
               </div>
               <p style={{ color: 'var(--color-text-secondary)' }}>
-                {userProfile.bio}
+                {userProfile.email}
               </p>
             </div>
           </div>
@@ -340,45 +363,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {userStats.totalProjects}
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-4"
-              style={{
-                backgroundColor: 'var(--color-background-primary)',
-                borderColor: 'var(--color-border-primary)',
-                borderRadius: 'var(--radius-12)'
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                  style={{ backgroundColor: 'var(--color-semantic-green)' + '20' }}
-                >
-                  <CheckCircle 
-                    className="w-5 h-5"
-                    style={{ color: 'var(--color-semantic-green)' }}
-                  />
-                </div>
-                <div>
-                  <p 
-                    className="text-sm"
-                    style={{ color: 'var(--color-text-tertiary)' }}
-                  >
-                    완료된 작업
-                  </p>
-                  <p 
-                    style={{
-                      fontSize: 'var(--font-size-title3)',
-                      fontWeight: 'var(--font-weight-semibold)',
-                      color: 'var(--color-text-primary)'
-                    }}
-                  >
-                    {userStats.completedProjects}
+                    {loading ? '-' : projectCount}
                   </p>
                 </div>
               </div>
@@ -485,15 +470,15 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                   >
                     보유 포인트
                   </p>
-                  <p 
+                  <DynamicFontSize
+                    text={`${userProfile.points.toLocaleString()} P`}
+                    baseSize="var(--font-size-title3)"
+                    maxWidth="140px"
+                    minSize="12px"
                     style={{
-                      fontSize: 'var(--font-size-title3)',
-                      fontWeight: 'var(--font-weight-semibold)',
                       color: 'var(--color-text-primary)'
                     }}
-                  >
-                    {userProfile.points.toLocaleString()} P
-                  </p>
+                  />
                 </div>
               </div>
             </Card>
@@ -530,7 +515,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {userProfile.modelsCreated}
+                    {userProfile.modelCount || 0}
                   </p>
                 </div>
               </div>
@@ -538,7 +523,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mt-6">
             <Card 
               className="p-6 cursor-pointer transition-all hover:shadow-lg"
               style={{
@@ -581,7 +566,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     className="text-sm"
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
-                    새로운 AI 모델을 만들어 수익을 창출하세요
+                    새로운 AI 모델을 만들고 프로젝트를 생성해보세요
                   </p>
                 </div>
               </div>
@@ -629,7 +614,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     className="text-sm"
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
-                    다른 크리에이터의 모델을 구매하세요
+                    다른 모델들을 사용해보세요
                   </p>
                 </div>
               </div>
@@ -678,6 +663,54 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     style={{ color: 'var(--color-text-tertiary)' }}
                   >
                     생성한 모델을 관리하고 수익을 확인하세요
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card 
+              className="p-6 cursor-pointer transition-all hover:shadow-lg"
+              style={{
+                backgroundColor: 'var(--color-background-primary)',
+                borderColor: 'var(--color-border-primary)',
+                borderRadius: 'var(--radius-16)',
+                boxShadow: 'var(--shadow-tiny)'
+              }}
+              onClick={onMyReviews}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-medium)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'var(--shadow-tiny)';
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--color-semantic-purple)' + '20' }}
+                >
+                <Star
+                    className="w-6 h-6"
+                    style={{ color: 'var(--color-semantic-orange)' }}
+                />
+                </div>
+                <div>
+                  <h3 
+                    style={{
+                      fontSize: 'var(--font-size-regular)',
+                      fontWeight: 'var(--font-weight-semibold)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  >
+                    내 리뷰
+                  </h3>
+                  <p 
+                    className="text-sm"
+                    style={{ color: 'var(--color-text-tertiary)' }}
+                  >
+                    작성한 리뷰를 확인하고 관리하세요
                   </p>
                 </div>
               </div>
@@ -874,18 +907,6 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                         className="w-full h-full object-cover"
                       />
                       
-                      {/* Status Indicator */}
-                      <div 
-                        className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 rounded-full text-xs"
-                        style={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                          color: statusNames[project.status].color,
-                          fontWeight: 'var(--font-weight-medium)'
-                        }}
-                      >
-                        {getStatusIcon(project.status)}
-                        {statusNames[project.status].label}
-                      </div>
 
                       {/* Model Type Badge */}
                       {project.model.isCustom && (
@@ -934,21 +955,20 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     <div className={`${viewMode === 'list' ? 'flex-1' : ''}`}>
                       <div className={`${viewMode === 'list' ? 'flex items-center justify-between' : ''}`}>
                         <div className="flex-1">
-                          <h3 
-                            className="mb-1 line-clamp-1"
-                            style={{
-                              fontSize: 'var(--font-size-regular)',
-                              fontWeight: 'var(--font-weight-semibold)',
-                              color: 'var(--color-text-primary)'
-                            }}
-                          >
-                            {project.title}
-                          </h3>
-                          
-                          <div className={`flex gap-2 mb-2 ${viewMode === 'list' ? 'mb-0' : ''}`}>
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <h3 
+                              className="line-clamp-1 flex-1"
+                              style={{
+                                fontSize: 'var(--font-size-regular)',
+                                fontWeight: 'var(--font-weight-semibold)',
+                                color: 'var(--color-text-primary)'
+                              }}
+                            >
+                              {project.title}
+                            </h3>
                             <Badge 
                               variant="secondary" 
-                              className="text-xs"
+                              className="text-xs flex-shrink-0"
                               style={{
                                 backgroundColor: 'var(--color-background-tertiary)',
                                 color: 'var(--color-text-secondary)',
@@ -990,67 +1010,23 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                           )}
                         </div>
 
-                        <div className={`${viewMode === 'list' ? 'flex items-center gap-4' : 'flex items-center justify-between mt-2'}`}>
-                          {viewMode === 'list' && (
-                            <div className="text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                              <p>{formatDate(project.createdAt)}</p>
-                              <div className="flex items-center gap-2 justify-end mt-1">
-                                <span>{project.downloadCount} 다운로드</span>
-                                {project.rating && (
-                                  <>
-                                    <span>•</span>
-                                    <div className="flex items-center gap-1">
-                                      <Star className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
-                                      <span>{project.rating.overallRating.toFixed(1)}</span>
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {project.rating && viewMode === 'grid' && (
-                            <StarRating rating={project.rating.overallRating} readonly size="sm" />
-                          )}
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                className="w-8 h-8 p-0"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                onProjectSelect(project);
-                              }}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                상세 보기
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle download
-                              }}>
-                                <Download className="w-4 h-4 mr-2" />
-                                다운로드
-                              </DropdownMenuItem>
-                              {!project.rating && project.status === 'completed' && (
-                                <DropdownMenuItem onClick={(e) => {
-                                  e.stopPropagation();
-                                  onProjectSelect(project);
-                                }}>
-                                  <Star className="w-4 h-4 mr-2" />
-                                  평가하기
-                                </DropdownMenuItem>
+                        {viewMode === 'list' && (
+                          <div className="text-right text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                            <p>{formatDate(project.createdAt)}</p>
+                            <div className="flex items-center gap-2 justify-end mt-1">
+                              <span>{project.downloadCount} 다운로드</span>
+                              {project.rating && (
+                                <>
+                                  <span>•</span>
+                                  <div className="flex items-center gap-1">
+                                    <Star className="w-3 h-3" style={{ color: 'var(--color-semantic-orange)' }} />
+                                    <span>{project.rating.overallRating.toFixed(1)}</span>
+                                  </div>
+                                </>
                               )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

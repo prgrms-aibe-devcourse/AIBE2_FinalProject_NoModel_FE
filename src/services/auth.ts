@@ -2,6 +2,56 @@ import { LoginRequest, LoginResponse, SignupRequest, SignupResponse } from '../t
 import { PostAxiosInstance, GetAxiosInstance } from './ApiService';
 import { AxiosError } from 'axios';
 import { tokenCookies } from '../utils/cookieUtils';
+import { buildApiUrl } from '../config/env';
+import { ApiError } from '../types/api';
+
+const buildApiError = (err: unknown, fallbackMessage: string): ApiError => {
+  if (err instanceof AxiosError) {
+    const data = err.response?.data as any;
+    const serverError = data?.error;
+
+    if (serverError && typeof serverError === 'object') {
+      const message = typeof serverError.message === 'string'
+        ? serverError.message
+        : typeof data?.message === 'string'
+          ? data.message
+          : fallbackMessage;
+
+      const status = typeof serverError.status === 'number'
+        ? serverError.status
+        : err.response?.status ?? 500;
+
+      return {
+        message,
+        status,
+        ...serverError,
+      };
+    }
+
+    const derivedMessage = typeof data?.message === 'string'
+      ? data.message
+      : typeof data?.error === 'string'
+        ? data.error
+        : fallbackMessage;
+
+    return {
+      message: derivedMessage,
+      status: err.response?.status ?? 500,
+    };
+  }
+
+  if (err instanceof Error) {
+    return {
+      message: err.message,
+      status: 500,
+    };
+  }
+
+  return {
+    message: fallbackMessage,
+    status: 500,
+  };
+};
 
 class AuthService {
   // Login API call - Cookie based authentication
@@ -10,46 +60,29 @@ class AuthService {
       const response = await PostAxiosInstance<LoginResponse>('/auth/login', credentials);
       const data = response.data;
 
-      // 쿠키 기반 인증이므로 body에서 토큰을 추출하지 않음
-      // 백엔드가 Set-Cookie 헤더로 토큰을 설정함
       if (data.success) {
-        // 로그인 성공 시 쿠키가 자동으로 설정됨
-        // 별도의 토큰 저장 로직 불필요
-        console.log('Login successful, cookies set by backend');
+        // HttpOnly 쿠키는 백엔드가 Set-Cookie 헤더로 설정함
+        console.log('Login successful, HttpOnly cookies set by backend');
         
-        // 성공 응답 반환 (토큰 정보는 없어도 됨)
-        return {
-          success: true,
-          response: {
-            grantType: 'Bearer',
-            accessToken: 'cookie-based',
-            accessTokenValidTime: 3600000,
-            refreshToken: 'cookie-based',
-            refreshTokenValidTime: 86400000
-          },
-          error: null
-        };
+        // HttpOnly 쿠키는 JS로 읽을 수 없으므로 localStorage에 로그인 상태 저장
+        localStorage.setItem('isLoggedIn', 'true');
+        
+        // 사용자 정보가 있으면 저장
+        if (data.response?.user) {
+          tokenCookies.setUserInfo(data.response.user);
+        }
+        
+        return data;
       }
 
       return data;
     } catch (error) {
       console.error('Login API error:', error);
       
-      if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message || 
-                           error.response?.data?.error || 
-                           '로그인에 실패했습니다.';
-        return {
-          success: false,
-          response: null,
-          error: errorMessage,
-        };
-      }
-
       return {
         success: false,
         response: null,
-        error: '네트워크 오류가 발생했습니다.',
+        error: buildApiError(error, '로그인에 실패했습니다.'),
       };
     }
   }
@@ -62,21 +95,10 @@ class AuthService {
     } catch (error) {
       console.error('Signup API error:', error);
       
-      if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message || 
-                           error.response?.data?.error || 
-                           '회원가입에 실패했습니다.';
-        return {
-          success: false,
-          response: null,
-          error: errorMessage,
-        };
-      }
-
       return {
         success: false,
         response: null,
-        error: '네트워크 오류가 발생했습니다.',
+        error: buildApiError(error, '회원가입에 실패했습니다.'),
       };
     }
   }
@@ -86,7 +108,7 @@ class AuthService {
     try {
       // 쿠키 기반 인증이므로 토큰 확인 불필요
       // withCredentials: true로 쿠키가 자동 전송됨
-      const response = await GetAxiosInstance('/auth/profile');
+      const response = await GetAxiosInstance('/members/me');
       const data = response.data;
       
       // Store user info locally
@@ -153,9 +175,19 @@ class AuthService {
 
   // Check if user is authenticated - Cookie based
   isAuthenticated(): boolean {
-    // 쿠키 기반 인증에서는 쿠키 존재 여부를 서버에서 확인해야 함
-    // 클라이언트에서는 로컬에 저장된 사용자 정보로 임시 확인
-    return tokenCookies.getUserInfo() !== null;
+    // HttpOnly 쿠키는 JavaScript로 읽을 수 없음
+    // localStorage에 로그인 상태를 저장하여 확인
+    const userInfo = tokenCookies.getUserInfo();
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    
+    console.log('🔍 인증 상태 확인 (HttpOnly 쿠키):');
+    console.log('  - localStorage isLoggedIn:', isLoggedIn);
+    console.log('  - userInfo 존재:', !!userInfo);
+    console.log('  - 최종 결과:', isLoggedIn || !!userInfo);
+    
+    // HttpOnly 쿠키는 읽을 수 없으므로 
+    // 로그인 시 localStorage에 상태를 저장하고 그것을 확인
+    return isLoggedIn || !!userInfo;
   }
 
   // Logout - clear cookies and local data
@@ -168,6 +200,7 @@ class AuthService {
     } finally {
       // 로컬 데이터 정리
       tokenCookies.clearAll();
+      localStorage.removeItem('isLoggedIn');
     }
   }
 
@@ -186,7 +219,7 @@ class AuthService {
       token = this.getAccessToken();
     }
 
-    const response = await fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:8080'}${url}`, {
+    const response = await fetch(buildApiUrl(url), {
       ...options,
       headers: {
         ...options.headers,
@@ -200,7 +233,7 @@ class AuthService {
       const refreshed = await this.refreshAccessToken();
       if (refreshed) {
         const newToken = this.getAccessToken();
-        return fetch(`${import.meta.env.VITE_BASE_URL || 'http://localhost:8080'}${url}`, {
+        return fetch(buildApiUrl(url), {
           ...options,
           headers: {
             ...options.headers,

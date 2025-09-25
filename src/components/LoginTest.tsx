@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authService } from '../services/auth';
 import { tokenCookies } from '../utils/cookieUtils';
+import { API_BASE_URL } from '../config/env';
 
 const LoginTest: React.FC = () => {
   const [email, setEmail] = useState('test@nomodel.com');
@@ -31,7 +32,8 @@ const LoginTest: React.FC = () => {
 - Refresh Token: ${tokenCookies.getRefreshToken()?.substring(0, 50)}...
 - 인증 상태: ${tokenCookies.isAuthenticated() ? '인증됨' : '인증되지 않음'}`);
       } else {
-        setResult(`❌ 로그인 실패: ${response.error}`);
+        const message = response.error?.message || '로그인에 실패했습니다.';
+        setResult(`❌ 로그인 실패: ${message}`);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -123,7 +125,7 @@ const LoginTest: React.FC = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h3 className="text-sm font-medium mb-2">테스트 설정:</h3>
             <div className="text-sm text-gray-600 space-y-1">
-              <p><strong>Backend URL:</strong> http://localhost:8080/api</p>
+              <p><strong>Backend URL:</strong> {API_BASE_URL}</p>
               <p><strong>Login Endpoint:</strong> POST /auth/login</p>
               <p><strong>Token Storage:</strong> HTTP Cookies (Secure)</p>
               <p><strong>Test Credentials:</strong> test@nomodel.com / password123</p>

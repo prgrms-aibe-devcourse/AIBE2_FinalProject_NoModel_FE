@@ -1,8 +1,9 @@
-import axios from 'axios';
+import axios, {AxiosError} from 'axios';
 import { tokenCookies } from '../utils/cookieUtils';
+import { API_BASE_URL } from '../config/env';
 
 const axiosInstance = axios.create({ 
-  baseURL: import.meta.env.VITE_BASE_URL || 'http://localhost:8080',
+  baseURL: API_BASE_URL,
   withCredentials: true, // 쿠키를 포함하여 요청 전송
 });
 
@@ -43,6 +44,27 @@ axiosInstance.interceptors.response.use(
 
     return Promise.reject(error);
   },
+);
+
+let redirectedForBan = false;
+
+axiosInstance.interceptors.response.use(
+    (res) => res,
+    (error: AxiosError<any>) => {
+      const status = error.response?.status;
+      const data = error.response?.data as any | undefined;
+
+      if (status === 403 && !redirectedForBan) {
+        redirectedForBan = true;
+        alert('해당 계정은 이용이 제한되었습니다.\n자세한 내용은 고객센터로 문의해주세요.');
+        // 뒤로가기로 다시 403 페이지로 못 돌아오게 replace 사용
+        window.location.replace('/');
+        // 이후 체인 중단
+        return new Promise(() => {});
+      }
+
+      return Promise.reject(error);
+    }
 );
 
 export default axiosInstance;

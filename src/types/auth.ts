@@ -1,3 +1,5 @@
+import { ApiError } from './api';
+
 // Authentication types
 export interface LoginRequest {
   email: string;
@@ -12,12 +14,13 @@ export interface LoginResponse {
     accessTokenValidTime: number;
     refreshToken: string;
     refreshTokenValidTime: number;
+    user?: unknown;
   } | null;
-  error: string | null;
+  error: ApiError | null;
 }
 
 export interface SignupRequest {
-  name: string;
+  username: string;
   email: string;
   password: string;
   agreeToTerms: boolean;
@@ -32,7 +35,7 @@ export interface SignupResponse {
     email: string;
     name: string;
   } | null;
-  error: string | null;
+  error: ApiError | null;
 }
 
 export interface AuthTokens {

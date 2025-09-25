@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/oauth2/callback", "destination": "/" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

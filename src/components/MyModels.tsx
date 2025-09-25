@@ -5,14 +5,14 @@ import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { DefaultAvatar } from './common/DefaultAvatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
-import { 
-  ArrowLeft, Sparkles, Search, Plus, MoreHorizontal, Eye, Edit, 
-  TrendingUp, Users, Coins, Calendar, Award, BarChart3,
-  Globe, EyeOff, DollarSign, Activity, Clock, Star, Filter
+import {
+  Search, MoreHorizontal, Eye, Edit,
+  Users, Coins, BarChart3,
+  Globe, EyeOff, DollarSign, Activity, Star, Filter
 } from 'lucide-react';
 import { UserProfile, UserModel, PointTransaction } from '../App';
 
@@ -28,6 +28,8 @@ interface MyModelsProps {
   onAdGeneration: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onAdmin?: () => void;
+  onPointsSubscription?: () => void;
 }
 
 // Mock data for user models if none provided
@@ -52,7 +54,7 @@ const defaultUserModels: UserModel[] = [
     },
     creatorId: 'user-1',
     creatorName: '홍길동',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    creatorAvatar: undefined,
     price: 75,
     usageCount: 89,
     rating: 4.6,
@@ -83,7 +85,7 @@ const defaultUserModels: UserModel[] = [
     },
     creatorId: 'user-1',
     creatorName: '홍길동',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    creatorAvatar: undefined,
     price: 60,
     usageCount: 42,
     rating: 4.3,
@@ -114,7 +116,7 @@ const defaultUserModels: UserModel[] = [
     },
     creatorId: 'user-1',
     creatorName: '홍길동',
-    creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+    creatorAvatar: undefined,
     price: 100,
     usageCount: 15,
     rating: 4.8,
@@ -148,7 +150,9 @@ export function MyModels({
   onLogout,
   onAdGeneration,
   onMarketplace,
-  onMyPage
+  onMyPage,
+  onAdmin,
+  onPointsSubscription
 }: MyModelsProps) {
   const [activeTab, setActiveTab] = useState('models');
   const [searchQuery, setSearchQuery] = useState('');
@@ -240,62 +244,26 @@ export function MyModels({
         onModelCreation={onCreateModel}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
+        onAdmin={onAdmin}
+        isAdmin={userProfile?.role === 'ADMIN'}
         onHome={onBack}
+        onBack={onBack}
+        showBackButton={true}
         isLoggedIn={!!userProfile}
         isLandingPage={false}
+        onPointsSubscription={onPointsSubscription}
+        userPoints={userProfile?.points}
+        currentPage="modelCreation"
       />
 
-      {/* Sub Header */}
-      <div className="linear-header border-b" style={{ backgroundColor: 'var(--color-background-primary)' }}>
-        <div className="linear-container h-full flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={onBack}
-              className="flex items-center gap-2"
-              style={{
-                color: 'var(--color-text-secondary)',
-                borderRadius: 'var(--radius-8)'
-              }}
-            >
-              <ArrowLeft className="w-4 h-4" />
-              뒤로 가기
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {userProfile && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: 'var(--color-background-secondary)' }}>
-                <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-                <span style={{ color: 'var(--color-text-primary)', fontSize: 'var(--font-size-small)', fontWeight: 'var(--font-weight-medium)' }}>
-                  {userProfile.points.toLocaleString()}P
-                </span>
-              </div>
-            )}
-            <Button 
-              onClick={onCreateModel}
-              style={{
-                backgroundColor: 'var(--color-brand-primary)',
-                color: 'var(--color-utility-white)',
-                borderRadius: 'var(--radius-8)',
-                border: 'none'
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              새 모델 생성
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <main className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="page-container">
         {/* Page Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <Users 
-              className="w-8 h-8"
-              style={{ color: 'var(--color-brand-primary)' }}
+          <div className="flex items-center gap-4 mb-6">
+            <DefaultAvatar 
+              name={userProfile.name}
+              className="w-12 h-12"
             />
             <div>
               <h1 
@@ -305,7 +273,7 @@ export function MyModels({
                   color: 'var(--color-text-primary)'
                 }}
               >
-                내 AI 모델
+                {userProfile.name}의 AI 모델
               </h1>
               <p style={{ color: 'var(--color-text-secondary)' }}>
                 생성한 모델을 관리하고 수익을 확인하세요
@@ -587,7 +555,7 @@ export function MyModels({
                     </Select>
 
                     {/* Sort */}
-                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                    <Select value={sortBy} onValueChange={(value: string) => setSortBy(value as typeof sortBy)}>
                       <SelectTrigger className="w-28 h-9">
                         <SelectValue placeholder="정렬" />
                       </SelectTrigger>
@@ -605,15 +573,6 @@ export function MyModels({
                   </div>
                 </div>
 
-                {/* Create Model Button */}
-                <Button 
-                  onClick={onCreateModel}
-                  className="h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  style={{ borderRadius: 'var(--radius-8)' }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  새 모델 만들기
-                </Button>
               </div>
             </div>
 
@@ -634,23 +593,12 @@ export function MyModels({
                 >
                   모델이 없습니다
                 </h3>
-                <p 
+                <p
                   className="mb-4"
                   style={{ color: 'var(--color-text-secondary)' }}
                 >
-                  첫 번째 AI 모델을 생성해보세요
+                  상단의 "모델 제작" 버튼을 클릭해서 첫 번째 AI 모델을 생성해보세요
                 </p>
-                <Button 
-                  onClick={onCreateModel}
-                  style={{
-                    backgroundColor: 'var(--color-brand-primary)',
-                    color: 'var(--color-utility-white)',
-                    borderRadius: 'var(--radius-8)'
-                  }}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  모델 생성하기
-                </Button>
               </div>
             ) : (
               <div className="grid gap-6">

@@ -9,24 +9,32 @@ import { Sparkles, Zap, Target, TrendingUp, Camera, Users, CheckCircle, Star, Us
 
 interface LandingPageProps {
   onGetStarted: () => void;
+  onSignup: () => void;
   onLogin: () => void;
   onLogout: () => void;
   onAdGeneration: () => void;
   onModelCreation: () => void;
   onMarketplace: () => void;
   onMyPage: () => void;
+  onAdmin?: () => void;
   isLoggedIn: boolean;
+  isAdmin?: boolean;
+  onPointsSubscription: () => void;
 }
 
 export function LandingPage({ 
   onGetStarted, 
+  onSignup,
   onLogin, 
   onLogout, 
   onAdGeneration, 
   onModelCreation, 
   onMarketplace, 
   onMyPage, 
-  isLoggedIn 
+  onAdmin,
+  isLoggedIn,
+  isAdmin,
+  onPointsSubscription
 }: LandingPageProps) {
   return (
     <div className="min-h-screen bg-background" style={{ scrollBehavior: 'smooth' }}>
@@ -37,9 +45,17 @@ export function LandingPage({
         onModelCreation={onModelCreation}
         onMarketplace={onMarketplace}
         onMyPage={onMyPage}
-        onHome={onGetStarted}
+        onAdmin={onAdmin}
+        isAdmin={isAdmin}
+        onHome={() => {
+          // 홈버튼 클릭시 페이지 최상단으로 스크롤 (로그인 상태와 무관)
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         isLoggedIn={isLoggedIn}
         isLandingPage={true}
+        onPointsSubscription={onPointsSubscription}
+        showBackButton={false}
+        currentPage="home"
       />
 
       {/* Hero Section */}
@@ -79,7 +95,7 @@ export function LandingPage({
               <Button 
                 variant="outline" 
                 size="lg"
-                onClick={onLogin}
+                onClick={onSignup}
                 className="w-auto px-8 h-12 text-base rounded-full border-2 hover:bg-muted/50 transition-all duration-300"
               >
                 <UserCheck className="w-5 h-5 mr-2" />

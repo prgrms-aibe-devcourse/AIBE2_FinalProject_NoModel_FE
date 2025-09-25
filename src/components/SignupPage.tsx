@@ -10,16 +10,18 @@ import { NavigationBar } from './NavigationBar';
 import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, User, CheckCircle, Chrome, Github, Zap, Shield, Clock, AlertCircle } from 'lucide-react';
 import { authService } from '../services/auth';
 import type { SignupRequest } from '../types/auth';
+import { TermsModal } from './common/TermsModal';
+import { API_BASE_URL } from '../config/env';
 
 interface SignupPageProps {
-  onSignupSuccess: () => void;
+  onSignupSuccess: (isAutoLogin?: boolean) => void;
   onLogin: () => void;
   onBack: () => void;
 }
 
 export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps) {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -34,6 +36,8 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -66,7 +70,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
     
     try {
       const signupData: SignupRequest = {
-        name: formData.name,
+        username: formData.username,
         email: formData.email,
         password: formData.password,
         agreeToTerms: agreements.terms,
@@ -83,7 +87,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
           onLogin();
         }, 2000);
       } else {
-        setError(result.error || '회원가입에 실패했습니다.');
+        setError(result.error?.message || '회원가입에 실패했습니다.');
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -93,15 +97,12 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
     }
   };
 
-  const handleSocialSignup = (provider: string) => {
-    console.log(`Sign up with ${provider}`);
-    // Simulate social signup
-    setTimeout(() => {
-      onSignupSuccess();
-    }, 1000);
+  const handleSocialSignup = (provider: 'google' | 'github') => {
+    // 실제 소셜 로그인 처리 - 로그인 페이지와 동일한 로직
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}`;
   };
 
-  const isFormValid = formData.name && formData.email && formData.password && 
+  const isFormValid = formData.username && formData.email && formData.password &&
                       formData.confirmPassword && agreements.terms && agreements.privacy;
 
   return (
@@ -116,6 +117,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
         onHome={onBack}
         isLoggedIn={false}
         isLandingPage={false}
+        currentPage="other"
       />
 
       {/* Main Content */}
@@ -216,17 +218,19 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
             {/* Email Signup Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-foreground">
-                  이름
+                <Label htmlFor="username" className="text-sm font-medium text-foreground">
+                  사용자명
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="name"
+                    id="username"
                     type="text"
-                    placeholder="홍길동"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    placeholder="username"
+                    value={formData.username}
+                    onChange={(e) => handleInputChange('username', e.target.value)}
+                    minLength={2}
+                    maxLength={20}
                     required
                     className="pl-10 h-12 text-base bg-background border-2 focus:border-primary/50 transition-colors"
                   />
@@ -342,6 +346,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                     <Button 
                       variant="link" 
                       className="text-sm p-0 h-auto text-primary hover:text-primary/80 hover:underline"
+                      onClick={() => setShowTerms(true)}
                     >
                       이용약관
                     </Button>에 동의합니다
@@ -363,6 +368,7 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
                     <Button 
                       variant="link" 
                       className="text-sm p-0 h-auto text-primary hover:text-primary/80 hover:underline"
+                      onClick={() => setShowPrivacy(true)}
                     >
                       개인정보처리방침
                     </Button>에 동의합니다
@@ -421,17 +427,39 @@ export function SignupPage({ onSignupSuccess, onLogin, onBack }: SignupPageProps
             <p className="text-xs text-muted-foreground mb-4">
               가입하면 다음에 동의하는 것으로 간주됩니다
             </p>
-            <div className="flex justify-center space-x-6 text-xs text-muted-foreground">
-              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
+            <div className="flex justify-center space-x-8 text-xs text-muted-foreground">
+              <Button 
+                variant="link" 
+                className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
+                onClick={() => setShowTerms(true)}
+              >
                 이용약관
               </Button>
-              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
+              <Button 
+                variant="link" 
+                className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPrivacy(true)}
+              >
                 개인정보처리방침
               </Button>
             </div>
           </div>
         </div>
       </main>
+      
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        type="terms"
+      />
+      
+      {/* Privacy Modal */}
+      <TermsModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        type="privacy"
+      />
     </div>
   );
 }

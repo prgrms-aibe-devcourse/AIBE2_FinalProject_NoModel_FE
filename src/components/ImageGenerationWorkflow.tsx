@@ -7,11 +7,13 @@ import { ResultDownload } from './workflow/ResultDownload';
 import { WorkflowHeader } from './workflow/WorkflowHeader';
 import { SelectedModel, GeneratedProject } from '../App';
 
+
 interface ImageGenerationWorkflowProps {
   selectedCategory: string;
   selectedModel: SelectedModel | null;
   onBack: () => void;
   onComplete?: (project: GeneratedProject) => void;
+  selectedModel: { id: number } | null;
 }
 
 export type WorkflowStep = 'upload' | 'style' | 'generate' | 'edit' | 'download';
@@ -131,7 +133,7 @@ export function ImageGenerationWorkflow({ selectedCategory, selectedModel, onBac
         onBack={onBack}
       />
 
-      <main className="py-8 max-w-6xl mx-auto px-6 sm:px-8 lg:px-12">
+      <main className="page-container">
         {currentStep === 'upload' && (
           <ProductUpload 
             onUploadComplete={handleProductUpload}

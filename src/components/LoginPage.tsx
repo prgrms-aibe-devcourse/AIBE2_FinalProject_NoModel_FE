@@ -6,9 +6,12 @@ import { Label } from './ui/label';
 import { Separator } from './ui/separator';
 import { Checkbox } from './ui/checkbox';
 import { NavigationBar } from './NavigationBar';
-import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome, Github, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Sparkles, Mail, Lock, Eye, EyeOff, Chrome as ChromeIcon, Github as GithubIcon } from 'lucide-react';
 import { authService } from '../services/auth';
 import type { LoginRequest } from '../types/auth';
+import { TermsModal } from './common/TermsModal';
+import { ErrorModal } from './common/ErrorModal';
+import { API_BASE_URL } from '../config/env';
 
 interface LoginPageProps {
   onLoginSuccess: () => void;
@@ -16,8 +19,8 @@ interface LoginPageProps {
   onBack: () => void;
 }
 
-// 백엔드 API 베이스에서 '/api'를 제거해 OAuth 시작 엔드포인트 도메인 계산
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080/api';
+// 환경 변수에 정의된 API 베이스 URL을 그대로 사용
+const API_BASE = API_BASE_URL;
 
 
 export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) {
@@ -26,11 +29,13 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorModalMessage, setErrorModalMessage] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
     
     try {
@@ -40,7 +45,8 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
       };
 
       const result = await authService.login(loginData);
-      
+      console.log('Login result:', result); // 디버깅용 로그
+
       if (result.success) {
         // Get user profile after successful login
         try {
@@ -52,11 +58,16 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
           onLoginSuccess();
         }
       } else {
-        setError(result.error || '로그인에 실패했습니다.');
+        // Show error in modal
+        // error는 객체 형태: { status, errorCode, message, timestamp }
+        const errorMessage = result.error?.message || '로그인에 실패했습니다.';
+        setErrorModalMessage(errorMessage);
+        setShowErrorModal(true);
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError('네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+      setErrorModalMessage('네트워크 오류가 발생했습니다. 나중에 다시 시도해주세요.');
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +75,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
 
   // ✅ 실제 소셜 로그인 시작: 백엔드 OAuth2 엔드포인트로 이동
   const handleSocialLogin = (provider: 'google' | 'github') => {
-    // 예: http://localhost:8080/api//oauth2/authorization/google|github
+    // 예: http://localhost:8080/api/oauth2/authorization/google|github
     window.location.href = `${API_BASE}/oauth2/authorization/${provider}`;
   };
 
@@ -80,6 +91,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
         onHome={onBack}
         isLoggedIn={false}
         isLandingPage={false}
+        currentPage="other"
       />
 
       {/* Main Content */}
@@ -102,7 +114,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialLogin('google')}
               >
-                <Chrome className="w-5 h-5 mr-3" />
+                <ChromeIcon className="w-5 h-5 mr-3" />
                 Google로 계속하기
               </Button>
               
@@ -111,7 +123,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 className="w-full h-12 text-base font-medium border-2 hover:bg-muted/50 transition-all duration-200"
                 onClick={() => handleSocialLogin('github')}
               >
-                <Github className="w-5 h-5 mr-3" />
+                <GithubIcon className="w-5 h-5 mr-3" />
                 GitHub로 계속하기
               </Button>
             </div>
@@ -124,14 +136,6 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
                 </span>
               </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0" />
-                <p className="text-sm text-destructive">{error}</p>
-              </div>
-            )}
 
             {/* Email Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -222,7 +226,7 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
           </Card>
 
           {/* Sign up link */}
-          <div className="text-center mt-8">
+          <div className="text-center mt-12">
             <p className="text-sm text-muted-foreground">
               아직 계정이 없으신가요?{' '}
               <Button 
@@ -236,21 +240,54 @@ export function LoginPage({ onLoginSuccess, onSignup, onBack }: LoginPageProps) 
           </div>
 
           {/* Trust indicators */}
-          <div className="mt-12 text-center">
-            <p className="text-xs text-muted-foreground mb-4">
+          <div className="mt-6 text-center">
+            <p className="text-xs text-muted-foreground mb-3">
               로그인하면 다음에 동의하는 것으로 간주됩니다
             </p>
-            <div className="flex justify-center space-x-6 text-xs text-muted-foreground">
-              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
-                이용약관
+            <div className="flex justify-center items-center space-x-4 text-xs text-muted-foreground">
+              <Button 
+                variant="link" 
+                className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
+                onClick={() => setShowTerms(true)}
+              >
+                이용 약관
               </Button>
-              <Button variant="link" className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground">
-                개인정보처리방침
+              <span className="text-muted-foreground px-2">|</span>
+              <Button 
+                variant="link" 
+                className="text-xs p-0 h-auto text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPrivacy(true)}
+              >
+                개인정보 처리방침
               </Button>
             </div>
           </div>
         </div>
       </main>
+      
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={showTerms}
+        onClose={() => setShowTerms(false)}
+        type="terms"
+      />
+      
+      {/* Privacy Modal */}
+      <TermsModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        type="privacy"
+      />
+
+      {/* Error Modal for Login Failures */}
+      <ErrorModal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="로그인 실패"
+        message={errorModalMessage}
+        buttonText="확인"
+        type="error"
+      />
     </div>
   );
 }

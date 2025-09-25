@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Menu, X, Search, Bell, User, ChevronDown } from 'lucide-react';
+import { Menu, X, Search, Bell, ChevronDown } from 'lucide-react';
 import { cn } from '../ui/utils';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { DefaultAvatar } from './DefaultAvatar';
 
 export interface NavItem {
   id: string;
@@ -207,20 +208,11 @@ export function Navbar({
           className="flex items-center gap-3 p-2 rounded-lg transition-colors hover:bg-muted"
           onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
         >
-          {userMenu.user.avatar ? (
-            <img
-              src={userMenu.user.avatar}
-              alt={userMenu.user.name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
-          ) : (
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: 'var(--color-brand-primary)' }}
-            >
-              <User className="w-4 h-4 text-white" />
-            </div>
-          )}
+          <DefaultAvatar 
+            name={userMenu.user.name}
+            imageUrl={userMenu.user.avatar}
+            className="w-8 h-8"
+          />
           <div className="text-left hidden md:block">
             <p className="text-sm font-medium" style={{ color: 'var(--color-text-primary)' }}>
               {userMenu.user.name}

@@ -1,0 +1,99 @@
+# Build & Test + Vercel deploy (Preview on non-main, Production on main)
+name: Node.js CI
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  # 모노레포면 FE 폴더로 바꿔주세요 (예: apps/web)
+  WORKING_DIR: .
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ matrix.node-version }}, cache: npm }
+      - name: Print tool versions
+        run: |
+          node -v
+          npm -v
+      - name: Install deps
+        run: npm ci --audit=false --fund=false
+      - name: Build (verbose)
+        env:
+          DEBUG: vite:*,rollup:*
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: |
+          set -e
+          npm run build --if-present -- --debug 2>&1 | tee build.log
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ matrix.node-version }}
+          path: ${{ env.WORKING_DIR }}/build.log
+          if-no-files-found: ignore
+
+  # === Preview 배포 (main이 아닐 때만) ===
+  deploy-preview:
+    if: github.ref != 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20.x }
+      - run: npm i -g vercel@latest
+      - name: Pull Vercel env (preview)
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build (preview)
+        env: { NODE_OPTIONS: --max_old_space_size=4096 }
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy (preview)
+        run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # === Production 배포 (main에만) ===
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20.x }
+      - run: npm i -g vercel@latest
+      - name: Pull Vercel env (production)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build (production)
+        env: { NODE_OPTIONS: --max_old_space_size=4096 }
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy (production)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
