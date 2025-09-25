@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
+import { buildApiUrl } from '@/config/env';
 
 interface AdGenerationResultProps {
   userProfile: UserProfile | null;
@@ -53,8 +54,8 @@ export function AdGenerationResult({
       console.log('resultFileId:', resultFileId);
       
       if (resultFileId) {
-        // 사용자가 제공한 API를 사용하여 다운로드
-        const downloadUrl = `http://localhost:8080/api/files/${resultFileId}/download`;
+        // buildApiUrl을 사용하여 다운로드 URL 생성
+        const downloadUrl = buildApiUrl(`/files/${resultFileId}/download`);
         console.log('Download URL:', downloadUrl);
         
         const link = document.createElement('a');
