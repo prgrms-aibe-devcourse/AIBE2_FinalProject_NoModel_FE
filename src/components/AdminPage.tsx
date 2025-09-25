@@ -710,7 +710,7 @@ export function AdminPage({
             </Button>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                   style={{ backgroundColor: 'var(--color-semantic-red)' + '20' }}>
+                  style={{ backgroundColor: 'var(--color-semantic-red)' + '20' }}>
                 <Shield className="w-5 h-5" style={{ color: 'var(--color-semantic-red)' }} />
               </div>
               <h1 style={{ 
@@ -722,16 +722,28 @@ export function AdminPage({
             </div>
           </div>
 
-          <Badge style={{
-            backgroundColor: 'var(--color-semantic-red)' + '20',
-            color: 'var(--color-semantic-red)',
-            borderRadius: 'var(--radius-rounded)',
-            fontSize: 'var(--font-size-small)',
-            fontWeight: 'var(--font-weight-medium)',
-            padding: '4px 12px'
-          }}>
-            ADMIN
-          </Badge>
+          <div className="flex items-center gap-3">
+            {/* Grafana Dashboard Button */}
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => window.open("http://43.202.250.36:3000/dashboards", "_blank")}
+            >
+              <BarChart3 className="w-4 h-4" />
+              대시보드
+            </Button>
+
+            <Badge style={{
+              backgroundColor: 'var(--color-semantic-red)' + '20',
+              color: 'var(--color-semantic-red)',
+              borderRadius: 'var(--radius-rounded)',
+              fontSize: 'var(--font-size-small)',
+              fontWeight: 'var(--font-weight-medium)',
+              padding: '4px 12px'
+            }}>
+              ADMIN
+            </Badge>
+          </div>
         </div>
       </div>
 
