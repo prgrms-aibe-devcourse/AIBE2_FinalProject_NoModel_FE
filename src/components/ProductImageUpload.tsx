@@ -12,6 +12,8 @@ import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
 import { buildApiUrl } from '@/config/env';
 import { getModelFullDetail } from '../services/modelApi';
+import { pointApiService } from '../services/pointApi';
+import { toast } from 'sonner';
 
 interface ProductImageUploadProps {
   userProfile: UserProfile | null;
@@ -89,6 +91,39 @@ export function ProductImageUpload({
     if (!uploadedImage) {
       alert('제품 이미지를 업로드해주세요.');
       return;
+    }
+
+    // 포인트 차감 로직 추가
+    const requiredPoints = selectedModel.price || 0;
+    
+    if (requiredPoints > 0) {
+      try {
+        // 1. 포인트 잔액 확인
+        const pointCheck = await pointApiService.checkSufficientPoints(requiredPoints);
+        
+        if (!pointCheck.sufficient) {
+          toast.error(`포인트가 부족합니다. 필요한 포인트: ${requiredPoints.toLocaleString()}, 보유 포인트: ${pointCheck.currentBalance.toLocaleString()}`);
+          return;
+        }
+        
+        // 2. 포인트 차감
+        const usePointsResponse = await pointApiService.usePoints({
+          amount: requiredPoints,
+          refererId: parseInt(selectedModel.id) // 모델 ID를 참조 ID로 사용
+        });
+        
+        if (!usePointsResponse.success) {
+          toast.error(usePointsResponse.error || '포인트 차감에 실패했습니다.');
+          return;
+        }
+        
+        toast.success(`${requiredPoints.toLocaleString()} 포인트가 차감되었습니다. 남은 포인트: ${usePointsResponse.response.remainingPoints.toLocaleString()}`);
+        
+      } catch (error) {
+        console.error('포인트 처리 오류:', error);
+        toast.error('포인트 처리 중 오류가 발생했습니다.');
+        return;
+      }
     }
 
     setIsGenerating(true);
@@ -542,6 +577,38 @@ export function ProductImageUpload({
             </Card>
 
             {/* Generate Button */}
+            {/* 가격 정보 표시 */}
+            {selectedModel.price && selectedModel.price > 0 && (
+              <Card 
+                className="p-4 mb-4"
+                style={{
+                  backgroundColor: 'var(--color-background-secondary)',
+                  borderColor: 'var(--color-border-primary)',
+                  borderRadius: 'var(--radius-12)'
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span 
+                    style={{ 
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 'var(--font-size-small)' 
+                    }}
+                  >
+                    이미지 생성 비용
+                  </span>
+                  <span 
+                    style={{ 
+                      color: 'var(--color-text-primary)',
+                      fontSize: 'var(--font-size-regular)',
+                      fontWeight: 'var(--font-weight-semibold)' 
+                    }}
+                  >
+                    {selectedModel.price.toLocaleString()} 포인트
+                  </span>
+                </div>
+              </Card>
+            )}
+            
             <Button
               onClick={handleGenerate}
               disabled={!uploadedImage || isGenerating}
@@ -567,7 +634,10 @@ export function ProductImageUpload({
               ) : (
                 <>
                   <Wand2 className="w-5 h-5 mr-2" />
-                  AI 광고 이미지 생성하기
+                  {selectedModel.price && selectedModel.price > 0 
+                    ? `AI 광고 이미지 생성하기 (${selectedModel.price.toLocaleString()} 포인트)`
+                    : 'AI 광고 이미지 생성하기'
+                  }
                 </>
               )}
             </Button>
