@@ -271,35 +271,28 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                 이미지 갤러리 {imageFiles.length > 0 && `(${imageFiles.length})`}
               </h4>
               {imageFiles.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {imageFiles.map((image, index) => (
+                <div className="flex flex-col items-center gap-6">
+                  {imageFiles.map((image) => (
                     <div
                       key={image.fileId}
-                      className="relative group cursor-pointer rounded-lg overflow-hidden border hover:border-blue-300 transition-colors"
-                      onClick={() => handleImageClick(index)}
+                      className="relative flex items-center justify-center w-full"
                     >
                       <img
                         src={image.fileUrl}
                         alt={image.fileName}
-                        className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
+                        className="max-w-[80%] max-h-[70vh] object-contain rounded-lg shadow-md bg-white"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = '/api/placeholder/300/200?text=Image+Not+Found';
+                          target.src = '/api/placeholder/600/400?text=Image+Not+Found';
                         }}
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                      </div>
                       {image.isPrimary && (
-                        <div className="absolute top-2 left-2">
+                        <div className="absolute top-4 left-4">
                           <Badge className="bg-blue-500 text-white text-xs">
                             주요
                           </Badge>
                         </div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 p-2">
-                        <p className="text-white text-xs truncate">{image.fileName}</p>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -411,15 +404,6 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             </div>
           </div>
         )}
-
-        {/* 이미지 뷰어 */}
-        <ImageViewer
-          images={imageFiles}
-          currentIndex={currentImageIndex}
-          open={imageViewerOpen}
-          onOpenChange={setImageViewerOpen}
-          onImageChange={setCurrentImageIndex}
-        />
 
         {/* 신고 모달 */}
         <ModelReportModal
