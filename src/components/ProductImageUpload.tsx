@@ -121,7 +121,7 @@ export function ProductImageUpload({
         
       } catch (error) {
         console.error('포인트 처리 오류:', error);
-        toast.error('포인트 처리 중 오류가 발생했습니다.');
+        toast.error(`포인트 처리 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         return;
       }
     }
