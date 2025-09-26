@@ -102,6 +102,7 @@ export function ProjectRatingForm({
                     const result = await updateMyReview(reviewId, reviewRequest);
                     
                     if (result.success) {
+                        console.log('✅ 리뷰 수정 성공:', result.response);
                         onSuccess(result.response);
                     } else {
                         setError(result.error?.message || "리뷰 수정에 실패했습니다.");
@@ -111,14 +112,24 @@ export function ProjectRatingForm({
                     const result = await createReview(Number(modelId), reviewRequest);
                     
                     if (result.success) {
+                        console.log('✅ 리뷰 등록 성공:', result.response);
                         onSuccess(result.response);
                     } else {
-                        // 중복 리뷰 에러 처리
+                        console.log('❌ 리뷰 등록 실패 - 에러 정보:', result.error);
+                        console.log('❌ 에러 상태 코드:', result.error?.status);
+                        console.log('❌ 에러 메시지:', result.error?.message);
+                        
+                        // 중복 리뷰 에러 처리 (400 Bad Request도 포함)
                         if (result.error?.status === 409 || 
-                            (result.error?.status === 400 && 
-                             (result.error.message?.includes("Review already exists") || 
-                              result.error.message?.includes("이미 리뷰")))) {
-                            console.log('중복 리뷰 감지, 다이얼로그 표시');
+                            result.error?.status === 400 ||
+                            (result.error?.message && (
+                             result.error.message.includes("Review already exists") || 
+                             result.error.message.includes("이미 리뷰") ||
+                             result.error.message.includes("중복") ||
+                             result.error.message.includes("duplicate") ||
+                             result.error.message.includes("already reviewed")
+                            ))) {
+                            console.log('🔄 중복 리뷰 감지, 다이얼로그 표시');
                             setShowDuplicateAlert(true);
                             return;
                         }

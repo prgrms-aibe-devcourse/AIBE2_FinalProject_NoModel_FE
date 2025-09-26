@@ -215,13 +215,17 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   };
 
   const handleReviewSuccess = (review: any) => {
-    console.log("리뷰 등록 성공:", review);
+    console.log("🎉 ModelDetailDialog - 리뷰 등록 성공:", review);
     setReviewDialogOpen(false);
+    
+    console.log("🍞 기본 토스트 알림 표시");
     toast.success("리뷰가 성공적으로 등록되었습니다!");
     
+    console.log("🎁 포인트 리워드 토스트 표시");
     // 포인트 리워드 토스트 표시
     setShowRewardToast(true);
     
+    console.log("🔄 리뷰 목록 다시 불러오기");
     // 리뷰 목록 다시 불러오기
     fetchReviews();
   };
@@ -318,6 +322,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             모델 상세 정보
           </DialogTitle>
         </DialogHeader>
+
 
         {loading && (
           <div className="space-y-6">
