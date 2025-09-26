@@ -93,18 +93,29 @@ export function ProductImageUpload({
       return;
     }
 
+    console.log('=== AI 광고 이미지 생성 시작 ===');
+    console.log('selectedModel:', selectedModel);
+    console.log('selectedModel.price:', selectedModel.price);
+    
     // 포인트 차감 로직 추가
     const requiredPoints = selectedModel.price || 0;
+    console.log('requiredPoints:', requiredPoints);
     
     if (requiredPoints > 0) {
       try {
+        console.log('1. 포인트 잔액 확인 시작...');
+        
         // 1. 포인트 잔액 확인
         const pointCheck = await pointApiService.checkSufficientPoints(requiredPoints);
+        console.log('pointCheck 결과:', pointCheck);
         
         if (!pointCheck.sufficient) {
+          console.log('포인트 부족!');
           toast.error(`포인트가 부족합니다. 필요한 포인트: ${requiredPoints.toLocaleString()}, 보유 포인트: ${pointCheck.currentBalance.toLocaleString()}`);
           return;
         }
+        
+        console.log('2. 포인트 차감 시작...');
         
         // 2. 포인트 차감
         const usePointsResponse = await pointApiService.usePoints({
@@ -112,11 +123,15 @@ export function ProductImageUpload({
           refererId: parseInt(selectedModel.id) // 모델 ID를 참조 ID로 사용
         });
         
+        console.log('usePointsResponse:', usePointsResponse);
+        
         if (!usePointsResponse.success) {
+          console.log('포인트 차감 실패:', usePointsResponse.error);
           toast.error(usePointsResponse.error || '포인트 차감에 실패했습니다.');
           return;
         }
         
+        console.log('포인트 차감 성공!');
         toast.success(`${requiredPoints.toLocaleString()} 포인트가 차감되었습니다. 남은 포인트: ${usePointsResponse.response.remainingPoints.toLocaleString()}`);
         
       } catch (error) {
@@ -124,8 +139,11 @@ export function ProductImageUpload({
         toast.error(`포인트 처리 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
         return;
       }
+    } else {
+      console.log('무료 모델이므로 포인트 차감 생략');
     }
 
+    console.log('3. 이미지 생성 시작...');
     setIsGenerating(true);
     setCurrentStep('upload');
     
