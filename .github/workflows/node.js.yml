@@ -1,11 +1,19 @@
-# Build & Test with verbose logs + Vercel preview deploy
+# Build & Test + Vercel deploy (Preview on non-main, Production on main)
 name: Node.js CI
 
 on:
   push:
     branches: ["main", "develop"]
   pull_request:
-    branches: ["develop"]
+    branches: ["main", "develop"]
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  # 모노레포면 FE 폴더로 바꿔주세요 (예: apps/web)
+  WORKING_DIR: .
 
 jobs:
   build:
@@ -14,77 +22,78 @@ jobs:
       fail-fast: false
       matrix:
         node-version: [18.x, 20.x]
-
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: ${{ matrix.node-version }}, cache: npm }
       - name: Print tool versions
         run: |
           node -v
           npm -v
-
       - name: Install deps
         run: npm ci --audit=false --fund=false
-
-      - name: Quick dep tree (top-level)
-        run: npm ls --depth=0 || true
-
-      # 🔎 실패 원인 빨리 찾는 빌드 로그 강화 포인트
       - name: Build (verbose)
         env:
-          # Vite/rollup 디버그 로그 활성화
           DEBUG: vite:*,rollup:*
-          # 메모리 부족 이슈 예방
           NODE_OPTIONS: --max_old_space_size=4096
         run: |
           set -e
-          echo "CI=${CI}"
-          # Vite/tsc/eslint 에러 추적을 위해 전체 로그를 파일로 저장
           npm run build --if-present -- --debug 2>&1 | tee build.log
-
-      # 빌드가 실패해도 로그를 항상 업로드
       - name: Upload build logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs-${{ matrix.node-version }}
-          path: build.log
+          path: ${{ env.WORKING_DIR }}/build.log
           if-no-files-found: ignore
 
+  # === Preview 배포 (main이 아닐 때만) ===
   deploy-preview:
-    # build 잡이 성공해야 실행됩니다.
+    if: github.ref != 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 20 (for Vercel CLI)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-
-      # vercel CLI 설치
-      - name: Install Vercel CLI
-        run: npm i -g vercel@latest
-
-      # Vercel 환경정보 가져오기 (.vercel / env)
-      - name: Pull Vercel Environment Information
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20.x }
+      - run: npm i -g vercel@latest
+      - name: Pull Vercel env (preview)
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-
-      # 프리뷰 빌드
-      - name: Build Project Artifacts
-        env:
-          NODE_OPTIONS: --max_old_space_size=4096
+      - name: Build (preview)
+        env: { NODE_OPTIONS: --max_old_space_size=4096 }
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
-      # 프리뷰 배포
-      - name: Deploy Project Artifacts to Vercel
+      - name: Deploy (preview)
         run: vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # === Production 배포 (main에만) ===
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20.x }
+      - run: npm i -g vercel@latest
+      - name: Pull Vercel env (production)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build (production)
+        env: { NODE_OPTIONS: --max_old_space_size=4096 }
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy (production)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
