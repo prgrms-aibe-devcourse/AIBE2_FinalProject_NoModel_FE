@@ -56,6 +56,11 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
     }
   }, [open, modelId]);
 
+  const isImageFile = (fileUrl: string) => {
+    const path = fileUrl.split('?')[0];
+    return path.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  };
+
   const fetchModelDetail = async () => {
     if (!modelId) return;
 
@@ -66,11 +71,10 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
       const response = await getModelFullDetail(modelId);
       if (response.success) {
         setModelDetail(response.response);
+        console.log('Fetched model detail:', response.response);
         
         // 이미지 파일들 분리
-        const images = response.response.files.filter(file => 
-          file.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-        );
+        const images = response.response.files.filter(file => isImageFile(file.fileUrl));
         setImageFiles(images);
       } else {
         setError('모델 정보를 불러올 수 없습니다.');
@@ -112,10 +116,6 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   const handleImageClick = (imageIndex: number) => {
     setCurrentImageIndex(imageIndex);
     setImageViewerOpen(true);
-  };
-
-  const isImageFile = (fileUrl: string) => {
-    return fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
   };
 
   const FilePreview = ({ file, imageIndex }: { file: FileInfo; imageIndex?: number }) => {
