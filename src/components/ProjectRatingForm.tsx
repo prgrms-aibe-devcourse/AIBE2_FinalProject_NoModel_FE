@@ -12,11 +12,24 @@ interface ProjectRatingFormProps {
     modelId: number | string; // 리뷰를 등록할 모델 ID (기존 DB 모델: number, 새로 생성된 모델: string)
     onSuccess: (review: any) => void;
     onCancel?: () => void;
+    // 수정 모드 관련 props
+    isEditMode?: boolean;
+    reviewId?: number;
+    initialRating?: number;
+    initialContent?: string;
 }
 
-export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatingFormProps) {
-    const [rating, setRating] = useState<number>(0);
-    const [content, setContent] = useState<string>("");
+export function ProjectRatingForm({ 
+    modelId, 
+    onSuccess, 
+    onCancel, 
+    isEditMode = false, 
+    reviewId, 
+    initialRating = 0, 
+    initialContent = "" 
+}: ProjectRatingFormProps) {
+    const [rating, setRating] = useState<number>(initialRating);
+    const [content, setContent] = useState<string>(initialContent);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string>("");
     const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
@@ -76,15 +89,28 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
                 }, 1000);
                 return;
             } else {
-                // 기존 DB 모델의 경우: 기존 API 호출
-                response = await fetch(buildApiUrl(`/models/${modelId}/reviews`), {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    credentials: "include", // 쿠키 포함
-                    body: JSON.stringify({ rating, content }),
-                });
+                // 기존 DB 모델의 경우: API 호출
+                if (isEditMode && reviewId) {
+                    // 수정 모드: PUT 요청
+                    response = await fetch(buildApiUrl(`/reviews/${reviewId}`), {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        credentials: "include", // 쿠키 포함
+                        body: JSON.stringify({ rating, content }),
+                    });
+                } else {
+                    // 등록 모드: POST 요청
+                    response = await fetch(buildApiUrl(`/models/${modelId}/reviews`), {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        credentials: "include", // 쿠키 포함
+                        body: JSON.stringify({ rating, content }),
+                    });
+                }
 
                 const result = await response.json();
                 
@@ -92,22 +118,32 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
                 console.log('응답 상태:', response.status);
                 console.log('응답 내용:', result);
                 
-                // 중복 리뷰 에러 처리 (409 또는 400 상태 코드와 특정 메시지)
-                if (response.status === 409 || 
-                    (response.status === 400 && 
-                     (result.error?.includes("Review already exists") || 
-                      result.error?.includes("이미 리뷰") ||
-                      result.message?.includes("Review already exists") ||
-                      result.message?.includes("이미 리뷰")))) {
-                    console.log('중복 리뷰 감지, 다이얼로그 표시');
-                    setShowDuplicateAlert(true);
-                    return;
-                }
-
-                if (result.success) {
-                    onSuccess(result.response);
+                if (isEditMode) {
+                    // 수정 모드일 때
+                    if (result.success) {
+                        onSuccess(result.response);
+                    } else {
+                        setError(result.error?.message || "리뷰 수정에 실패했습니다.");
+                    }
                 } else {
-                    setError(result.error?.message || "리뷰 등록에 실패했습니다.");
+                    // 등록 모드일 때
+                    // 중복 리뷰 에러 처리 (409 또는 400 상태 코드와 특정 메시지)
+                    if (response.status === 409 || 
+                        (response.status === 400 && 
+                         (result.error?.includes("Review already exists") || 
+                          result.error?.includes("이미 리뷰") ||
+                          result.message?.includes("Review already exists") ||
+                          result.message?.includes("이미 리뷰")))) {
+                        console.log('중복 리뷰 감지, 다이얼로그 표시');
+                        setShowDuplicateAlert(true);
+                        return;
+                    }
+
+                    if (result.success) {
+                        onSuccess(result.response);
+                    } else {
+                        setError(result.error?.message || "리뷰 등록에 실패했습니다.");
+                    }
                 }
             }
         } catch (error) {
@@ -175,7 +211,10 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
                     onClick={handleSubmit}
                     disabled={!isFormValid || isSubmitting}
                 >
-                    {isSubmitting ? "등록 중..." : "리뷰 등록"}
+                    {isSubmitting ? 
+                        (isEditMode ? "수정 중..." : "등록 중...") : 
+                        (isEditMode ? "리뷰 수정" : "리뷰 등록")
+                    }
                 </Button>
             </div>
         </Card>

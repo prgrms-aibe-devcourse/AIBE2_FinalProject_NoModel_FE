@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from './ui/dialog';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -12,13 +13,14 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { Skeleton } from './ui/skeleton';
 import {
   Star, Users, Download, Eye, Calendar, Crown,
-  Image as ImageIcon, FileText, ExternalLink, Loader2, Flag
+  Image as ImageIcon, FileText, ExternalLink, Loader2, Flag, MessageSquare, Plus
 } from 'lucide-react';
 import { getModelFullDetail } from '../services/modelApi';
 import { AIModelDetailResponse, FileInfo, ReviewResponse } from '../types/model';
 import { toast } from 'sonner';
 import { ImageViewer } from './ImageViewer';
 import { ModelReportModal } from './ModelReportModal';
+import { ProjectRatingForm } from './ProjectRatingForm';
 
 interface ModelDetailDialogProps {
   modelId: number | null;
@@ -46,6 +48,9 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   
   // 신고 모달 상태
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  
+  // 리뷰 작성 다이얼로그 상태
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
   useEffect(() => {
     if (open && modelId) {
@@ -112,6 +117,14 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
   const handleImageClick = (imageIndex: number) => {
     setCurrentImageIndex(imageIndex);
     setImageViewerOpen(true);
+  };
+
+  const handleReviewSuccess = (review: any) => {
+    console.log("리뷰 등록 성공:", review);
+    setReviewDialogOpen(false);
+    toast.success("리뷰가 성공적으로 등록되었습니다!");
+    // 모델 상세 정보 다시 불러오기 (리뷰 목록 업데이트)
+    fetchModelDetail();
   };
 
   const isImageFile = (fileUrl: string) => {
@@ -388,9 +401,20 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
 
             {/* 리뷰 목록 */}
             <div>
-              <h4 className="text-lg font-semibold mb-4">
-                리뷰 ({modelDetail.reviews.length})
-              </h4>
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold">
+                  리뷰 ({modelDetail.reviews.length})
+                </h4>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setReviewDialogOpen(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  리뷰 작성하기
+                </Button>
+              </div>
               {modelDetail.reviews.length > 0 ? (
                 <div className="space-y-4 max-h-64 overflow-y-auto">
                   {modelDetail.reviews.map((review) => (
@@ -398,9 +422,11 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">
-                  아직 리뷰가 없습니다.
-                </p>
+                <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                  <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                  <p className="mb-2">아직 리뷰가 없습니다.</p>
+                  <p className="text-sm">첫 번째 리뷰를 작성해보세요!</p>
+                </div>
               )}
             </div>
 
@@ -432,6 +458,25 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             console.log('Report submitted with ID:', reportId);
           }}
         />
+
+        {/* 리뷰 작성 다이얼로그 */}
+        <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>리뷰 작성</DialogTitle>
+              <DialogDescription>
+                {modelDetail?.modelName}에 대한 리뷰를 작성해주세요!
+              </DialogDescription>
+            </DialogHeader>
+            {modelDetail && (
+              <ProjectRatingForm
+                modelId={modelDetail.modelId}
+                onSuccess={handleReviewSuccess}
+                onCancel={() => setReviewDialogOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

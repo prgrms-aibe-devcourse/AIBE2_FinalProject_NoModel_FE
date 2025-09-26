@@ -12,6 +12,7 @@ import { ArrowLeft, Search, Star, Edit, Trash2, MessageSquare, Calendar, Externa
 import { UserProfile } from '../App';
 import { MyReviewResponse, ReviewRequest } from '../types/model';
 import { getMyAllReviews, updateMyReview, deleteMyReview } from '../services/reviewApi';
+import { ProjectRatingForm } from './ProjectRatingForm';
 
 interface MyReviewsProps {
   userProfile: UserProfile | null;
@@ -125,33 +126,27 @@ export function MyReviews({
     }
   };
 
-  // 리뷰 수정 저장
-  const handleSaveEdit = async () => {
+  // 리뷰 수정 성공 핸들러
+  const handleEditSuccess = (updatedReview: any) => {
     if (!selectedReview) return;
 
-    try {
-      const response = await updateMyReview(selectedReview.reviewId, editForm);
-      
-      if (response.success) {
-        // 목록 업데이트
-        const updatedReviews = reviews.map(review =>
-          review.reviewId === selectedReview.reviewId
-            ? { ...review, ...response.response }
-            : review
-        );
-        setReviews(updatedReviews);
-        setFilteredReviews(updatedReviews);
-        
-        // 선택된 리뷰 업데이트
-        setSelectedReview({ ...selectedReview, ...response.response });
-        setIsEditMode(false);
-      } else {
-        alert('리뷰 수정에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('리뷰 수정 중 오류:', error);
-      alert('리뷰 수정 중 오류가 발생했습니다.');
-    }
+    // 목록 업데이트
+    const updatedReviews = reviews.map(review =>
+      review.reviewId === selectedReview.reviewId
+        ? { ...review, rating: updatedReview.rating, content: updatedReview.content, updatedAt: updatedReview.updatedAt || new Date().toISOString() }
+        : review
+    );
+    setReviews(updatedReviews);
+    setFilteredReviews(updatedReviews);
+    
+    // 선택된 리뷰 업데이트
+    setSelectedReview({ 
+      ...selectedReview, 
+      rating: updatedReview.rating, 
+      content: updatedReview.content,
+      updatedAt: updatedReview.updatedAt || new Date().toISOString()
+    });
+    setIsEditMode(false);
   };
 
   // 삭제 확인 다이얼로그 열기
@@ -269,7 +264,7 @@ export function MyReviews({
         onPointsSubscription={onPointsSubscription}
         showBackButton={true}
         onBack={onBack}
-        currentPage="my-reviews"
+        currentPage="mypage"
       />
 
       <main className="page-container">
@@ -443,134 +438,96 @@ export function MyReviews({
           </DialogHeader>
 
           {selectedReview && (
-            <div className="space-y-2 py-4">
-              {/* 평점 */}
-              <div>
-                <label className="block text-sm font-medium mb-2" 
-                  style={{ color: 'var(--color-text-primary)' }}>
-                  평점
-                </label>
-                {isEditMode ? (
-                  <div className="flex items-center gap-2">
-                    {renderStars(editForm.rating, true, (rating) => 
-                      setEditForm(prev => ({ ...prev, rating }))
+            <div className="space-y-4">
+              {isEditMode ? (
+                // 수정 모드: ProjectRatingForm 사용
+                <ProjectRatingForm
+                  modelId={selectedReview.modelId}
+                  reviewId={selectedReview.reviewId}
+                  isEditMode={true}
+                  initialRating={selectedReview.rating}
+                  initialContent={selectedReview.content}
+                  onSuccess={handleEditSuccess}
+                  onCancel={() => setIsEditMode(false)}
+                />
+              ) : (
+                // 조회 모드
+                <div className="space-y-4">
+                  {/* 평점 */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" 
+                      style={{ color: 'var(--color-text-primary)' }}>
+                      평점
+                    </label>
+                    <div className="flex items-center gap-2">
+                      {renderStars(selectedReview.rating)}
+                      <span className="text-sm font-medium ml-2">
+                        {selectedReview.rating}.0
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 리뷰 내용 */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2" 
+                      style={{ color: 'var(--color-text-primary)' }}>
+                      리뷰 내용
+                    </label>
+                    <p
+                      className="p-3 rounded-lg whitespace-pre-wrap"
+                      style={{
+                        backgroundColor: 'var(--color-background-secondary)',
+                        color: 'var(--color-text-primary)',
+                        fontSize: 'var(--font-size-small)',
+                        lineHeight: '1.6'
+                      }}
+                    >
+                      {selectedReview.content}
+                    </p>
+                  </div>
+
+                  {/* 작성/수정 정보 */}
+                  <div className="flex flex-col gap-2 text-xs" 
+                    style={{ color: 'var(--color-text-tertiary)' }}>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>작성일: {formatDate(selectedReview.createdAt)}</span>
+                    </div>
+                    {selectedReview.updatedAt !== selectedReview.createdAt && (
+                      <div className="flex items-center gap-1">
+                        <Edit className="w-3 h-3" />
+                        <span>수정일: {formatDate(selectedReview.updatedAt)}</span>
+                      </div>
                     )}
-                    <span className="text-sm font-medium ml-2">
-                      {editForm.rating}.0
-                    </span>
                   </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    {renderStars(selectedReview.rating)}
-                    <span className="text-sm font-medium ml-2">
-                      {selectedReview.rating}.0
-                    </span>
+
+                  {/* 수정/삭제 버튼 */}
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleEditToggle}
+                      className="flex items-center gap-1"
+                    >
+                      <Edit className="w-3 h-3" />
+                      수정
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectedReview && handleDeleteClick(selectedReview)}
+                      className="flex items-center gap-1 text-red-600 hover:text-red-700 transition-all duration-200"
+                      onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                        e.currentTarget.style.backgroundColor = '#fee2e2';
+                      }}
+                      onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      삭제
+                    </Button>
                   </div>
-                )}
-              </div>
-
-              {/* 리뷰 내용 */}
-              <div>
-                <label className="block text-sm font-medium mb-2" 
-                  style={{ color: 'var(--color-text-primary)' }}>
-                  리뷰 내용
-                </label>
-                {isEditMode ? (
-                  <Textarea
-                    value={editForm.content}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, content: e.target.value }))}
-                    placeholder="리뷰를 작성해주세요..."
-                    className="min-h-32"
-                    style={{
-                      borderRadius: 'var(--radius-8)',
-                      borderColor: 'var(--color-border-primary)'
-                    }}
-                  />
-                ) : (
-                  <p
-                    className="p-3 rounded-lg whitespace-pre-wrap"
-                    style={{
-                      backgroundColor: 'var(--color-background-secondary)',
-                      color: 'var(--color-text-primary)',
-                      fontSize: 'var(--font-size-small)',
-                      lineHeight: '1.6'
-                    }}
-                  >
-                    {selectedReview.content}
-                  </p>
-                )}
-              </div>
-
-              {/* 작성/수정 정보 */}
-              <div className="flex flex-col gap-2 text-xs" 
-                style={{ color: 'var(--color-text-tertiary)' }}>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  <span>작성일: {formatDate(selectedReview.createdAt)}</span>
-                </div>
-                {selectedReview.updatedAt !== selectedReview.createdAt && (
-                  <div className="flex items-center gap-1">
-                    <Edit className="w-3 h-3" />
-                    <span>수정일: {formatDate(selectedReview.updatedAt)}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 수정/삭제 버튼 */}
-              {!isEditMode && (
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleEditToggle}
-                    className="flex items-center gap-1"
-                  >
-                    <Edit className="w-3 h-3" />
-                    수정
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => selectedReview && handleDeleteClick(selectedReview)}
-                    className="flex items-center gap-1 text-red-600 hover:text-red-700 transition-all duration-200"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#fee2e2';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    삭제
-                  </Button>
-                </div>
-              )}
-
-              {/* 버튼 영역 */}
-              {isEditMode && (
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={handleEditToggle}
-                  >
-                    취소
-                  </Button>
-                  <Button
-                    onClick={handleSaveEdit}
-                    className="transition-all duration-200"
-                    style={{
-                      backgroundColor: 'var(--color-brand-primary)',
-                      color: 'var(--color-utility-white)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.filter = 'brightness(0.9)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.filter = 'brightness(1)';
-                    }}
-                  >
-                    저장
-                  </Button>
                 </div>
               )}
             </div>
