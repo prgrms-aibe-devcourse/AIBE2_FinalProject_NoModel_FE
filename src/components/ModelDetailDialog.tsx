@@ -13,7 +13,7 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { Skeleton } from './ui/skeleton';
 import {
   Star, Users, Download, Eye, Calendar, Crown,
-  Image as ImageIcon, FileText, ExternalLink, Loader2, Flag, MessageSquare, Plus, Coins, X
+  Image as ImageIcon, FileText, ExternalLink, Loader2, Flag, MessageSquare, Plus, Coins, X, Edit
 } from 'lucide-react';
 import { getModelFullDetail } from '../services/modelApi';
 import axiosInstance from '../services/AxiosInstance';
@@ -523,7 +523,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
                   onClick={() => setReviewDialogOpen(true)}
                   className="flex items-center gap-2"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Edit className="h-4 w-4" />
                   리뷰 작성하기
                 </Button>
               </div>
