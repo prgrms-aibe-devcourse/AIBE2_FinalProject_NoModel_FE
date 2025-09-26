@@ -160,6 +160,8 @@ export interface ApiReviewResponse {
   status: string;
   createdAt: string;
   updatedAt?: string;
+  reviewerName?: string; // 서버에서 포함될 수 있는 리뷰어 이름
+  username?: string; // 서버에서 포함될 수 있는 사용자 이름
 }
 
 export interface ReviewRequest {

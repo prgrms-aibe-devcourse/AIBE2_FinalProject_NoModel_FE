@@ -209,7 +209,12 @@ export const createReview = async (
   request: ReviewRequest
 ): Promise<ApiResponse<MyReviewResponse>> => {
   try {
+    console.log('📤 리뷰 작성 요청 - modelId:', modelId);
+    console.log('📤 리뷰 작성 요청 - request:', request);
+    console.log('📤 요청 URL:', `/models/${modelId}/reviews`);
+    
     const response = await axiosInstance.post(`/models/${modelId}/reviews`, request);
+    console.log('📥 리뷰 작성 응답:', response.data);
     const apiData = response.data;
     
     if (apiData.success && apiData.response) {
@@ -229,11 +234,20 @@ export const createReview = async (
     return apiData;
   } catch (error: any) {
     console.error('리뷰 작성 실패:', error);
+    console.error('에러 응답 전체:', error.response);
+    console.error('에러 응답 데이터:', error.response?.data);
+    console.error('에러 메시지:', error.response?.data?.message || error.response?.data?.error);
+    console.error('HTTP 상태:', error.response?.status);
+    
     return {
       success: false,
       response: {} as MyReviewResponse,
       error: {
-        message: error.response?.data?.error?.message || '리뷰 작성에 실패했습니다.',
+        message: error.response?.data?.message || 
+                error.response?.data?.error?.message || 
+                error.response?.data?.error || 
+                error.message || 
+                '리뷰 작성에 실패했습니다.',
         status: error.response?.status || 500
       }
     };

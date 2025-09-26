@@ -19,9 +19,9 @@ import {
     X
 } from 'lucide-react';
 import { StyleSettings } from '../ImageGenerationWorkflow';
-import { ProjectRating } from "../../App";
+import { ProjectRating, SelectedModel } from "../../App";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
-import { ProjectRatingForm } from "../ProjectRatingForm"; // ✅ 리뷰 폼 가져오기
+import { ProjectRatingForm } from "../ProjectRatingForm";
 
 interface ResultDownloadProps {
     generatedImages: string[];
@@ -228,7 +228,7 @@ export function ResultDownload({
                                             variant="ghost"
                                             size="sm"
                                             className="w-8 h-8 p-0 bg-background/90 backdrop-blur"
-                                            onClick={(e) => {
+                                            onClick={(e: React.MouseEvent) => {
                                                 e.stopPropagation();
                                                 copyToClipboard(imageUrl);
                                             }}
@@ -239,7 +239,7 @@ export function ResultDownload({
                                             variant="ghost"
                                             size="sm"
                                             className="w-8 h-8 p-0 bg-background/90 backdrop-blur"
-                                            onClick={(e) => {
+                                            onClick={(e: React.MouseEvent) => {
                                                 e.stopPropagation();
                                                 handleShare('link');
                                             }}
@@ -341,7 +341,7 @@ export function ResultDownload({
                 <DialogTitle>리뷰 등록</DialogTitle>
                 <DialogDescription>생성된 모델에 대한 리뷰를 작성해주세요!</DialogDescription>
                     <ProjectRatingForm
-                        modelId={selectedModel?.id!}  // ✅ DB에서 넘어온 모델 ID
+                        modelId={typeof selectedModel?.id === 'string' ? selectedModel.id : parseInt(selectedModel?.id!)}  // ✅ 문자열 ID와 숫자 ID 모두 지원
                         onSuccess={(review) => {
                             console.log("리뷰 저장됨:", review);
                             setIsRatingOpen(false);

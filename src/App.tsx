@@ -20,6 +20,7 @@ import PointsSubscriptionPage from './components/PointsSubscriptionPage';
 import { MyReviews } from './components/MyReviews';
 import { ProductImageUpload } from './components/ProductImageUpload';
 import { AdGenerationResult } from './components/AdGenerationResult';
+import { Toaster } from './components/ui/sonner';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
@@ -1023,6 +1024,7 @@ export default function App() {
           onAdmin={() => handleStageChange('admin')}
         />
       )}
+      <Toaster />
     </div>
   );
 }
