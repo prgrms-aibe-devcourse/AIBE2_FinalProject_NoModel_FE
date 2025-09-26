@@ -7,6 +7,8 @@ import { StarRating } from "./StarRating";
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { buildApiUrl } from '@/config/env';
+import { updateMyReview, createReview } from '../services/reviewApi';
+import { ReviewRequest } from '../types/model';
 
 interface ProjectRatingFormProps {
     modelId: number | string; // 리뷰를 등록할 모델 ID (기존 DB 모델: number, 새로 생성된 모델: string)
@@ -89,65 +91,43 @@ export function ProjectRatingForm({
                 }, 1000);
                 return;
             } else {
-                // 기존 DB 모델의 경우: API 호출
-                if (isEditMode && reviewId) {
-                    // 수정 모드: PUT 요청
-                    response = await fetch(buildApiUrl(`/reviews/${reviewId}`), {
-                        method: "PUT",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        credentials: "include", // 쿠키 포함
-                        body: JSON.stringify({ rating, content }),
-                    });
-                } else {
-                    // 등록 모드: POST 요청
-                    response = await fetch(buildApiUrl(`/models/${modelId}/reviews`), {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        credentials: "include", // 쿠키 포함
-                        body: JSON.stringify({ rating, content }),
-                    });
-                }
+                // 기존 DB 모델의 경우: reviewApi 사용
+                const reviewRequest: ReviewRequest = {
+                    rating,
+                    content
+                };
 
-                const result = await response.json();
-                
-                // 디버깅: 응답 상태와 내용 확인
-                console.log('응답 상태:', response.status);
-                console.log('응답 내용:', result);
-                
-                if (isEditMode) {
-                    // 수정 모드일 때
+                if (isEditMode && reviewId) {
+                    // 수정 모드: updateMyReview 사용
+                    const result = await updateMyReview(reviewId, reviewRequest);
+                    
                     if (result.success) {
                         onSuccess(result.response);
                     } else {
                         setError(result.error?.message || "리뷰 수정에 실패했습니다.");
                     }
                 } else {
-                    // 등록 모드일 때
-                    // 중복 리뷰 에러 처리 (409 또는 400 상태 코드와 특정 메시지)
-                    if (response.status === 409 || 
-                        (response.status === 400 && 
-                         (result.error?.includes("Review already exists") || 
-                          result.error?.includes("이미 리뷰") ||
-                          result.message?.includes("Review already exists") ||
-                          result.message?.includes("이미 리뷰")))) {
-                        console.log('중복 리뷰 감지, 다이얼로그 표시');
-                        setShowDuplicateAlert(true);
-                        return;
-                    }
-
+                    // 등록 모드: createReview 사용
+                    const result = await createReview(Number(modelId), reviewRequest);
+                    
                     if (result.success) {
                         onSuccess(result.response);
                     } else {
+                        // 중복 리뷰 에러 처리
+                        if (result.error?.status === 409 || 
+                            (result.error?.status === 400 && 
+                             (result.error.message?.includes("Review already exists") || 
+                              result.error.message?.includes("이미 리뷰")))) {
+                            console.log('중복 리뷰 감지, 다이얼로그 표시');
+                            setShowDuplicateAlert(true);
+                            return;
+                        }
                         setError(result.error?.message || "리뷰 등록에 실패했습니다.");
                     }
                 }
             }
         } catch (error) {
-            console.error("리뷰 등록 중 오류:", error);
+            console.error("리뷰 처리 중 오류:", error);
             setError("네트워크 오류가 발생했습니다.");
         } finally {
             setIsSubmitting(false);
