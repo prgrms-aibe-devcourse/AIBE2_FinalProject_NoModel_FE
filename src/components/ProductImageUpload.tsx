@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
@@ -48,7 +48,38 @@ export function ProductImageUpload({
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentStep, setCurrentStep] = useState<'upload' | 'removing_bg' | 'composing' | 'completed'>('upload');
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
+  const [pointBalance, setPointBalance] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 포인트 잔액 조회 함수
+  const checkPointBalance = React.useCallback(async (): Promise<number> => {
+    try {
+      const response = await fetch(buildApiUrl('/points/balance'), {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      if (!response.ok) {
+        throw new Error("포인트 잔액 조회 실패");
+      }
+      
+      const data = await response.json();
+      const balance = data.availablePoints ?? 0;
+      setPointBalance(balance);
+      return balance;
+    } catch (error) {
+      console.error("포인트 잔액 조회 실패:", error);
+      setPointBalance(0);
+      return 0;
+    }
+  }, []);
+
+  // 컴포넌트 마운트 시 포인트 잔액 조회
+  useEffect(() => {
+    if (userProfile) {
+      checkPointBalance();
+    }
+  }, [userProfile, checkPointBalance]);
 
   const handleFileSelect = (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -88,6 +119,15 @@ export function ProductImageUpload({
   const handleGenerate = async () => {
     if (!uploadedImage) {
       alert('제품 이미지를 업로드해주세요.');
+      return;
+    }
+
+    // 포인트 잔액 확인
+    const currentBalance = await checkPointBalance();
+    const requiredPoints = 10; // AI 생성에 필요한 포인트
+    
+    if (currentBalance < requiredPoints) {
+      alert(`포인트가 부족합니다. 현재 잔액: ${currentBalance}P, 필요 포인트: ${requiredPoints}P\n\n포인트를 충전해주세요.`);
       return;
     }
 
@@ -572,14 +612,29 @@ export function ProductImageUpload({
               )}
             </Button>
 
-            {!uploadedImage && (
-              <p 
-                className="text-center text-sm"
+            {/* 포인트 정보 표시 */}
+            <div className="text-center space-y-2">
+              <div 
+                className="text-sm"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                보유 포인트: <span style={{ color: 'var(--color-brand-primary)', fontWeight: 'var(--font-weight-semibold)' }}>{pointBalance}P</span>
+              </div>
+              <div 
+                className="text-xs"
                 style={{ color: 'var(--color-text-tertiary)' }}
               >
-                제품 이미지를 업로드하면 생성 버튼이 활성화됩니다.
-              </p>
-            )}
+                AI 생성 필요 포인트: 10P
+              </div>
+              {!uploadedImage && (
+                <p 
+                  className="text-xs"
+                  style={{ color: 'var(--color-text-tertiary)' }}
+                >
+                  제품 이미지를 업로드하면 생성 버튼이 활성화됩니다.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </main>
