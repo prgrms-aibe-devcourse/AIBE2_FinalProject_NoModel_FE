@@ -12,6 +12,8 @@ import { UserProfile, UserModel } from '../App';
 import { NavigationBar } from './NavigationBar';
 import { buildApiUrl } from '@/config/env';
 import { getModelFullDetail } from '../services/modelApi';
+import { pointApiService } from '../services/pointApi';
+import { toast } from 'sonner';
 
 interface ProductImageUploadProps {
   userProfile: UserProfile | null;
@@ -122,44 +124,52 @@ export function ProductImageUpload({
       return;
     }
 
-    // 포인트 잔액 확인
-    const currentBalance = await checkPointBalance();
-    const requiredPoints = selectedModel.price || 0; // 모델의 가격을 사용
+    console.log('=== AI 광고 이미지 생성 시작 ===');
+    console.log('selectedModel:', selectedModel);
+    console.log('selectedModel.price:', selectedModel.price);
     
-    if (currentBalance < requiredPoints) {
-      alert(`포인트가 부족합니다. 현재 잔액: ${currentBalance}P, 필요 포인트: ${requiredPoints}P\n\n포인트를 충전해주세요.`);
-      return;
-    }
-
-    // 포인트 차감
-    try {
-      const usePointsResponse = await fetch(buildApiUrl('/points/use'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+    // 포인트 차감 로직 추가
+    const requiredPoints = selectedModel.price || 0;
+    console.log('requiredPoints:', requiredPoints);
+    
+    if (requiredPoints > 0) {
+      try {
+        console.log('1. 포인트 잔액 확인 시작...');
+        
+        // 1. 포인트 잔액 확인
+        const pointCheck = await pointApiService.checkSufficientPoints(requiredPoints);
+        console.log('pointCheck 결과:', pointCheck);
+        
+        if (!pointCheck.sufficient) {
+          console.log('포인트 부족!');
+          toast.error(`포인트가 부족합니다. 필요한 포인트: ${requiredPoints.toLocaleString()}, 보유 포인트: ${pointCheck.currentBalance.toLocaleString()}`);
+          return;
+        }
+        
+        console.log('2. 포인트 차감 시작...');
+        
+        // 2. 포인트 차감
+        const usePointsResponse = await pointApiService.usePoints({
           amount: requiredPoints,
-          refererId: parseInt(selectedModel.creatorId)
-        }),
-        credentials: 'include',
-      });
+          refererId: parseInt(selectedModel.id), // 모델 ID를 참조 ID로 사용
+          refererType: 'ORDER'
+        });
 
-      if (!usePointsResponse.ok) {
-        throw new Error('포인트 차감에 실패했습니다.');
+        console.log('usePointsResponse:', usePointsResponse);
+
+        console.log('포인트 차감 성공!');
+        toast.success(`${requiredPoints.toLocaleString()} 포인트가 차감되었습니다. 남은 포인트: ${usePointsResponse.balanceAfter.toLocaleString()}`);
+        
+      } catch (error) {
+        console.error('포인트 처리 오류:', error);
+        toast.error(`포인트 처리 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        return;
       }
-
-      const usePointsResult = await usePointsResponse.json();
-      console.log('포인트 차감 결과:', usePointsResult);
-      
-      // 포인트 차감 후 잔액 업데이트
-      setPointBalance(currentBalance - requiredPoints);
-    } catch (error) {
-      console.error('포인트 차감 오류:', error);
-      alert(`포인트 차감 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
-      return;
+    } else {
+      console.log('무료 모델이므로 포인트 차감 생략');
     }
 
+    console.log('3. 이미지 생성 시작...');
     setIsGenerating(true);
     setCurrentStep('upload');
     
@@ -611,6 +621,38 @@ export function ProductImageUpload({
             </Card>
 
             {/* Generate Button */}
+            {/* 가격 정보 표시 */}
+            {selectedModel.price && selectedModel.price > 0 && (
+              <Card 
+                className="p-4 mb-4"
+                style={{
+                  backgroundColor: 'var(--color-background-secondary)',
+                  borderColor: 'var(--color-border-primary)',
+                  borderRadius: 'var(--radius-12)'
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <span 
+                    style={{ 
+                      color: 'var(--color-text-secondary)',
+                      fontSize: 'var(--font-size-small)' 
+                    }}
+                  >
+                    이미지 생성 비용
+                  </span>
+                  <span 
+                    style={{ 
+                      color: 'var(--color-text-primary)',
+                      fontSize: 'var(--font-size-regular)',
+                      fontWeight: 'var(--font-weight-semibold)' 
+                    }}
+                  >
+                    {selectedModel.price.toLocaleString()} 포인트
+                  </span>
+                </div>
+              </Card>
+            )}
+            
             <Button
               onClick={handleGenerate}
               disabled={!uploadedImage || isGenerating}
@@ -636,7 +678,10 @@ export function ProductImageUpload({
               ) : (
                 <>
                   <Wand2 className="w-5 h-5 mr-2" />
-                  AI 광고 이미지 생성하기
+                  {selectedModel.price && selectedModel.price > 0 
+                    ? `AI 광고 이미지 생성하기 (${selectedModel.price.toLocaleString()} 포인트)`
+                    : 'AI 광고 이미지 생성하기'
+                  }
                 </>
               )}
             </Button>

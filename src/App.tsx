@@ -644,7 +644,9 @@ export default function App() {
     console.log('UserModel로 변환됨:', userModel);
     console.log('fileId:', userModel.fileId, 'seedValue:', userModel.seedValue);
 
-    // 제품 이미지 업로드 화면으로 이동
+    // 포인트 검증 및 차감은 제거 - ProductImageUpload에서 "AI 광고 이미지 생성하기" 버튼 클릭 시 처리
+    
+    // 제품 이미지 업로드 화면으로 바로 이동
     setSelectedModelForAdGeneration(userModel);
     setCurrentStage('productUpload');
   };
