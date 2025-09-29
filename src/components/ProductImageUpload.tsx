@@ -124,10 +124,39 @@ export function ProductImageUpload({
 
     // 포인트 잔액 확인
     const currentBalance = await checkPointBalance();
-    const requiredPoints = 10; // AI 생성에 필요한 포인트
+    const requiredPoints = selectedModel.price || 0; // 모델의 가격을 사용
     
     if (currentBalance < requiredPoints) {
       alert(`포인트가 부족합니다. 현재 잔액: ${currentBalance}P, 필요 포인트: ${requiredPoints}P\n\n포인트를 충전해주세요.`);
+      return;
+    }
+
+    // 포인트 차감
+    try {
+      const usePointsResponse = await fetch(buildApiUrl('/points/use'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: requiredPoints,
+          refererId: parseInt(selectedModel.creatorId)
+        }),
+        credentials: 'include',
+      });
+
+      if (!usePointsResponse.ok) {
+        throw new Error('포인트 차감에 실패했습니다.');
+      }
+
+      const usePointsResult = await usePointsResponse.json();
+      console.log('포인트 차감 결과:', usePointsResult);
+      
+      // 포인트 차감 후 잔액 업데이트
+      setPointBalance(currentBalance - requiredPoints);
+    } catch (error) {
+      console.error('포인트 차감 오류:', error);
+      alert(`포인트 차감 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
       return;
     }
 
@@ -624,7 +653,7 @@ export function ProductImageUpload({
                 className="text-xs"
                 style={{ color: 'var(--color-text-tertiary)' }}
               >
-                AI 생성 필요 포인트: 10P
+                AI 생성 필요 포인트: {selectedModel.price || 0}P
               </div>
               {!uploadedImage && (
                 <p 
