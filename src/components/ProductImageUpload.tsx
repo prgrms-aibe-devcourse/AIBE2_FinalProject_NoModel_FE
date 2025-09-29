@@ -120,19 +120,14 @@ export function ProductImageUpload({
         // 2. 포인트 차감
         const usePointsResponse = await pointApiService.usePoints({
           amount: requiredPoints,
-          refererId: parseInt(selectedModel.id) // 모델 ID를 참조 ID로 사용
+          refererId: parseInt(selectedModel.id), // 모델 ID를 참조 ID로 사용
+          refererType: 'ORDER'
         });
-        
+
         console.log('usePointsResponse:', usePointsResponse);
-        
-        if (!usePointsResponse.success) {
-          console.log('포인트 차감 실패:', usePointsResponse.error);
-          toast.error(usePointsResponse.error || '포인트 차감에 실패했습니다.');
-          return;
-        }
-        
+
         console.log('포인트 차감 성공!');
-        toast.success(`${requiredPoints.toLocaleString()} 포인트가 차감되었습니다. 남은 포인트: ${usePointsResponse.response.remainingPoints.toLocaleString()}`);
+        toast.success(`${requiredPoints.toLocaleString()} 포인트가 차감되었습니다. 남은 포인트: ${usePointsResponse.balanceAfter.toLocaleString()}`);
         
       } catch (error) {
         console.error('포인트 처리 오류:', error);

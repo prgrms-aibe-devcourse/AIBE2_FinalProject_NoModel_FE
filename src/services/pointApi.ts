@@ -1,4 +1,5 @@
 import { GetAxiosInstance, PostAxiosInstance } from './ApiService';
+import { RefererType } from '@/types/api';
 import { toast } from 'sonner';
 
 export interface PointBalance {
@@ -11,17 +12,21 @@ export interface PointBalance {
 export interface PointUseRequest {
   amount: number;
   refererId: number; // 모델 ID 또는 관련 참조 ID
+  // 옵션 B: 중복 클릭 방지를 위한 멱등키 (백엔드가 지원하는 경우)
+  idempotencyKey?: string;
+  // 백엔드 enum RefererType 매핑
+  refererType?: RefererType;
 }
 
+// 백엔드는 2xx로 성공을 반환하며 바디는 트랜잭션 정보만 포함함
 export interface PointUseResponse {
-  success: boolean;
-  response: {
-    transactionId: number;
-    amount: number;
-    remainingPoints: number;
-    refererId: number;
-  };
-  error?: any;
+  id: number;
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  refererId: number;
+  // 필요 시 확장 필드 (예: transactionType, createdAt 등)
+  [key: string]: any;
 }
 
 class PointApiService {
@@ -77,45 +82,24 @@ class PointApiService {
   async usePoints(request: PointUseRequest): Promise<PointUseResponse> {
     try {
       console.log('포인트 사용 API 호출 시작, 요청 데이터:', request);
-      const response = await PostAxiosInstance<any>('/points/use', request);
+      const response = await PostAxiosInstance<PointUseResponse>('/points/use', request);
       console.log('포인트 사용 응답:', response);
       console.log('응답 데이터:', response.data);
-      
-      // 백엔드 응답이 success 형태인지 확인
-      if (response.data.success) {
-        console.log('포인트 사용 성공!');
-        return response.data;
-      } else {
-        // success가 false인 경우
-        console.log('포인트 사용 실패 (success=false):', response.data.error);
-        throw new Error(response.data.error?.message || response.data.message || '포인트 사용에 실패했습니다.');
-      }
-      
+
+      // 2xx면 성공으로 간주하고 바디를 그대로 반환
+      return response.data;
     } catch (error: any) {
       console.error('포인트 사용 실패:', error);
       console.error('에러 응답:', error.response);
       console.error('에러 데이터:', error.response?.data);
-      
-      // 에러 메시지 처리
-      let errorMessage = '포인트 사용에 실패했습니다.';
-      if (error.response?.data?.error?.message) {
-        errorMessage = error.response.data.error.message;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
 
-      return {
-        success: false,
-        response: {
-          transactionId: 0,
-          amount: 0,
-          remainingPoints: 0,
-          refererId: 0,
-        },
-        error: errorMessage,
-      };
+      // 서버 표준 에러 포맷 우선 추출 (legacy: { success:false, response:null, error:{ message } })
+      const serverData = error.response?.data;
+      const message = serverData?.error?.message
+        || serverData?.message
+        || error.message
+        || '포인트 사용에 실패했습니다.';
+      throw new Error(message);
     }
   }
 

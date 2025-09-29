@@ -11,3 +11,15 @@ export interface ApiResponse<T> {
   response: T;
   error: ApiError | null;
 }
+
+// 서버 RefererType enum 대응 프런트 타입
+export type RefererType =
+  | 'REVIEW'
+  | 'ORDER'
+  | 'STORE_PURCHASE'
+  | 'EVENT'
+  | 'REFERRAL'
+  | 'LOGIN'
+  | 'MANUAL'
+  | 'SYSTEM'
+  | 'CHARGE';
