@@ -110,7 +110,7 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
         console.log('Fetched model detail:', response.response);
         
         // 이미지 파일들 분리
-        const images = response.response.files.filter(file => isImageFile(file.fileUrl));
+        const images = response.response.files.filter(file => isImageFile(file.fileUrl, file.fileName));
         setImageFiles(images);
       } else {
         console.error('❌ 모델 API 응답 실패:', response.error);
@@ -236,12 +236,16 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
     setIsToastPaused(false);
   };
 
-  const isImageFile = (fileUrl: string) => {
-    return fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  const isImageFile = (fileUrl: string, fileName?: string) => {
+    const candidates = [fileUrl, fileName].filter(Boolean) as string[];
+    return candidates.some((path) => {
+      const normalized = path.split('?')[0].toLowerCase();
+      return /\.(jpg|jpeg|png|gif|webp)$/.test(normalized);
+    });
   };
 
   const FilePreview = ({ file, imageIndex }: { file: FileInfo; imageIndex?: number }) => {
-    const isImage = isImageFile(file.fileUrl);
+    const isImage = isImageFile(file.fileUrl, file.fileName);
 
     return (
       <div className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
@@ -487,12 +491,12 @@ export const ModelDetailDialog: React.FC<ModelDetailDialogProps> = ({
             <hr className="border-gray-200" />
 
             {/* 기타 파일 목록 */}
-            {modelDetail.files.filter(file => !isImageFile(file.fileUrl)).length > 0 && (
+            {modelDetail.files.filter(file => !isImageFile(file.fileUrl, file.fileName)).length > 0 && (
               <div>
                 <h4 className="text-lg font-semibold mb-4">기타 파일</h4>
                 <div className="space-y-2">
                   {modelDetail.files
-                    .filter(file => !isImageFile(file.fileUrl))
+                    .filter(file => !isImageFile(file.fileUrl, file.fileName))
                     .map((file) => (
                       <FilePreview key={file.fileId} file={file} />
                     ))}
