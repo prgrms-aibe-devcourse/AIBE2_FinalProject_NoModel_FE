@@ -7,16 +7,31 @@ import { StarRating } from "./StarRating";
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { AlertCircle, AlertTriangle } from 'lucide-react';
 import { buildApiUrl } from '@/config/env';
+import { updateMyReview, createReview } from '../services/reviewApi';
+import { ReviewRequest } from '../types/model';
 
 interface ProjectRatingFormProps {
-    modelId: number; // 리뷰를 등록할 모델 ID
+    modelId: number | string; // 리뷰를 등록할 모델 ID (기존 DB 모델: number, 새로 생성된 모델: string)
     onSuccess: (review: any) => void;
     onCancel?: () => void;
+    // 수정 모드 관련 props
+    isEditMode?: boolean;
+    reviewId?: number;
+    initialRating?: number;
+    initialContent?: string;
 }
 
-export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatingFormProps) {
-    const [rating, setRating] = useState<number>(0);
-    const [content, setContent] = useState<string>("");
+export function ProjectRatingForm({ 
+    modelId, 
+    onSuccess, 
+    onCancel, 
+    isEditMode = false, 
+    reviewId, 
+    initialRating = 0, 
+    initialContent = "" 
+}: ProjectRatingFormProps) {
+    const [rating, setRating] = useState<number>(initialRating);
+    const [content, setContent] = useState<string>(initialContent);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string>("");
     const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
@@ -53,40 +68,77 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
         setShowDuplicateAlert(false);
 
         try {
-            const response = await fetch(buildApiUrl(`/models/${modelId}/reviews`), {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include", // 쿠키 포함
-                body: JSON.stringify({ rating, content }),
-            });
-
-            const result = await response.json();
+            // 새로 생성된 모델인지 기존 DB 모델인지 구분
+            const isNewModel = typeof modelId === 'string' && modelId.startsWith('model-');
             
-            // 디버깅: 응답 상태와 내용 확인
-            console.log('응답 상태:', response.status);
-            console.log('응답 내용:', result);
+            let response;
             
-            // 중복 리뷰 에러 처리 (409 또는 400 상태 코드와 특정 메시지)
-            if (response.status === 409 || 
-                (response.status === 400 && 
-                 (result.error?.includes("Review already exists") || 
-                  result.error?.includes("이미 리뷰") ||
-                  result.message?.includes("Review already exists") ||
-                  result.message?.includes("이미 리뷰")))) {
-                console.log('중복 리뷰 감지, 다이얼로그 표시');
-                setShowDuplicateAlert(true);
+            if (isNewModel) {
+                // 새로 생성된 모델의 경우: 로컬 저장 또는 다른 방식으로 처리
+                console.log('새로 생성된 모델에 대한 리뷰:', { modelId, rating, content });
+                
+                // 임시로 성공 응답 모방 (실제로는 로컬 스토리지나 다른 방식으로 저장)
+                setTimeout(() => {
+                    const mockReview = {
+                        id: `review-${Date.now()}`,
+                        modelId,
+                        rating,
+                        content,
+                        createdAt: new Date().toISOString(),
+                        authorName: '사용자' // 실제로는 userProfile에서 가져와야 함
+                    };
+                    onSuccess(mockReview);
+                }, 1000);
                 return;
-            }
-
-            if (result.success) {
-                onSuccess(result.response);
             } else {
-                setError(result.error?.message || "리뷰 등록에 실패했습니다.");
+                // 기존 DB 모델의 경우: reviewApi 사용
+                const reviewRequest: ReviewRequest = {
+                    rating,
+                    content
+                };
+
+                if (isEditMode && reviewId) {
+                    // 수정 모드: updateMyReview 사용
+                    const result = await updateMyReview(reviewId, reviewRequest);
+                    
+                    if (result.success) {
+                        console.log('✅ 리뷰 수정 성공:', result.response);
+                        onSuccess(result.response);
+                    } else {
+                        setError(result.error?.message || "리뷰 수정에 실패했습니다.");
+                    }
+                } else {
+                    // 등록 모드: createReview 사용
+                    const result = await createReview(Number(modelId), reviewRequest);
+                    
+                    if (result.success) {
+                        console.log('✅ 리뷰 등록 성공:', result.response);
+                        onSuccess(result.response);
+                    } else {
+                        console.log('❌ 리뷰 등록 실패 - 에러 정보:', result.error);
+                        console.log('❌ 에러 상태 코드:', result.error?.status);
+                        console.log('❌ 에러 메시지:', result.error?.message);
+                        
+                        // 중복 리뷰 에러 처리 (400 Bad Request도 포함)
+                        if (result.error?.status === 409 || 
+                            result.error?.status === 400 ||
+                            (result.error?.message && (
+                             result.error.message.includes("Review already exists") || 
+                             result.error.message.includes("이미 리뷰") ||
+                             result.error.message.includes("중복") ||
+                             result.error.message.includes("duplicate") ||
+                             result.error.message.includes("already reviewed")
+                            ))) {
+                            console.log('🔄 중복 리뷰 감지, 다이얼로그 표시');
+                            setShowDuplicateAlert(true);
+                            return;
+                        }
+                        setError(result.error?.message || "리뷰 등록에 실패했습니다.");
+                    }
+                }
             }
         } catch (error) {
-            console.error("리뷰 등록 중 오류:", error);
+            console.error("리뷰 처리 중 오류:", error);
             setError("네트워크 오류가 발생했습니다.");
         } finally {
             setIsSubmitting(false);
@@ -150,7 +202,10 @@ export function ProjectRatingForm({ modelId, onSuccess, onCancel }: ProjectRatin
                     onClick={handleSubmit}
                     disabled={!isFormValid || isSubmitting}
                 >
-                    {isSubmitting ? "등록 중..." : "리뷰 등록"}
+                    {isSubmitting ? 
+                        (isEditMode ? "수정 중..." : "등록 중...") : 
+                        (isEditMode ? "리뷰 수정" : "리뷰 등록")
+                    }
                 </Button>
             </div>
         </Card>
