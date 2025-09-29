@@ -644,32 +644,9 @@ export default function App() {
     console.log('UserModel로 변환됨:', userModel);
     console.log('fileId:', userModel.fileId, 'seedValue:', userModel.seedValue);
 
-    // 포인트 차감 로직
-    if (model.creator && model.price && userProfile) {
-      if (userProfile.points >= model.price) {
-        // 포인트 차감
-        setUserProfile(prev => prev ? { ...prev, points: prev.points - model.price! } : prev);
-        
-        // 거래 내역 추가
-        const transaction: PointTransaction = {
-          id: `transaction-${Date.now()}`,
-          userId: userProfile.id,
-          type: 'spent',
-          amount: -model.price,
-          description: `${model.name} 모델 사용`,
-          relatedModelId: model.id,
-          createdAt: new Date()
-        };
-        setPointTransactions(prev => [transaction, ...prev]);
-        
-        console.log(`${model.creator.name}에게 ${model.price * 0.7} 포인트 지급`); // 70% 수수료율
-      } else {
-        alert('포인트가 부족합니다.');
-        return;
-      }
-    }
-
-    // 제품 이미지 업로드 화면으로 이동
+    // 포인트 검증 및 차감은 제거 - ProductImageUpload에서 "AI 광고 이미지 생성하기" 버튼 클릭 시 처리
+    
+    // 제품 이미지 업로드 화면으로 바로 이동
     setSelectedModelForAdGeneration(userModel);
     setCurrentStage('productUpload');
   };
@@ -1016,7 +993,7 @@ export default function App() {
           onNewGeneration={() => handleStageChange('productUpload')}
           onLogin={() => handleStageChange('login')}
           onLogout={handleLogout}
-          onAdGeneration={() => handleStageChange('onboarding')}
+          onAdGeneration={() => handleStageChange('modelMarketplace')}
           onModelCreation={() => handleStageChange('modelCreation')}
           onMarketplace={() => handleStageChange('modelMarketplace')}
           onMyPage={() => handleStageChange('mypage')}
