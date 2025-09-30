@@ -1,4 +1,4 @@
-import { GetAxiosInstance, PostAxiosInstance } from './ApiService';
+import { GetAxiosInstance, PostAxiosInstance, PatchAxiosInstance } from './ApiService';
 import axiosInstance from './AxiosInstance';
 import type {
   ModelSearchParams,
@@ -14,9 +14,15 @@ import type {
   ModelReportRequest,
   ModelReportResponse,
   MyReportsResponse,
-  ErrorResponse
-} from '../types/model';
+  ErrorResponse,
+  AIModelDetailResponse,
+  UserModelStatsResponse,
+  MyModelListApiResponse,
+  UserModelStatsApiResponse,
+  ModelUpdatePayload
+} from '@/types/model';
 import { AxiosError } from 'axios';
+import type { ApiResponse } from '@/types/api';
 
 /**
  * AI 모델 통합 검색 API
@@ -197,6 +203,52 @@ export const getPopularModels = async (params: PopularModelParams & { isFree?: b
     return response.data;
   } catch (error) {
     console.error('인기 모델 조회 API 에러:', error);
+    throw error;
+  }
+};
+
+export const getMyModelList = async (): Promise<AIModelDetailResponse[]> => {
+  try {
+    const response = await GetAxiosInstance<MyModelListApiResponse>('/members/me/models');
+    const { data } = response;
+
+    if (!data.success || !data.response) {
+      throw new Error(data.error || '내 모델 목록을 불러올 수 없습니다.');
+    }
+
+    return data.response;
+  } catch (error) {
+    console.error('내 모델 목록 API 에러:', error);
+    throw error;
+  }
+};
+
+export const getMyModelStats = async (): Promise<UserModelStatsResponse> => {
+  try {
+    const response = await GetAxiosInstance<UserModelStatsApiResponse>('/members/me/models/stats');
+    const { data } = response;
+
+    if (!data.success || !data.response) {
+      throw new Error(data.error || '내 모델 통계를 불러올 수 없습니다.');
+    }
+
+    return data.response;
+  } catch (error) {
+    console.error('내 모델 통계 API 에러:', error);
+    throw error;
+  }
+};
+
+export const updateMyModel = async (payload: ModelUpdatePayload): Promise<void> => {
+  try {
+    const response = await PatchAxiosInstance<ApiResponse<null>>('/members/me/models', payload);
+    const { data } = response;
+
+    if (!data.success) {
+      throw new Error(data.error?.message || '모델 정보를 업데이트하지 못했습니다.');
+    }
+  } catch (error) {
+    console.error('내 모델 업데이트 API 에러:', error);
     throw error;
   }
 };
