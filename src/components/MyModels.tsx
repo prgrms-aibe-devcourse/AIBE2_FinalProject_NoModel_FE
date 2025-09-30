@@ -9,16 +9,25 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
+import { Skeleton } from './ui/skeleton';
+import { ModelDetailDialog } from './ModelDetailDialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog';
 import {
-  Search, MoreHorizontal, Eye, Edit,
+  Search, MoreHorizontal, Eye,
   Users, Coins, BarChart3,
-  Globe, EyeOff, DollarSign, Activity, Star, Filter
+  Globe, EyeOff, Activity, Star, Filter
 } from 'lucide-react';
 import { UserProfile, UserModel, PointTransaction } from '../App';
+import type { UserModelStatsResponse } from '@/types/model';
+import { updateMyModel } from '@/services/modelApi';
+import { toast } from 'sonner';
 
 interface MyModelsProps {
   userProfile: UserProfile | null;
   userModels: UserModel[];
+  modelStats?: UserModelStatsResponse | null;
+  isLoading?: boolean;
+  fetchError?: string | null;
   pointTransactions: PointTransaction[];
   onBack: () => void;
   onCreateModel: () => void;
@@ -32,116 +41,18 @@ interface MyModelsProps {
   onPointsSubscription?: () => void;
 }
 
-// Mock data for user models if none provided
-const defaultUserModels: UserModel[] = [
-  {
-    id: 'user-model-1',
-    name: '프로페셔널 한국 여성',
-    description: '비즈니스 환경에 적합한 20대 후반 한국 여성 모델입니다.',
-    prompt: 'professional korean woman, business attire, confident pose',
-    seedValue: '11111',
-    imageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop',
-    previewImages: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop'
-    ],
-    category: 'fashion',
-    metadata: {
-      age: '20대 후반',
-      gender: '여성',
-      style: '프로페셔널',
-      ethnicity: '아시아'
-    },
-    creatorId: 'user-1',
-    creatorName: '홍길동',
-    creatorAvatar: undefined,
-    price: 75,
-    usageCount: 89,
-    rating: 4.6,
-    ratingCount: 23,
-    tags: ['프로페셔널', '한국', '비즈니스', '여성'],
-    isPublic: true,
-    isForSale: true,
-    createdAt: new Date('2024-02-15'),
-    updatedAt: new Date('2024-03-10'),
-    earnings: 1245
-  },
-  {
-    id: 'user-model-2',
-    name: '캐주얼 남성 모델',
-    description: '친근하고 자연스러운 20대 남성 모델입니다.',
-    prompt: 'casual young man, friendly smile, natural lighting',
-    seedValue: '22222',
-    imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
-    previewImages: [
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop'
-    ],
-    category: 'lifestyle',
-    metadata: {
-      age: '20대 초반',
-      gender: '남성',
-      style: '캐주얼',
-      ethnicity: '아시아'
-    },
-    creatorId: 'user-1',
-    creatorName: '홍길동',
-    creatorAvatar: undefined,
-    price: 60,
-    usageCount: 42,
-    rating: 4.3,
-    ratingCount: 12,
-    tags: ['캐주얼', '친근함', '자연스러움'],
-    isPublic: true,
-    isForSale: true,
-    createdAt: new Date('2024-03-01'),
-    updatedAt: new Date('2024-03-05'),
-    earnings: 630
-  },
-  {
-    id: 'user-model-3',
-    name: '럭셔리 뷰티 모델',
-    description: '고급 화장품 브랜드에 특화된 모델입니다.',
-    prompt: 'luxury beauty model, elegant makeup, soft studio lighting',
-    seedValue: '33333',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
-    previewImages: [
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'
-    ],
-    category: 'beauty',
-    metadata: {
-      age: '30대 초반',
-      gender: '여성',
-      style: '럭셔리',
-      ethnicity: '서양'
-    },
-    creatorId: 'user-1',
-    creatorName: '홍길동',
-    creatorAvatar: undefined,
-    price: 100,
-    usageCount: 15,
-    rating: 4.8,
-    ratingCount: 5,
-    tags: ['럭셔리', '뷰티', '엘레간트'],
-    isPublic: false,
-    isForSale: false,
-    createdAt: new Date('2024-03-12'),
-    updatedAt: new Date('2024-03-12'),
-    earnings: 210
-  }
-];
 
 const categoryNames: Record<string, string> = {
-  fashion: '패션',
-  electronics: '전자제품',
-  beauty: '뷰티',
-  home: '홈&리빙',
-  food: '식품',
-  lifestyle: '라이프스타일'
+  admin: '관리자 모델',
+  user: '사용자 모델'
 };
 
 export function MyModels({ 
   userProfile, 
-  userModels = defaultUserModels, 
+  userModels = [], 
+  modelStats: modelStatsData,
+  isLoading = false,
+  fetchError,
   pointTransactions, 
   onBack, 
   onCreateModel, 
@@ -158,6 +69,13 @@ export function MyModels({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'earnings' | 'rating'>('newest');
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedModelIdForDetail, setSelectedModelIdForDetail] = useState<number | null>(null);
+  const [updatingModelIds, setUpdatingModelIds] = useState<Record<string, boolean>>({});
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
+  const [priceEditingModel, setPriceEditingModel] = useState<UserModel | null>(null);
+  const [priceInput, setPriceInput] = useState('');
+  const [priceSubmitting, setPriceSubmitting] = useState(false);
 
   // Filter and sort models
   const filteredModels = useMemo(() => {
@@ -183,12 +101,25 @@ export function MyModels({
     });
   }, [userModels, searchQuery, selectedCategory, sortBy]);
 
-  // Calculate stats
-  const modelStats = useMemo(() => {
+  const totalEarnings = useMemo(() => {
+    return userModels.reduce((sum, model) => sum + (model.earnings ?? 0), 0);
+  }, [userModels]);
+
+  const aggregatedStats = useMemo(() => {
+    if (userModels.length === 0 && modelStatsData) {
+      return {
+        totalModels: modelStatsData.totalModelCount ?? 0,
+        totalUsage: modelStatsData.totalUsageCount ?? 0,
+        totalEarnings,
+        avgRating: modelStatsData.averageRating ?? 0,
+        publicModels: modelStatsData.publicModelCount ?? 0
+      };
+    }
+
     const totalUsage = userModels.reduce((sum, model) => sum + model.usageCount, 0);
-    const totalEarnings = userModels.reduce((sum, model) => sum + model.earnings, 0);
-    const avgRating = userModels.length > 0 ? 
-      userModels.reduce((sum, model) => sum + model.rating, 0) / userModels.length : 0;
+    const avgRating = userModels.length > 0
+      ? userModels.reduce((sum, model) => sum + model.rating, 0) / userModels.length
+      : 0;
     const publicModels = userModels.filter(model => model.isPublic).length;
 
     return {
@@ -198,7 +129,7 @@ export function MyModels({
       avgRating,
       publicModels
     };
-  }, [userModels]);
+  }, [modelStatsData, totalEarnings, userModels]);
 
   // Filter earnings transactions
   const earningsTransactions = useMemo(() => {
@@ -216,19 +147,87 @@ export function MyModels({
     }).format(date);
   };
 
-  const handleModelEdit = (model: UserModel) => {
-    // In real app, this would open edit modal
-    console.log('Editing model:', model.id);
+  const setModelUpdating = (modelId: string, value: boolean) => {
+    setUpdatingModelIds(prev => {
+      if (value) {
+        return { ...prev, [modelId]: true };
+      }
+      const { [modelId]: _removed, ...rest } = prev;
+      return rest;
+    });
   };
 
-  const handleModelToggleVisibility = (model: UserModel) => {
-    const updatedModel = { ...model, isPublic: !model.isPublic };
-    onModelUpdate(updatedModel);
+  const openPriceDialog = (model: UserModel) => {
+    setPriceEditingModel(model);
+    setPriceInput(model.price > 0 ? model.price.toString() : '0');
+    setPriceDialogOpen(true);
   };
 
-  const handleModelToggleSale = (model: UserModel) => {
-    const updatedModel = { ...model, isForSale: !model.isForSale };
-    onModelUpdate(updatedModel);
+  const closePriceDialog = () => {
+    setPriceDialogOpen(false);
+    setPriceEditingModel(null);
+    setPriceInput('');
+    setPriceSubmitting(false);
+  };
+
+  const handlePriceSubmit = async () => {
+    if (!priceEditingModel) return;
+
+    const numericId = Number(priceEditingModel.id);
+    if (Number.isNaN(numericId)) {
+      toast.error('모델 ID가 올바르지 않습니다.');
+      return;
+    }
+
+    const parsed = Number(priceInput);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      toast.error('0 이상 숫자를 입력해주세요.');
+      return;
+    }
+
+    const modelId = priceEditingModel.id;
+    setPriceSubmitting(true);
+    setModelUpdating(modelId, true);
+
+    try {
+      await updateMyModel({ updateType: 'PRICE', modelId: numericId, newPrice: parsed });
+      onModelUpdate({
+        ...priceEditingModel,
+        price: parsed,
+        isForSale: parsed > 0,
+        updatedAt: new Date()
+      });
+      toast.success('모델 가격이 업데이트되었습니다.');
+      closePriceDialog();
+    } catch (error) {
+      console.error('모델 가격 업데이트 실패:', error);
+      toast.error('모델 가격을 업데이트하지 못했습니다.');
+    } finally {
+      setModelUpdating(modelId, false);
+      setPriceSubmitting(false);
+    }
+  };
+
+  const handleModelToggleVisibility = async (model: UserModel) => {
+    const numericId = Number(model.id);
+    if (Number.isNaN(numericId)) {
+      toast.error('모델 ID가 올바르지 않습니다.');
+      return;
+    }
+
+    const nextVisibility = !model.isPublic;
+    setModelUpdating(model.id, true);
+
+    try {
+      await updateMyModel({ updateType: 'VISIBILITY', modelId: numericId, isPublic: nextVisibility });
+      onModelUpdate({ ...model, isPublic: nextVisibility });
+      toast.success(nextVisibility ? '모델이 공개 상태로 변경되었습니다.' : '모델이 비공개로 변경되었습니다.');
+    } catch (error) {
+      console.error('모델 공개 상태 변경 실패:', error);
+      toast.error('모델 공개 상태를 변경하지 못했습니다.');
+    } finally {
+      setModelUpdating(model.id, false);
+    }
   };
 
   if (!userProfile) {
@@ -315,7 +314,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.totalModels}
+                    {isLoading ? '...' : aggregatedStats.totalModels.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -353,7 +352,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.totalUsage}
+                    {isLoading ? '...' : aggregatedStats.totalUsage.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -391,7 +390,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.totalEarnings.toLocaleString()}P
+                    {isLoading ? '...' : `${aggregatedStats.totalEarnings.toLocaleString()}P`}
                   </p>
                 </div>
               </div>
@@ -429,7 +428,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.avgRating > 0 ? modelStats.avgRating.toFixed(1) : '-'}
+                    {isLoading ? '...' : aggregatedStats.avgRating > 0 ? aggregatedStats.avgRating.toFixed(1) : '-'}
                   </p>
                 </div>
               </div>
@@ -467,13 +466,19 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.publicModels}
+                    {isLoading ? '...' : aggregatedStats.publicModels.toLocaleString()}
                   </p>
                 </div>
               </div>
             </Card>
           </div>
         </div>
+
+        {fetchError && (
+          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm" style={{ color: 'var(--color-semantic-red)' }}>
+            {fetchError}
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -577,7 +582,34 @@ export function MyModels({
             </div>
 
             {/* Models List */}
-            {filteredModels.length === 0 ? (
+            {isLoading && userModels.length === 0 ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <Card 
+                    key={index}
+                    className="p-6"
+                    style={{
+                      backgroundColor: 'var(--color-background-primary)',
+                      borderColor: 'var(--color-border-primary)',
+                      borderRadius: 'var(--radius-16)'
+                    }}
+                  >
+                    <div className="flex items-center gap-6">
+                      <Skeleton className="h-20 w-20 rounded-lg" />
+                      <div className="flex-1 space-y-3">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-8 w-20" />
+                          <Skeleton className="h-8 w-20" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredModels.length === 0 ? (
               <div className="text-center py-12">
                 <Users 
                   className="w-12 h-12 mx-auto mb-4"
@@ -602,14 +634,29 @@ export function MyModels({
               </div>
             ) : (
               <div className="grid gap-6">
-                {filteredModels.map((model) => (
+                {filteredModels.map((model) => {
+                  const isUpdating = !!updatingModelIds[model.id];
+
+                  return (
                   <Card 
                     key={model.id}
-                    className="p-6"
+                    className="p-6 cursor-pointer transition-transform hover:translate-y-[-2px]"
                     style={{
                       backgroundColor: 'var(--color-background-primary)',
                       borderColor: 'var(--color-border-primary)',
                       borderRadius: 'var(--radius-16)'
+                    }}
+                    onClick={() => {
+                      if (isUpdating) {
+                        return;
+                      }
+                      const numericId = Number(model.id);
+                      if (Number.isNaN(numericId)) {
+                        console.warn('모델 상세를 열 수 없습니다. 숫자 ID가 아닙니다:', model.id);
+                        return;
+                      }
+                      setSelectedModelIdForDetail(numericId);
+                      setDetailDialogOpen(true);
                     }}
                   >
                     <div className="flex items-center gap-6">
@@ -641,31 +688,30 @@ export function MyModels({
                                 {model.name}
                               </h3>
                               <div className="flex items-center gap-2">
-                                {!model.isPublic && (
-                                  <Badge 
-                                    className="text-xs"
-                                    style={{
-                                      backgroundColor: 'var(--color-background-tertiary)',
-                                      color: 'var(--color-text-secondary)',
-                                      borderRadius: 'var(--radius-4)'
-                                    }}
-                                  >
-                                    <EyeOff className="w-3 h-3 mr-1" />
-                                    비공개
-                                  </Badge>
-                                )}
-                                {!model.isForSale && (
-                                  <Badge 
-                                    className="text-xs"
-                                    style={{
-                                      backgroundColor: 'var(--color-semantic-red)' + '20',
-                                      color: 'var(--color-semantic-red)',
-                                      borderRadius: 'var(--radius-4)'
-                                    }}
-                                  >
-                                    판매 중지
-                                  </Badge>
-                                )}
+                                <Badge
+                                  className="text-xs"
+                                  style={model.isPublic ? {
+                                    backgroundColor: 'var(--color-semantic-green)' + '20',
+                                    color: 'var(--color-semantic-green)',
+                                    borderRadius: 'var(--radius-4)'
+                                  } : {
+                                    backgroundColor: 'var(--color-background-tertiary)',
+                                    color: 'var(--color-text-secondary)',
+                                    borderRadius: 'var(--radius-4)'
+                                  }}
+                                >
+                                  {model.isPublic ? (
+                                    <>
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      공개
+                                    </>
+                                  ) : (
+                                    <>
+                                      <EyeOff className="w-3 h-3 mr-1" />
+                                      비공개
+                                    </>
+                                  )}
+                                </Badge>
                               </div>
                             </div>
                             <p 
@@ -675,7 +721,7 @@ export function MyModels({
                               {model.description}
                             </p>
                             <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                              <span>{categoryNames[model.category]}</span>
+                              <span>{categoryNames[model.category] ?? '분류 없음'}</span>
                               <span>•</span>
                               <span>{formatDate(model.createdAt)}</span>
                               <span>•</span>
@@ -683,30 +729,19 @@ export function MyModels({
                             </div>
                           </div>
 
-                          <div className="text-right flex-shrink-0 ml-4">
-                            <div className="flex items-center gap-2 mb-1">
+                          <div className="text-right flex-shrink-0 ml-4 space-y-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">가격</p>
+                              <p className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                                {model.price.toLocaleString()}P
+                              </p>
+                            </div>
+                            <div className="flex items-center justify-end gap-2 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
                               <StarRating rating={model.rating} readonly size="sm" />
-                              <span className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                                ({model.ratingCount})
-                              </span>
+                              <span>({model.ratingCount})</span>
                             </div>
-                            <div className="flex items-center gap-1 mb-2">
-                              <Coins className="w-4 h-4" style={{ color: 'var(--color-semantic-orange)' }} />
-                              <span 
-                                style={{
-                                  fontSize: 'var(--font-size-regular)',
-                                  fontWeight: 'var(--font-weight-semibold)',
-                                  color: 'var(--color-text-primary)'
-                                }}
-                              >
-                                {model.price}P
-                              </span>
-                            </div>
-                            <p 
-                              className="text-xs"
-                              style={{ color: 'var(--color-semantic-green)' }}
-                            >
-                              {model.earnings.toLocaleString()}P 수익
+                            <p className="text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
+                              최근 수정: {formatDate(model.updatedAt)}
                             </p>
                           </div>
                         </div>
@@ -746,15 +781,11 @@ export function MyModels({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleModelEdit(model)}
-                            >
-                              <Edit className="w-4 h-4 mr-2" />
-                              편집
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleModelToggleVisibility(model)}
+                              disabled={isUpdating}
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                handleModelToggleVisibility(model);
+                              }}
                             >
                               {model.isPublic ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
                               {model.isPublic ? '비공개' : '공개'}
@@ -762,30 +793,57 @@ export function MyModels({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleModelToggleSale(model)}
+                              disabled={isUpdating}
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                openPriceDialog(model);
+                              }}
                             >
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              {model.isForSale ? '판매 중지' : '판매 시작'}
+                              <Coins className="w-4 h-4 mr-2" />
+                              가격 변경
                             </Button>
+                            <span className="text-xs text-muted-foreground">
+                              {model.updatedAt.toLocaleDateString()}
+                            </span>
                           </div>
 
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-8 h-8 p-0"
+                                disabled={isUpdating}
+                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => event.stopPropagation()}
+                              >
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleModelEdit(model)}>
+                              <DropdownMenuItem
+                                onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+                                  if (isUpdating) {
+                                    event.preventDefault();
+                                    return;
+                                  }
+                                  event.stopPropagation();
+                                  const numericId = Number(model.id);
+                                  if (Number.isNaN(numericId)) {
+                                    console.warn('모델 상세를 열 수 없습니다. 숫자 ID가 아닙니다:', model.id);
+                                    return;
+                                  }
+                                  setSelectedModelIdForDetail(numericId);
+                                  setDetailDialogOpen(true);
+                                }}
+                              >
                                 <Eye className="w-4 h-4 mr-2" />
                                 상세 보기
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleModelEdit(model)}>
-                                <Edit className="w-4 h-4 mr-2" />
-                                편집
-                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={(event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation()}
+                              >
                                 삭제
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -794,7 +852,8 @@ export function MyModels({
                       </div>
                     </div>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             )}
           </TabsContent>
@@ -963,6 +1022,67 @@ export function MyModels({
           </TabsContent>
         </Tabs>
       </main>
+
+      <ModelDetailDialog
+        modelId={selectedModelIdForDetail}
+        open={detailDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDetailDialogOpen(false);
+            setSelectedModelIdForDetail(null);
+          } else {
+            setDetailDialogOpen(true);
+          }
+        }}
+      />
+
+      <Dialog
+        open={priceDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closePriceDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle>가격 변경</DialogTitle>
+            <DialogDescription>
+              {priceEditingModel?.name ?? '모델'}의 판매 가격을 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">가격 (포인트)</p>
+              <Input
+                type="number"
+                min={0}
+                value={priceInput}
+                onChange={(event) => setPriceInput(event.target.value)}
+                placeholder="0"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              0을 입력하면 무료 모델로 전환됩니다.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closePriceDialog}
+              disabled={priceSubmitting}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handlePriceSubmit}
+              disabled={priceSubmitting}
+            >
+              {priceSubmitting ? '저장 중...' : '저장'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
