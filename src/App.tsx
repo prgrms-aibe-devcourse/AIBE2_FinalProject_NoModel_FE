@@ -445,7 +445,7 @@ export default function App() {
           rating: Number(detail.avgRating ?? 0),
           ratingCount: Number(detail.reviewCount ?? 0),
           tags: [],
-          isPublic: true,
+          isPublic: detail.isPublic ?? true,
           isForSale: price > 0,
           createdAt: detail.createdAt ? new Date(detail.createdAt) : new Date(),
           updatedAt: detail.updatedAt ? new Date(detail.updatedAt) : new Date(),
@@ -976,7 +976,6 @@ export default function App() {
           modelStats={userModelStats}
           isLoading={isLoadingUserModels}
           fetchError={userModelsError}
-          onRefresh={refreshUserModels}
           pointTransactions={pointTransactions}
           onBack={() => handleStageChange('mypage')}
           onCreateModel={() => handleStageChange('modelCreation')}

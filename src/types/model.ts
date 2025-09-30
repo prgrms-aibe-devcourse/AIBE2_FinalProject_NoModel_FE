@@ -177,6 +177,7 @@ export interface AIModelDetailResponse {
   ownerName: string;
   ownerId: number;
   price: number;
+  isPublic?: boolean;
   avgRating: number;
   reviewCount: number;
   usageCount: number;
@@ -198,6 +199,14 @@ export interface UserModelStatsResponse {
 
 export type UserModelStatsApiResponse = ApiResponse<UserModelStatsResponse>;
 export type MyModelListApiResponse = ApiResponse<AIModelDetailResponse[]>;
+
+export type ModelVisibilityUpdatePayload = {
+  updateType: 'VISIBILITY';
+  modelId: number;
+  isPublic: boolean;
+};
+
+export type ModelUpdatePayload = ModelVisibilityUpdatePayload;
 
 // Model report types
 export interface ModelReportRequest {
