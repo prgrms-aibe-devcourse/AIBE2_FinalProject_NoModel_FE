@@ -14,8 +14,12 @@ import type {
   ModelReportRequest,
   ModelReportResponse,
   MyReportsResponse,
-  ErrorResponse
-} from '../types/model';
+  ErrorResponse,
+  AIModelDetailResponse,
+  UserModelStatsResponse,
+  MyModelListApiResponse,
+  UserModelStatsApiResponse
+} from '@/types/model';
 import { AxiosError } from 'axios';
 
 /**
@@ -197,6 +201,38 @@ export const getPopularModels = async (params: PopularModelParams & { isFree?: b
     return response.data;
   } catch (error) {
     console.error('인기 모델 조회 API 에러:', error);
+    throw error;
+  }
+};
+
+export const getMyModelList = async (): Promise<AIModelDetailResponse[]> => {
+  try {
+    const response = await GetAxiosInstance<MyModelListApiResponse>('/members/me/models');
+    const { data } = response;
+
+    if (!data.success || !data.response) {
+      throw new Error(data.error || '내 모델 목록을 불러올 수 없습니다.');
+    }
+
+    return data.response;
+  } catch (error) {
+    console.error('내 모델 목록 API 에러:', error);
+    throw error;
+  }
+};
+
+export const getMyModelStats = async (): Promise<UserModelStatsResponse> => {
+  try {
+    const response = await GetAxiosInstance<UserModelStatsApiResponse>('/members/me/models/stats');
+    const { data } = response;
+
+    if (!data.success || !data.response) {
+      throw new Error(data.error || '내 모델 통계를 불러올 수 없습니다.');
+    }
+
+    return data.response;
+  } catch (error) {
+    console.error('내 모델 통계 API 에러:', error);
     throw error;
   }
 };

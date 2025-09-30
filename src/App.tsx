@@ -21,6 +21,8 @@ import { MyReviews } from './components/MyReviews';
 import { ProductImageUpload } from './components/ProductImageUpload';
 import { AdGenerationResult } from './components/AdGenerationResult';
 import { Toaster } from './components/ui/sonner';
+import { getMyModelList, getMyModelStats } from '@/services/modelApi';
+import type { UserModelStatsResponse } from '@/types/model';
 
 const OAUTH_CALLBACK_PATH =
     (import.meta as any).env?.VITE_OAUTH_CALLBACK || "/oauth2/callback";
@@ -182,6 +184,9 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [projects, setProjects] = useState<GeneratedProject[]>([]);
   const [userModels, setUserModels] = useState<UserModel[]>([]);
+  const [userModelStats, setUserModelStats] = useState<UserModelStatsResponse | null>(null);
+  const [isLoadingUserModels, setIsLoadingUserModels] = useState(false);
+  const [userModelsError, setUserModelsError] = useState<string | null>(null);
   const [pointTransactions, setPointTransactions] = useState<PointTransaction[]>([]);
   const [modelReports, setModelReports] = useState<ModelReport[]>([
     {
@@ -383,6 +388,87 @@ export default function App() {
     resultFileId?: number; // compose API에서 받은 resultFileId 추가
   } | null>(null);
 
+  const refreshUserModels = React.useCallback(async () => {
+    if (!userProfile) {
+      return;
+    }
+
+    const profileId = userProfile.id;
+
+    setIsLoadingUserModels(true);
+    setUserModelsError(null);
+
+    try {
+      const [modelsData, statsData] = await Promise.all([
+        getMyModelList(),
+        getMyModelStats()
+      ]);
+
+      // 사용자 포인트 거래 내역에서 모델별 수익 합산
+      const earningsByModelId = pointTransactions.reduce<Record<string, number>>((acc, transaction) => {
+        if (transaction.type === 'earned' && transaction.relatedModelId) {
+          const key = transaction.relatedModelId.toString();
+          acc[key] = (acc[key] ?? 0) + transaction.amount;
+        }
+        return acc;
+      }, {});
+
+      const mappedModels = modelsData.map<UserModel>((detail) => {
+        const primaryFile = detail.files?.find((file) => file.isPrimary) ?? detail.files?.[0];
+        const previewImages = detail.files?.map((file) => file.fileUrl) ?? [];
+        const modelId = detail.modelId.toString();
+        const price = detail.price !== undefined && detail.price !== null
+          ? Number(detail.price)
+          : 0;
+
+        return {
+          id: modelId,
+          name: detail.modelName,
+          description: detail.description,
+          prompt: '',
+          seedValue: '',
+          fileId: primaryFile?.fileId,
+          imageUrl: primaryFile?.fileUrl ?? '',
+          previewImages,
+          category: detail.ownType === 'ADMIN' ? 'admin' : 'user',
+          metadata: {
+            age: '',
+            gender: '',
+            style: '',
+            ethnicity: ''
+          },
+          creatorId: detail.ownerId ? detail.ownerId.toString() : '',
+          creatorName: detail.ownerName,
+          creatorAvatar: undefined,
+          price,
+          usageCount: Number(detail.usageCount ?? 0),
+          rating: Number(detail.avgRating ?? 0),
+          ratingCount: Number(detail.reviewCount ?? 0),
+          tags: [],
+          isPublic: true,
+          isForSale: price > 0,
+          createdAt: detail.createdAt ? new Date(detail.createdAt) : new Date(),
+          updatedAt: detail.updatedAt ? new Date(detail.updatedAt) : new Date(),
+          earnings: earningsByModelId[modelId] ?? 0
+        };
+      });
+
+      // 다른 계정으로 전환된 경우 업데이트하지 않음
+      if (!userProfile || userProfile.id !== profileId) {
+        return;
+      }
+
+      setUserModels(mappedModels);
+      setUserModelStats(statsData);
+    } catch (error) {
+      console.error('내 모델 데이터 로드 실패:', error);
+      const message = error instanceof Error ? error.message : '내 모델 정보를 불러오지 못했습니다.';
+      setUserModelsError(message);
+    } finally {
+      setIsLoadingUserModels(false);
+    }
+  }, [pointTransactions, userProfile]);
+
   // Check authentication status on app load
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -443,6 +529,14 @@ export default function App() {
     setCurrentStage(stage);
     console.log('스테이지 변경 완료');
   };
+
+  useEffect(() => {
+    if (!userProfile || currentStage !== 'myModels') {
+      return;
+    }
+
+    void refreshUserModels();
+  }, [currentStage, refreshUserModels, userProfile]);
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
@@ -531,6 +625,10 @@ export default function App() {
     await authService.logout();
     setIsLoggedIn(false);
     setUserProfile(null);
+    setUserModels([]);
+    setUserModelStats(null);
+    setUserModelsError(null);
+    setIsLoadingUserModels(false);
     setCurrentStage('landing');
   };
 
@@ -875,6 +973,10 @@ export default function App() {
         <MyModels 
           userProfile={userProfile}
           userModels={userModels}
+          modelStats={userModelStats}
+          isLoading={isLoadingUserModels}
+          fetchError={userModelsError}
+          onRefresh={refreshUserModels}
           pointTransactions={pointTransactions}
           onBack={() => handleStageChange('mypage')}
           onCreateModel={() => handleStageChange('modelCreation')}

@@ -189,6 +189,16 @@ export interface AIModelDetailResponse {
 
 export type ModelDetailApiResponse = ApiResponse<AIModelDetailResponse>;
 
+export interface UserModelStatsResponse {
+  totalModelCount: number;
+  totalUsageCount: number;
+  averageRating: number;
+  publicModelCount: number;
+}
+
+export type UserModelStatsApiResponse = ApiResponse<UserModelStatsResponse>;
+export type MyModelListApiResponse = ApiResponse<AIModelDetailResponse[]>;
+
 // Model report types
 export interface ModelReportRequest {
   reasonDetail: string;

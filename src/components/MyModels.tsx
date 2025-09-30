@@ -9,16 +9,23 @@ import { DefaultAvatar } from './common/DefaultAvatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { StarRating } from './StarRating';
 import { NavigationBar } from './NavigationBar';
+import { Skeleton } from './ui/skeleton';
+import { ModelDetailDialog } from './ModelDetailDialog';
 import {
   Search, MoreHorizontal, Eye, Edit,
   Users, Coins, BarChart3,
   Globe, EyeOff, DollarSign, Activity, Star, Filter
 } from 'lucide-react';
 import { UserProfile, UserModel, PointTransaction } from '../App';
+import type { UserModelStatsResponse } from '@/types/model';
 
 interface MyModelsProps {
   userProfile: UserProfile | null;
   userModels: UserModel[];
+  modelStats?: UserModelStatsResponse | null;
+  isLoading?: boolean;
+  fetchError?: string | null;
+  onRefresh?: () => void;
   pointTransactions: PointTransaction[];
   onBack: () => void;
   onCreateModel: () => void;
@@ -32,116 +39,19 @@ interface MyModelsProps {
   onPointsSubscription?: () => void;
 }
 
-// Mock data for user models if none provided
-const defaultUserModels: UserModel[] = [
-  {
-    id: 'user-model-1',
-    name: '프로페셔널 한국 여성',
-    description: '비즈니스 환경에 적합한 20대 후반 한국 여성 모델입니다.',
-    prompt: 'professional korean woman, business attire, confident pose',
-    seedValue: '11111',
-    imageUrl: 'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop',
-    previewImages: [
-      'https://images.unsplash.com/photo-1494790108755-2616b612b1ff?w=400&h=400&fit=crop',
-      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop'
-    ],
-    category: 'fashion',
-    metadata: {
-      age: '20대 후반',
-      gender: '여성',
-      style: '프로페셔널',
-      ethnicity: '아시아'
-    },
-    creatorId: 'user-1',
-    creatorName: '홍길동',
-    creatorAvatar: undefined,
-    price: 75,
-    usageCount: 89,
-    rating: 4.6,
-    ratingCount: 23,
-    tags: ['프로페셔널', '한국', '비즈니스', '여성'],
-    isPublic: true,
-    isForSale: true,
-    createdAt: new Date('2024-02-15'),
-    updatedAt: new Date('2024-03-10'),
-    earnings: 1245
-  },
-  {
-    id: 'user-model-2',
-    name: '캐주얼 남성 모델',
-    description: '친근하고 자연스러운 20대 남성 모델입니다.',
-    prompt: 'casual young man, friendly smile, natural lighting',
-    seedValue: '22222',
-    imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
-    previewImages: [
-      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop'
-    ],
-    category: 'lifestyle',
-    metadata: {
-      age: '20대 초반',
-      gender: '남성',
-      style: '캐주얼',
-      ethnicity: '아시아'
-    },
-    creatorId: 'user-1',
-    creatorName: '홍길동',
-    creatorAvatar: undefined,
-    price: 60,
-    usageCount: 42,
-    rating: 4.3,
-    ratingCount: 12,
-    tags: ['캐주얼', '친근함', '자연스러움'],
-    isPublic: true,
-    isForSale: true,
-    createdAt: new Date('2024-03-01'),
-    updatedAt: new Date('2024-03-05'),
-    earnings: 630
-  },
-  {
-    id: 'user-model-3',
-    name: '럭셔리 뷰티 모델',
-    description: '고급 화장품 브랜드에 특화된 모델입니다.',
-    prompt: 'luxury beauty model, elegant makeup, soft studio lighting',
-    seedValue: '33333',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
-    previewImages: [
-      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop'
-    ],
-    category: 'beauty',
-    metadata: {
-      age: '30대 초반',
-      gender: '여성',
-      style: '럭셔리',
-      ethnicity: '서양'
-    },
-    creatorId: 'user-1',
-    creatorName: '홍길동',
-    creatorAvatar: undefined,
-    price: 100,
-    usageCount: 15,
-    rating: 4.8,
-    ratingCount: 5,
-    tags: ['럭셔리', '뷰티', '엘레간트'],
-    isPublic: false,
-    isForSale: false,
-    createdAt: new Date('2024-03-12'),
-    updatedAt: new Date('2024-03-12'),
-    earnings: 210
-  }
-];
 
 const categoryNames: Record<string, string> = {
-  fashion: '패션',
-  electronics: '전자제품',
-  beauty: '뷰티',
-  home: '홈&리빙',
-  food: '식품',
-  lifestyle: '라이프스타일'
+  admin: '관리자 모델',
+  user: '사용자 모델'
 };
 
 export function MyModels({ 
   userProfile, 
-  userModels = defaultUserModels, 
+  userModels = [], 
+  modelStats: modelStatsData,
+  isLoading = false,
+  fetchError,
+  onRefresh,
   pointTransactions, 
   onBack, 
   onCreateModel, 
@@ -158,6 +68,8 @@ export function MyModels({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'popular' | 'earnings' | 'rating'>('newest');
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [selectedModelIdForDetail, setSelectedModelIdForDetail] = useState<number | null>(null);
 
   // Filter and sort models
   const filteredModels = useMemo(() => {
@@ -183,22 +95,26 @@ export function MyModels({
     });
   }, [userModels, searchQuery, selectedCategory, sortBy]);
 
-  // Calculate stats
-  const modelStats = useMemo(() => {
-    const totalUsage = userModels.reduce((sum, model) => sum + model.usageCount, 0);
-    const totalEarnings = userModels.reduce((sum, model) => sum + model.earnings, 0);
-    const avgRating = userModels.length > 0 ? 
-      userModels.reduce((sum, model) => sum + model.rating, 0) / userModels.length : 0;
-    const publicModels = userModels.filter(model => model.isPublic).length;
+  const totalEarnings = useMemo(() => {
+    return userModels.reduce((sum, model) => sum + (model.earnings ?? 0), 0);
+  }, [userModels]);
+
+  const aggregatedStats = useMemo(() => {
+    const fallbackTotalModels = userModels.length;
+    const fallbackTotalUsage = userModels.reduce((sum, model) => sum + model.usageCount, 0);
+    const fallbackAvgRating = userModels.length > 0
+      ? userModels.reduce((sum, model) => sum + model.rating, 0) / userModels.length
+      : 0;
+    const fallbackPublicModels = userModels.filter(model => model.isPublic).length;
 
     return {
-      totalModels: userModels.length,
-      totalUsage,
+      totalModels: modelStatsData?.totalModelCount ?? fallbackTotalModels,
+      totalUsage: modelStatsData?.totalUsageCount ?? fallbackTotalUsage,
       totalEarnings,
-      avgRating,
-      publicModels
+      avgRating: modelStatsData?.averageRating ?? fallbackAvgRating,
+      publicModels: modelStatsData?.publicModelCount ?? fallbackPublicModels
     };
-  }, [userModels]);
+  }, [modelStatsData, totalEarnings, userModels]);
 
   // Filter earnings transactions
   const earningsTransactions = useMemo(() => {
@@ -315,7 +231,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.totalModels}
+                    {isLoading ? '...' : aggregatedStats.totalModels.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -353,7 +269,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.totalUsage}
+                    {isLoading ? '...' : aggregatedStats.totalUsage.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -391,7 +307,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.totalEarnings.toLocaleString()}P
+                    {isLoading ? '...' : `${aggregatedStats.totalEarnings.toLocaleString()}P`}
                   </p>
                 </div>
               </div>
@@ -429,7 +345,7 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.avgRating > 0 ? modelStats.avgRating.toFixed(1) : '-'}
+                    {isLoading ? '...' : aggregatedStats.avgRating > 0 ? aggregatedStats.avgRating.toFixed(1) : '-'}
                   </p>
                 </div>
               </div>
@@ -467,13 +383,24 @@ export function MyModels({
                       color: 'var(--color-text-primary)'
                     }}
                   >
-                    {modelStats.publicModels}
+                    {isLoading ? '...' : aggregatedStats.publicModels.toLocaleString()}
                   </p>
                 </div>
               </div>
             </Card>
           </div>
         </div>
+
+        {fetchError && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm" style={{ color: 'var(--color-semantic-red)' }}>
+            <span>{fetchError}</span>
+            {onRefresh && (
+              <Button variant="outline" size="sm" onClick={() => onRefresh()}>
+                다시 시도
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -577,7 +504,34 @@ export function MyModels({
             </div>
 
             {/* Models List */}
-            {filteredModels.length === 0 ? (
+            {isLoading && userModels.length === 0 ? (
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <Card 
+                    key={index}
+                    className="p-6"
+                    style={{
+                      backgroundColor: 'var(--color-background-primary)',
+                      borderColor: 'var(--color-border-primary)',
+                      borderRadius: 'var(--radius-16)'
+                    }}
+                  >
+                    <div className="flex items-center gap-6">
+                      <Skeleton className="h-20 w-20 rounded-lg" />
+                      <div className="flex-1 space-y-3">
+                        <Skeleton className="h-4 w-1/3" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-3 w-2/3" />
+                        <div className="flex gap-2">
+                          <Skeleton className="h-8 w-20" />
+                          <Skeleton className="h-8 w-20" />
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredModels.length === 0 ? (
               <div className="text-center py-12">
                 <Users 
                   className="w-12 h-12 mx-auto mb-4"
@@ -605,11 +559,20 @@ export function MyModels({
                 {filteredModels.map((model) => (
                   <Card 
                     key={model.id}
-                    className="p-6"
+                    className="p-6 cursor-pointer transition-transform hover:translate-y-[-2px]"
                     style={{
                       backgroundColor: 'var(--color-background-primary)',
                       borderColor: 'var(--color-border-primary)',
                       borderRadius: 'var(--radius-16)'
+                    }}
+                    onClick={() => {
+                      const numericId = Number(model.id);
+                      if (Number.isNaN(numericId)) {
+                        console.warn('모델 상세를 열 수 없습니다. 숫자 ID가 아닙니다:', model.id);
+                        return;
+                      }
+                      setSelectedModelIdForDetail(numericId);
+                      setDetailDialogOpen(true);
                     }}
                   >
                     <div className="flex items-center gap-6">
@@ -675,7 +638,7 @@ export function MyModels({
                               {model.description}
                             </p>
                             <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-text-tertiary)' }}>
-                              <span>{categoryNames[model.category]}</span>
+                              <span>{categoryNames[model.category] ?? '분류 없음'}</span>
                               <span>•</span>
                               <span>{formatDate(model.createdAt)}</span>
                               <span>•</span>
@@ -746,7 +709,10 @@ export function MyModels({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleModelEdit(model)}
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                handleModelEdit(model);
+                              }}
                             >
                               <Edit className="w-4 h-4 mr-2" />
                               편집
@@ -754,7 +720,10 @@ export function MyModels({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleModelToggleVisibility(model)}
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                handleModelToggleVisibility(model);
+                              }}
                             >
                               {model.isPublic ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
                               {model.isPublic ? '비공개' : '공개'}
@@ -762,7 +731,10 @@ export function MyModels({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleModelToggleSale(model)}
+                              onClick={(event: React.MouseEvent<HTMLButtonElement>) => {
+                                event.stopPropagation();
+                                handleModelToggleSale(model);
+                              }}
                             >
                               <DollarSign className="w-4 h-4 mr-2" />
                               {model.isForSale ? '판매 중지' : '판매 시작'}
@@ -771,21 +743,45 @@ export function MyModels({
 
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-8 h-8 p-0"
+                                onClick={(event: React.MouseEvent<HTMLButtonElement>) => event.stopPropagation()}
+                              >
                                 <MoreHorizontal className="w-4 h-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleModelEdit(model)}>
+                              <DropdownMenuItem
+                                onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+                                  event.stopPropagation();
+                                  const numericId = Number(model.id);
+                                  if (Number.isNaN(numericId)) {
+                                    console.warn('모델 상세를 열 수 없습니다. 숫자 ID가 아닙니다:', model.id);
+                                    return;
+                                  }
+                                  setSelectedModelIdForDetail(numericId);
+                                  setDetailDialogOpen(true);
+                                }}
+                              >
                                 <Eye className="w-4 h-4 mr-2" />
                                 상세 보기
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleModelEdit(model)}>
+                              <DropdownMenuItem
+                                onClick={(event: React.MouseEvent<HTMLDivElement>) => {
+                                  event.stopPropagation();
+                                  handleModelEdit(model);
+                                }}
+                              >
                                 <Edit className="w-4 h-4 mr-2" />
                                 편집
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={(event: React.MouseEvent<HTMLDivElement>) => event.stopPropagation()}
+                              >
                                 삭제
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -963,6 +959,19 @@ export function MyModels({
           </TabsContent>
         </Tabs>
       </main>
+
+      <ModelDetailDialog
+        modelId={selectedModelIdForDetail}
+        open={detailDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDetailDialogOpen(false);
+            setSelectedModelIdForDetail(null);
+          } else {
+            setDetailDialogOpen(true);
+          }
+        }}
+      />
     </div>
   );
 }
