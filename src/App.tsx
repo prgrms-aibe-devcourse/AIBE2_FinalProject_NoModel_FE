@@ -1079,6 +1079,7 @@ export default function App() {
           onMyPage={() => handleStageChange('mypage')}
           onHome={() => handleStageChange('landing')}
           onAdmin={() => handleStageChange('admin')}
+          onPointsSubscription={() => handleStageChange('pointsSubscription')}
         />
       )}
 

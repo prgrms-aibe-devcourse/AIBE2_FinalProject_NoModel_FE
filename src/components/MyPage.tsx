@@ -446,12 +446,13 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
             </Card>
 
             <Card 
-              className="p-4"
+              className="p-4 cursor-pointer transition-transform hover:translate-y-[-2px]"
               style={{
                 backgroundColor: 'var(--color-background-primary)',
                 borderColor: 'var(--color-border-primary)',
                 borderRadius: 'var(--radius-12)'
               }}
+              onClick={() => onPointsSubscription?.()}
             >
               <div className="flex items-center gap-4">
                 <div 
@@ -471,7 +472,7 @@ export function MyPage({ userProfile, projects = defaultMockProjects, onProjectS
                     보유 포인트
                   </p>
                   <DynamicFontSize
-                    text={`${userProfile.points.toLocaleString()} P`}
+                    text={`${(userProfile.points ?? 0).toLocaleString()} P`}
                     baseSize="var(--font-size-title3)"
                     maxWidth="140px"
                     minSize="12px"

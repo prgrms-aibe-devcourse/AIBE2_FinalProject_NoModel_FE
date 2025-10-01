@@ -28,6 +28,7 @@ interface ProductImageUploadProps {
   onMyPage: () => void;
   onHome: () => void;
   onAdmin?: () => void;
+  onPointsSubscription?: () => void;
 }
 
 export function ProductImageUpload({ 
@@ -42,7 +43,8 @@ export function ProductImageUpload({
   onMarketplace, 
   onMyPage, 
   onHome, 
-  onAdmin 
+  onAdmin,
+  onPointsSubscription
 }: ProductImageUploadProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [additionalPrompt, setAdditionalPrompt] = useState('');
@@ -364,6 +366,7 @@ export function ProductImageUpload({
         onHome={onHome}
         onBack={onBack}
         onAdmin={onAdmin}
+        onPointsSubscription={onPointsSubscription}
         isAdmin={userProfile?.role === 'ADMIN'}
         isLoggedIn={!!userProfile}
         showBackButton={true}
