@@ -1026,7 +1026,7 @@ export function MyModels({
       <ModelDetailDialog
         modelId={selectedModelIdForDetail}
         open={detailDialogOpen}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) {
             setDetailDialogOpen(false);
             setSelectedModelIdForDetail(null);
@@ -1038,7 +1038,7 @@ export function MyModels({
 
       <Dialog
         open={priceDialogOpen}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) {
             closePriceDialog();
           }
